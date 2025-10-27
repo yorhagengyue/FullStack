@@ -92,16 +92,16 @@ https://chat.openai.com/chat
 
 ---
 
-### 幻灯片 4: 选择的案例
+### 幻灯片 4: 选定案例
 
 ```
-选择的案例研究
+✅ 选定案例
 Selected Case Study
 
-案例3: 点对点学习/导师查找系统
-Peer-to-Peer Learning / Tutor Finder
+点对点学习/导师查找系统
+Peer-to-Peer Tutor Finder
 
-✓ 问题陈述:
+问题陈述:
 学生经常需要学术帮助,但很难找到具有合适
 专业知识的同学,导致错过学习机会和获取支
 持的机会不均等。
