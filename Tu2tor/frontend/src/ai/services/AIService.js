@@ -44,12 +44,33 @@ export class AIService {
       const ollamaProvider = new OllamaProvider(ollamaConfig);
       this.registerProvider('ollama', ollamaProvider);
 
-      // Set default provider
+      // Try to set default provider without health check first
       const defaultProvider = import.meta.env.VITE_DEFAULT_AI_PROVIDER || 'gemini';
-      await this.switchProvider(defaultProvider);
 
-      console.log('[AIService] Initialized with providers:', Array.from(this.providers.keys()));
-      return true;
+      try {
+        await this.switchProvider(defaultProvider);
+        console.log('[AIService] Initialized with providers:', Array.from(this.providers.keys()));
+        console.log('[AIService] Active provider:', defaultProvider);
+        return true;
+      } catch (error) {
+        console.warn('[AIService] Default provider not available, trying fallback...', error.message);
+
+        // Try alternative providers
+        const providers = Array.from(this.providers.keys()).filter(p => p !== defaultProvider);
+        for (const providerName of providers) {
+          try {
+            await this.switchProvider(providerName);
+            console.log('[AIService] Initialized with fallback provider:', providerName);
+            return true;
+          } catch (fallbackError) {
+            console.warn(`[AIService] Fallback provider '${providerName}' also failed:`, fallbackError.message);
+          }
+        }
+
+        // If all providers failed, still initialize but with warning
+        console.warn('[AIService] No providers available at initialization. Will retry on first use.');
+        return true;
+      }
     } catch (error) {
       console.error('[AIService] Initialization failed:', error);
       throw error;

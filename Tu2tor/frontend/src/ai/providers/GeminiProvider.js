@@ -57,20 +57,26 @@ export class GeminiProvider extends BaseAIProvider {
    */
   async checkHealth() {
     try {
+      // Quick check: just verify API key is configured
+      if (!this.apiKey) {
+        return {
+          available: false,
+          message: 'Gemini API key not configured',
+          error: 'Missing API key',
+        };
+      }
+
+      // Initialize if needed
       if (!this.isInitialized) {
         await this.initialize();
       }
 
-      // Simple test generation
-      const result = await this.model.generateContent('Hello');
-      const response = await result.response;
-      const text = response.text();
-
+      // If initialization succeeded, consider it available
+      // Don't make actual API call during health check to avoid quota/network issues
       return {
         available: true,
-        message: 'Gemini API is available',
+        message: 'Gemini API is configured and ready',
         model: this.modelName,
-        responsePreview: text.substring(0, 50),
       };
     } catch (error) {
       return {
