@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppProvider } from './context/AppContext';
 import { ToastProvider } from './context/ToastContext';
+import { AIProvider } from './context/AIContext';
 
 // Layout
 import Layout from './components/layout/Layout';
@@ -93,7 +94,9 @@ function App() {
       <ToastProvider>
         <AuthProvider>
           <AppProvider>
-            <AppRoutes />
+            <AIProvider>
+              <AppRoutes />
+            </AIProvider>
           </AppProvider>
         </AuthProvider>
       </ToastProvider>
