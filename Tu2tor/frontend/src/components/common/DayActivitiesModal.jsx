@@ -41,7 +41,7 @@ const DayActivitiesModal = ({ isOpen, onClose, selectedDay }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-white bg-opacity-30 backdrop-blur-md"
+        className="absolute inset-0 bg-gray-900 bg-opacity-10 backdrop-blur-md"
         onClick={onClose}
       />
 
