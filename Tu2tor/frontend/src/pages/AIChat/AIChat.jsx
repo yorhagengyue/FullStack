@@ -6,8 +6,6 @@ import { ChatService } from '../../ai/services/ChatService';
 import aiService from '../../ai/services/AIService';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {
   Send,
   Loader2,
@@ -48,18 +46,19 @@ const AIChat = () => {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-  // Markdown components with syntax highlighting
+  // Markdown components with styled code blocks
   const MarkdownComponents = {
     code({ node, inline, className, children, ...props }) {
       const match = /language-(\w+)/.exec(className || '');
       const codeId = `code-${Math.random()}`;
+      const codeString = String(children).replace(/\n$/, '');
 
       return !inline && match ? (
         <div className="relative group my-4">
           <div className="flex items-center justify-between bg-gray-800 text-gray-200 px-4 py-2 rounded-t-lg">
-            <span className="text-xs font-mono">{match[1]}</span>
+            <span className="text-xs font-mono uppercase">{match[1]}</span>
             <button
-              onClick={() => handleCopyCode(String(children).replace(/\n$/, ''), codeId)}
+              onClick={() => handleCopyCode(codeString, codeId)}
               className="flex items-center space-x-1 text-xs hover:text-white transition-colors"
             >
               {copiedCode === codeId ? (
@@ -75,15 +74,9 @@ const AIChat = () => {
               )}
             </button>
           </div>
-          <SyntaxHighlighter
-            style={vscDarkPlus}
-            language={match[1]}
-            PreTag="div"
-            className="!mt-0 !rounded-t-none"
-            {...props}
-          >
-            {String(children).replace(/\n$/, '')}
-          </SyntaxHighlighter>
+          <pre className="bg-gray-900 text-gray-100 p-4 rounded-b-lg overflow-x-auto">
+            <code className="text-sm font-mono">{codeString}</code>
+          </pre>
         </div>
       ) : (
         <code className="bg-gray-200 text-red-600 px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
