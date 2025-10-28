@@ -398,6 +398,36 @@ export const mockTutorProfiles = [
   }
 ];
 
+// Mock Subject List - Based on real TP modules (moved here before mockTutors to avoid initialization error)
+export const mockSubjects = [
+  { subjectId: 'sub001', name: 'Programming Fundamentals', code: 'IT1001', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '💻', tutorCount: 15 },
+  { subjectId: 'sub002', name: 'Object-Oriented Programming', code: 'IT2001', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '🎯', tutorCount: 12 },
+  { subjectId: 'sub003', name: 'Database Design & Administration', code: 'IT2002', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '🗄️', tutorCount: 10 },
+  { subjectId: 'sub004', name: 'Web Application Development', code: 'IT3001', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '🌐', tutorCount: 14 },
+  { subjectId: 'sub005', name: 'Python Programming', code: 'AI1002', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '🐍', tutorCount: 18 },
+  { subjectId: 'sub006', name: 'Data Analytics', code: 'BDA2001', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '📊', tutorCount: 11 },
+  { subjectId: 'sub007', name: 'Machine Learning Fundamentals', code: 'AI2001', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '🤖', tutorCount: 8 },
+  { subjectId: 'sub008', name: 'Mathematics for Computing', code: 'MAT1001', category: SUBJECT_CATEGORIES.MATH, icon: '📐', tutorCount: 9 },
+  { subjectId: 'sub009', name: 'Network Fundamentals', code: 'CDF1002', category: SUBJECT_CATEGORIES.OTHER, icon: '🌐', tutorCount: 7 },
+  { subjectId: 'sub010', name: 'Cybersecurity Fundamentals', code: 'CDF1001', category: SUBJECT_CATEGORIES.OTHER, icon: '🔒', tutorCount: 6 },
+  { subjectId: 'sub011', name: 'Ethical Hacking', code: 'CDF2001', category: SUBJECT_CATEGORIES.OTHER, icon: '🎭', tutorCount: 5 },
+  { subjectId: 'sub012', name: 'Linux Administration', code: 'CDF2003', category: SUBJECT_CATEGORIES.OTHER, icon: '🐧', tutorCount: 4 },
+  { subjectId: 'sub013', name: 'Business Analytics', code: 'BPS2001', category: SUBJECT_CATEGORIES.OTHER, icon: '💼', tutorCount: 8 },
+  { subjectId: 'sub014', name: 'Statistics & Probability', code: 'MAT2001', category: SUBJECT_CATEGORIES.MATH, icon: '📈', tutorCount: 10 },
+  { subjectId: 'sub015', name: 'Process Improvement Techniques', code: 'BPS2002', category: SUBJECT_CATEGORIES.OTHER, icon: '⚙️', tutorCount: 5 },
+  { subjectId: 'sub016', name: 'Game Programming', code: 'IMG2001', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '🎮', tutorCount: 7 },
+  { subjectId: 'sub017', name: 'Unity Game Engine', code: 'IMG2002', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '🕹️', tutorCount: 6 },
+  { subjectId: 'sub018', name: 'C# Programming', code: 'IMG1002', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '⚡', tutorCount: 8 },
+  { subjectId: 'sub019', name: '3D Modeling & Animation', code: 'IMG2003', category: SUBJECT_CATEGORIES.OTHER, icon: '🎨', tutorCount: 4 },
+  { subjectId: 'sub020', name: 'Mobile Application Development', code: 'IT3002', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '📱', tutorCount: 9 },
+  { subjectId: 'sub021', name: 'Cloud Computing with AWS', code: 'IT3003', category: SUBJECT_CATEGORIES.OTHER, icon: '☁️', tutorCount: 7 },
+  { subjectId: 'sub022', name: 'SQL & Database Querying', code: 'BDA1002', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '🔍', tutorCount: 12 },
+  { subjectId: 'sub023', name: 'Data Visualization', code: 'BDA2002', category: SUBJECT_CATEGORIES.OTHER, icon: '📉', tutorCount: 8 },
+  { subjectId: 'sub024', name: 'Financial Accounting', code: 'ACC2001', category: SUBJECT_CATEGORIES.OTHER, icon: '💰', tutorCount: 10 },
+  { subjectId: 'sub025', name: 'Management Accounting', code: 'ACC2002', category: SUBJECT_CATEGORIES.OTHER, icon: '📊', tutorCount: 7 },
+  { subjectId: 'sub026', name: 'Excel for Finance', code: 'ACC1002', category: SUBJECT_CATEGORIES.OTHER, icon: '📗', tutorCount: 11 }
+];
+
 // Merge user and tutor profile data with proper field mapping
 export const mockTutors = mockTutorProfiles.map(profile => {
   const user = mockUsers.find(u => u.userId === profile.userId) || {
@@ -715,36 +745,6 @@ export const mockCreditTransactions = [
     description: '5-star review bonus - Keep it up!',
     createdAt: '2024-10-15T20:00:00Z'
   }
-];
-
-// Mock Subject List - Based on real TP modules
-export const mockSubjects = [
-  { subjectId: 'sub001', name: 'Programming Fundamentals', code: 'IT1001', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '💻', tutorCount: 15 },
-  { subjectId: 'sub002', name: 'Object-Oriented Programming', code: 'IT2001', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '🎯', tutorCount: 12 },
-  { subjectId: 'sub003', name: 'Database Design & Administration', code: 'IT2002', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '🗄️', tutorCount: 10 },
-  { subjectId: 'sub004', name: 'Web Application Development', code: 'IT3001', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '🌐', tutorCount: 14 },
-  { subjectId: 'sub005', name: 'Python Programming', code: 'AI1002', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '🐍', tutorCount: 18 },
-  { subjectId: 'sub006', name: 'Data Analytics', code: 'BDA2001', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '📊', tutorCount: 11 },
-  { subjectId: 'sub007', name: 'Machine Learning Fundamentals', code: 'AI2001', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '🤖', tutorCount: 8 },
-  { subjectId: 'sub008', name: 'Mathematics for Computing', code: 'MAT1001', category: SUBJECT_CATEGORIES.MATH, icon: '📐', tutorCount: 9 },
-  { subjectId: 'sub009', name: 'Network Fundamentals', code: 'CDF1002', category: SUBJECT_CATEGORIES.OTHER, icon: '🌐', tutorCount: 7 },
-  { subjectId: 'sub010', name: 'Cybersecurity Fundamentals', code: 'CDF1001', category: SUBJECT_CATEGORIES.OTHER, icon: '🔒', tutorCount: 6 },
-  { subjectId: 'sub011', name: 'Ethical Hacking', code: 'CDF2001', category: SUBJECT_CATEGORIES.OTHER, icon: '🎭', tutorCount: 5 },
-  { subjectId: 'sub012', name: 'Linux Administration', code: 'CDF2003', category: SUBJECT_CATEGORIES.OTHER, icon: '🐧', tutorCount: 4 },
-  { subjectId: 'sub013', name: 'Business Analytics', code: 'BPS2001', category: SUBJECT_CATEGORIES.OTHER, icon: '💼', tutorCount: 8 },
-  { subjectId: 'sub014', name: 'Statistics & Probability', code: 'MAT2001', category: SUBJECT_CATEGORIES.MATH, icon: '📈', tutorCount: 10 },
-  { subjectId: 'sub015', name: 'Process Improvement Techniques', code: 'BPS2002', category: SUBJECT_CATEGORIES.OTHER, icon: '⚙️', tutorCount: 5 },
-  { subjectId: 'sub016', name: 'Game Programming', code: 'IMG2001', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '🎮', tutorCount: 7 },
-  { subjectId: 'sub017', name: 'Unity Game Engine', code: 'IMG2002', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '🕹️', tutorCount: 6 },
-  { subjectId: 'sub018', name: 'C# Programming', code: 'IMG1002', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '⚡', tutorCount: 8 },
-  { subjectId: 'sub019', name: '3D Modeling & Animation', code: 'IMG2003', category: SUBJECT_CATEGORIES.OTHER, icon: '🎨', tutorCount: 4 },
-  { subjectId: 'sub020', name: 'Mobile Application Development', code: 'IT3002', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '📱', tutorCount: 9 },
-  { subjectId: 'sub021', name: 'Cloud Computing with AWS', code: 'IT3003', category: SUBJECT_CATEGORIES.OTHER, icon: '☁️', tutorCount: 7 },
-  { subjectId: 'sub022', name: 'SQL & Database Querying', code: 'BDA1002', category: SUBJECT_CATEGORIES.PROGRAMMING, icon: '🔍', tutorCount: 12 },
-  { subjectId: 'sub023', name: 'Data Visualization', code: 'BDA2002', category: SUBJECT_CATEGORIES.OTHER, icon: '📉', tutorCount: 8 },
-  { subjectId: 'sub024', name: 'Financial Accounting', code: 'ACC2001', category: SUBJECT_CATEGORIES.OTHER, icon: '💰', tutorCount: 10 },
-  { subjectId: 'sub025', name: 'Management Accounting', code: 'ACC2002', category: SUBJECT_CATEGORIES.OTHER, icon: '📊', tutorCount: 7 },
-  { subjectId: 'sub026', name: 'Excel for Finance', code: 'ACC1002', category: SUBJECT_CATEGORIES.OTHER, icon: '📗', tutorCount: 11 }
 ];
 
 // Current logged-in user
