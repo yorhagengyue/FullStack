@@ -395,6 +395,38 @@ export const mockTutorProfiles = [
     isVerified: true,
     status: 'active',
     school: 'Temasek Polytechnic'
+  },
+  {
+    profileId: 'profileCurrent',
+    userId: 'currentUser',
+    bio: 'Year 2 Information Technology student with a passion for web development and programming. I enjoy helping fellow students understand coding concepts and building practical projects together. My teaching style focuses on hands-on learning and making complex topics simple and relatable.',
+    subjects: [
+      { subjectId: 'sub001', subjectName: 'Programming Fundamentals', proficiencyLevel: 'advanced', category: SUBJECT_CATEGORIES.PROGRAMMING },
+      { subjectId: 'sub002', subjectName: 'Object-Oriented Programming', proficiencyLevel: 'advanced', category: SUBJECT_CATEGORIES.PROGRAMMING },
+      { subjectId: 'sub004', subjectName: 'Web Application Development', proficiencyLevel: 'expert', category: SUBJECT_CATEGORIES.PROGRAMMING },
+      { subjectId: 'sub003', subjectName: 'Database Design & Administration', proficiencyLevel: 'intermediate', category: SUBJECT_CATEGORIES.PROGRAMMING }
+    ],
+    completedCourses: [
+      { code: 'IT1001', name: 'Programming Fundamentals', grade: 'A' },
+      { code: 'IT2001', name: 'Object-Oriented Programming', grade: 'A-' },
+      { code: 'IT2002', name: 'Database Design', grade: 'B+' }
+    ],
+    availableSlots: [
+      { day: 'Monday', startTime: '16:00', endTime: '19:00', isRecurring: true },
+      { day: 'Wednesday', startTime: '15:00', endTime: '18:00', isRecurring: true },
+      { day: 'Friday', startTime: '17:00', endTime: '20:00', isRecurring: true }
+    ],
+    preferredLocation: ['Online (Zoom/Teams)', 'Library @ TP', 'Canteen'],
+    languages: ['English', 'Mandarin'],
+    totalSessions: 8,
+    totalHours: 12,
+    averageRating: 4.6,
+    totalReviews: 5,
+    responseRate: 95,
+    responseTime: 25,
+    isVerified: true,
+    status: 'active',
+    school: 'Temasek Polytechnic'
   }
 ];
 
@@ -1025,6 +1057,76 @@ export const mockReviews = [
     studentName: 'Student from T51',
     studentAvatar: 'https://ui-avatars.com/api/?name=Student&background=random',
     createdAt: '2024-10-26T17:00:00Z'
+  },
+  {
+    reviewId: 'review039',
+    tutorId: 'currentUser',
+    studentId: 'student039',
+    rating: 5,
+    comment: 'Alex is an amazing tutor! He helped me debug my web application project and explained React hooks in a way that finally made sense. Very patient and encouraging. Highly recommend for web dev help!',
+    tags: ['Patient', 'Clear Explanation', 'Helpful'],
+    isAnonymous: false,
+    isVerified: true,
+    helpfulCount: 8,
+    studentName: 'Benjamin Koh',
+    studentAvatar: 'https://ui-avatars.com/api/?name=Benjamin+Koh&background=random',
+    createdAt: '2024-10-18T14:30:00Z'
+  },
+  {
+    reviewId: 'review040',
+    tutorId: 'currentUser',
+    studentId: 'student040',
+    rating: 4,
+    comment: 'Good session on OOP concepts. Alex used practical coding examples to explain inheritance and polymorphism. Would have preferred more time on abstract classes but overall very helpful.',
+    tags: ['Clear Explanation', 'Professional'],
+    isAnonymous: true,
+    isVerified: true,
+    helpfulCount: 5,
+    studentName: 'Student from T30',
+    studentAvatar: 'https://ui-avatars.com/api/?name=Student&background=random',
+    createdAt: '2024-10-12T16:45:00Z'
+  },
+  {
+    reviewId: 'review041',
+    tutorId: 'currentUser',
+    studentId: 'student041',
+    rating: 5,
+    comment: 'Alex helped me understand JavaScript closures and async programming for my IT3001 project. His explanations were clear and he shared useful resources. Really appreciate his help!',
+    tags: ['Patient', 'Well Prepared', 'Helpful'],
+    isAnonymous: false,
+    isVerified: true,
+    helpfulCount: 7,
+    studentName: 'Chloe Lim',
+    studentAvatar: 'https://ui-avatars.com/api/?name=Chloe+Lim&background=random',
+    createdAt: '2024-10-08T19:15:00Z'
+  },
+  {
+    reviewId: 'review042',
+    tutorId: 'currentUser',
+    studentId: 'student042',
+    rating: 5,
+    comment: 'Excellent tutor for programming fundamentals! Alex broke down complex algorithms into simple steps and provided lots of practice questions. My coding skills improved significantly after just a few sessions.',
+    tags: ['Clear Explanation', 'Patient', 'Encouraging'],
+    isAnonymous: false,
+    isVerified: true,
+    helpfulCount: 10,
+    studentName: 'Daniel Tan',
+    studentAvatar: 'https://ui-avatars.com/api/?name=Daniel+Tan&background=random',
+    createdAt: '2024-09-30T13:20:00Z'
+  },
+  {
+    reviewId: 'review043',
+    tutorId: 'currentUser',
+    studentId: 'student043',
+    rating: 4,
+    comment: 'Alex is very knowledgeable about web development. He helped me set up my first full-stack project with Node.js and MySQL. Session was productive and I learned a lot!',
+    tags: ['Helpful', 'Professional', 'Knowledgeable'],
+    isAnonymous: true,
+    isVerified: true,
+    helpfulCount: 6,
+    studentName: 'Student from T30',
+    studentAvatar: 'https://ui-avatars.com/api/?name=Student&background=random',
+    createdAt: '2024-09-22T15:00:00Z'
   }
 ];
 
@@ -2735,7 +2837,7 @@ export const currentUser = {
   major: 'Information Technology',
   yearOfStudy: 2,
   avatar: 'https://ui-avatars.com/api/?name=Alex+Tan&background=4f46e5&color=fff',
-  role: ['student'],
+  role: ['student', 'tutor'],
   credits: 115,
   points: 50,
   badges: [BADGE_TYPES.NEWBIE],
