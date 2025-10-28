@@ -398,7 +398,7 @@ export const mockTutorProfiles = [
   }
 ];
 
-// Merge user and tutor profile data
+// Merge user and tutor profile data with proper field mapping
 export const mockTutors = mockTutorProfiles.map(profile => {
   const user = mockUsers.find(u => u.userId === profile.userId) || {
     userId: profile.userId,
@@ -407,9 +407,40 @@ export const mockTutors = mockTutorProfiles.map(profile => {
     school: 'Temasek Polytechnic'
   };
 
+  // Map subjects to have both subjectName and code fields
+  const subjects = profile.subjects.map(sub => {
+    const matchedSubject = mockSubjects.find(ms => ms.name === sub.subjectName);
+    return {
+      ...sub,
+      name: sub.subjectName,
+      code: matchedSubject?.code || sub.subjectName
+    };
+  });
+
+  // Keep availableSlots as objects for algorithm, but also add formatted strings for display
+  const availableSlots = profile.availableSlots;
+  const availableSlotsFormatted = profile.availableSlots.map(slot =>
+    `${slot.day} ${slot.startTime}-${slot.endTime.substring(0, 5)}`
+  );
+
+  // Rename preferredLocation to preferredLocations (plural)
+  const preferredLocations = profile.preferredLocation;
+
+  // Merge hourlyRate from completedCourses count
+  const hourlyRate = 10 + profile.completedCourses.length;
+
   return {
+    ...user,
     ...profile,
-    ...user
+    subjects,
+    availableSlots, // Objects for algorithm
+    availableSlotsDisplay: availableSlotsFormatted, // Strings for UI display
+    preferredLocations,
+    hourlyRate,
+    // Keep profile fields that might be needed
+    profileCompletion: 85,
+    responseRate: profile.responseRate,
+    responseTime: profile.responseTime
   };
 });
 
@@ -558,49 +589,88 @@ export const mockBookings = [
     bookingId: 'booking001',
     studentId: 'currentUser',
     tutorId: 'user001',
-    tutorName: 'John Tan Wei Ming',
-    tutorAvatar: 'https://ui-avatars.com/api/?name=John+Tan&background=6366f1&color=fff',
-    subjectName: 'Object-Oriented Programming',
-    sessionDate: '2024-10-30T14:00:00Z',
+    subject: 'Object-Oriented Programming', // Changed from subjectName
+    date: '2024-10-30', // Changed from sessionDate, simplified format
+    timeSlot: '14:00 - 16:00', // Added timeSlot field
     duration: 2,
     location: 'Library @ TP Level 3',
-    locationType: 'offline',
-    description: 'Need help understanding inheritance, polymorphism and abstract classes for IT2001 module. Have quiz next week.',
-    status: BOOKING_STATUS.CONFIRMED,
-    createdAt: '2024-10-20T10:00:00Z'
+    notes: 'Need help understanding inheritance, polymorphism and abstract classes for IT2001 module. Have quiz next week.', // Changed from description
+    status: 'confirmed', // Using string instead of constant
+    createdAt: '2024-10-20T10:00:00Z',
+    hasReview: false
   },
   {
     bookingId: 'booking002',
     studentId: 'currentUser',
     tutorId: 'user002',
-    tutorName: 'Sarah Lim Hui Ting',
-    tutorAvatar: 'https://ui-avatars.com/api/?name=Sarah+Lim&background=10b981&color=fff',
-    subjectName: 'Machine Learning Fundamentals',
-    sessionDate: '2024-10-28T16:00:00Z',
+    subject: 'Machine Learning Fundamentals',
+    date: '2024-10-28',
+    timeSlot: '16:00 - 17:30',
     duration: 1.5,
-    location: 'Online',
-    locationType: 'online',
-    meetingLink: 'https://zoom.us/j/123456789',
-    description: 'Preparing for AI module exam - need revision on supervised learning algorithms and model evaluation metrics.',
-    status: BOOKING_STATUS.PENDING,
-    createdAt: '2024-10-22T14:00:00Z'
+    location: 'Online (Zoom)',
+    notes: 'Preparing for AI module exam - need revision on supervised learning algorithms and model evaluation metrics.',
+    status: 'pending',
+    createdAt: '2024-10-22T14:00:00Z',
+    hasReview: false
   },
   {
     bookingId: 'booking003',
     studentId: 'currentUser',
     tutorId: 'user001',
-    tutorName: 'John Tan Wei Ming',
-    tutorAvatar: 'https://ui-avatars.com/api/?name=John+Tan&background=6366f1&color=fff',
-    subjectName: 'Database Design & Administration',
-    sessionDate: '2024-10-15T15:00:00Z',
+    subject: 'Database Design & Administration',
+    date: '2024-10-15',
+    timeSlot: '15:00 - 17:00',
     duration: 2,
     location: 'Library @ TP Level 3',
-    locationType: 'offline',
-    description: 'Learning database normalization (1NF, 2NF, 3NF) and ER diagram design for IT2002 project.',
-    status: BOOKING_STATUS.COMPLETED,
-    isRated: true,
+    notes: 'Learning database normalization (1NF, 2NF, 3NF) and ER diagram design for IT2002 project.',
+    status: 'completed',
     createdAt: '2024-10-10T09:00:00Z',
-    completedAt: '2024-10-15T17:00:00Z'
+    completedAt: '2024-10-15T17:00:00Z',
+    hasReview: true
+  },
+  {
+    bookingId: 'booking004',
+    studentId: 'currentUser',
+    tutorId: 'user003',
+    subject: 'Cybersecurity Fundamentals',
+    date: '2024-11-05',
+    timeSlot: '14:00 - 16:00',
+    duration: 2,
+    location: 'Library @ TP Level 3',
+    notes: 'Need help with network security concepts and cryptography basics.',
+    status: 'confirmed',
+    createdAt: '2024-10-25T10:00:00Z',
+    hasReview: false
+  },
+  {
+    bookingId: 'booking005',
+    studentId: 'currentUser',
+    tutorId: 'user002',
+    subject: 'Python Programming',
+    date: '2024-10-20',
+    timeSlot: '16:00 - 18:00',
+    duration: 2,
+    location: 'Online (Zoom)',
+    notes: 'Learn Python data structures and file handling.',
+    status: 'completed',
+    createdAt: '2024-10-15T09:00:00Z',
+    completedAt: '2024-10-20T18:00:00Z',
+    hasReview: false
+  },
+  {
+    bookingId: 'booking006',
+    studentId: 'currentUser',
+    tutorId: 'user004',
+    subject: 'Business Analytics',
+    date: '2024-10-12',
+    timeSlot: '10:00 - 12:00',
+    duration: 2,
+    location: 'Student Hub @ TP',
+    notes: 'Help with statistics and data interpretation for business case study.',
+    status: 'cancelled',
+    createdAt: '2024-10-08T10:00:00Z',
+    cancelledAt: '2024-10-11T14:00:00Z',
+    hasReview: false
   }
 ];
 

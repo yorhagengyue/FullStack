@@ -19,6 +19,7 @@ import {
   Plus
 } from 'lucide-react';
 
+
 const BookingPage = () => {
   const location = useLocation();
   const { user } = useAuth();

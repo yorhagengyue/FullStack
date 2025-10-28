@@ -198,10 +198,10 @@ const TutorDetailPage = () => {
             <div>
               <h3 className="text-sm font-semibold text-gray-700 mb-3">Available Time Slots</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {tutor.availableSlots?.map((slot, index) => (
+                {(tutor.availableSlotsDisplay || tutor.availableSlots)?.map((slot, index) => (
                   <div key={index} className="flex items-center px-3 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm">
                     <Clock className="w-4 h-4 mr-2" />
-                    {slot}
+                    {typeof slot === 'string' ? slot : `${slot.day} ${slot.startTime}-${slot.endTime}`}
                   </div>
                 ))}
               </div>
