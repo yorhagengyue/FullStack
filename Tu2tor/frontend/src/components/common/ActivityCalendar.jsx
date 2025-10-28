@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Flame, TrendingUp } from 'lucide-react';
+import DayActivitiesModal from './DayActivitiesModal';
 
 /**
  * GitHub-style Activity Calendar Component
@@ -7,6 +8,8 @@ import { Flame, TrendingUp } from 'lucide-react';
  */
 const ActivityCalendar = ({ bookings, userId }) => {
   const [hoveredDay, setHoveredDay] = useState(null);
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   // Generate activity data for the past 24 weeks (168 days)
   const activityData = useMemo(() => {
@@ -94,6 +97,14 @@ const ActivityCalendar = ({ bookings, userId }) => {
     return 'bg-gray-100';
   };
 
+  // Handle day click
+  const handleDayClick = (day) => {
+    if (day.count > 0) {
+      setSelectedDay(day);
+      setShowModal(true);
+    }
+  };
+
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
@@ -157,9 +168,10 @@ const ActivityCalendar = ({ bookings, userId }) => {
                     onMouseLeave={() => setHoveredDay(null)}
                   >
                     <div
+                      onClick={() => handleDayClick(day)}
                       className={`w-5 h-5 rounded ${getColor(day.count)}
-                        hover:ring-2 hover:ring-primary-500 hover:scale-110 transition-all cursor-pointer border border-gray-200`}
-                      title={`${day.displayDate}: ${day.count} sessions`}
+                        hover:ring-2 hover:ring-primary-500 hover:scale-110 transition-all ${day.count > 0 ? 'cursor-pointer' : 'cursor-default'} border border-gray-200`}
+                      title={`${day.displayDate}: ${day.count} sessions${day.count > 0 ? ' - Click to view' : ''}`}
                     />
 
                     {/* Tooltip */}
@@ -210,6 +222,13 @@ const ActivityCalendar = ({ bookings, userId }) => {
           </div>
         )}
       </div>
+
+      {/* Day Activities Modal */}
+      <DayActivitiesModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        selectedDay={selectedDay}
+      />
     </div>
   );
 };
