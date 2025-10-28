@@ -33,16 +33,14 @@ const Dashboard = () => {
         <div className="w-16 h-1 bg-red-500"></div>
       </div>
 
+      {/* Welcome Message */}
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">
+        Welcome back, {user?.username?.split(' ')[0]}! 👋
+      </h2>
+
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Left Column - Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Welcome Card */}
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Welcome back, {user?.username?.split(' ')[0]}! 👋
-            </h2>
-          </div>
-
           {/* Stats Cards */}
           <div className="grid md:grid-cols-3 gap-6">
             {/* Sessions Completed */}
