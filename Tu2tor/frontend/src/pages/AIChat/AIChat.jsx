@@ -279,7 +279,7 @@ const AIChat = () => {
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Tu2tor AI Assistant</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Tu2tor Assistant</h1>
                 <p className="text-sm text-gray-600">
                   {isOnlineMode ? '🟢' : '🔵'} {currentProvider} • {isOnlineMode ? 'Online' : 'Offline'}
                 </p>
@@ -317,31 +317,14 @@ const AIChat = () => {
           <div className="max-w-4xl mx-auto px-6 py-8">
             {messages.length === 0 ? (
               /* Welcome Screen */
-              <div className="text-center space-y-8">
+              <div className="text-center space-y-6 mt-20">
                 <div className="inline-block">
-                  <div className="w-24 h-24 bg-gradient-to-r from-primary-600 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                    <Sparkles className="w-12 h-12 text-white" />
-                  </div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                    Hi, {user?.username?.split(' ')[0] || 'there'}! 👋
+                  <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+                    Hello, {user?.username?.split(' ')[0] || 'there'}
                   </h2>
-                  <p className="text-gray-600 text-lg">
-                    I'm your AI assistant for the Tu2tor platform. How can I help you today?
+                  <p className="text-gray-600">
+                    Ask me anything about the Tu2tor platform
                   </p>
-                </div>
-
-                {/* Suggested Questions */}
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
-                  {suggestedQuestions.slice(0, 6).map((question, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSuggestedQuestion(question)}
-                      className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 hover:from-primary-50 hover:to-purple-50 border border-gray-200 hover:border-primary-300 rounded-xl text-left transition-all group"
-                    >
-                      <MessageSquare className="w-5 h-5 text-primary-600 mb-2 group-hover:scale-110 transition-transform" />
-                      <p className="text-sm text-gray-900 font-medium">{question}</p>
-                    </button>
-                  ))}
                 </div>
               </div>
             ) : (
@@ -474,13 +457,13 @@ const AIChat = () => {
                 <div className="flex items-center space-x-2">
                   <Sparkles className={`w-4 h-4 ${thinkingMode ? 'text-primary-600' : 'text-gray-400'}`} />
                   <span className={`text-sm font-medium ${thinkingMode ? 'text-primary-600' : 'text-gray-600'}`}>
-                    深度思考模式
+                    Deep Think
                   </span>
                 </div>
               </div>
               {thinkingMode && (
                 <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                  使用 Gemini 2.5 Pro
+                  Gemini 2.5 Pro
                 </span>
               )}
             </div>
@@ -492,7 +475,7 @@ const AIChat = () => {
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder={!isInitialized ? "AI is initializing..." : "Ask me anything about tutoring..."}
+                  placeholder={!isInitialized ? "Initializing..." : "Type your question..."}
                   rows="1"
                   className="w-full resize-none border border-gray-300 rounded-2xl px-6 py-4 pr-12 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-base max-h-40 overflow-y-auto"
                   disabled={isTyping}
