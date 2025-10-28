@@ -27,7 +27,8 @@
       "Bash(tasklist)",
       "Bash(taskkill /F /PID 37104 /PID 49828)",
       "Bash(taskkill /F /PID 37104)",
-      "Bash(taskkill /F /PID 49828)"
+      "Bash(taskkill /F /PID 49828)",
+      "WebFetch(domain:ai.google.dev)"
     ],
     "deny": [],
     "ask": []

@@ -4,6 +4,10 @@ import { useApp } from '../../context/AppContext';
 import { useAI } from '../../context/AIContext';
 import { ChatService } from '../../ai/services/ChatService';
 import aiService from '../../ai/services/AIService';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {
   Send,
   Loader2,
@@ -14,6 +18,8 @@ import {
   MessageSquare,
   Trash2,
   Plus,
+  Copy,
+  Check,
 } from 'lucide-react';
 import ProviderSelector from '../../components/ai/ProviderSelector';
 import UsageMonitor from '../../components/ai/UsageMonitor';
@@ -29,10 +35,119 @@ const AIChat = () => {
   const [streamingContent, setStreamingContent] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [thinkingMode, setThinkingMode] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(null);
 
   const messagesEndRef = useRef(null);
   const chatServiceRef = useRef(null);
   const textareaRef = useRef(null);
+
+  // Copy code to clipboard
+  const handleCopyCode = (code, id) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(id);
+    setTimeout(() => setCopiedCode(null), 2000);
+  };
+
+  // Markdown components with syntax highlighting
+  const MarkdownComponents = {
+    code({ node, inline, className, children, ...props }) {
+      const match = /language-(\w+)/.exec(className || '');
+      const codeId = `code-${Math.random()}`;
+
+      return !inline && match ? (
+        <div className="relative group my-4">
+          <div className="flex items-center justify-between bg-gray-800 text-gray-200 px-4 py-2 rounded-t-lg">
+            <span className="text-xs font-mono">{match[1]}</span>
+            <button
+              onClick={() => handleCopyCode(String(children).replace(/\n$/, ''), codeId)}
+              className="flex items-center space-x-1 text-xs hover:text-white transition-colors"
+            >
+              {copiedCode === codeId ? (
+                <>
+                  <Check className="w-3 h-3" />
+                  <span>Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3" />
+                  <span>Copy</span>
+                </>
+              )}
+            </button>
+          </div>
+          <SyntaxHighlighter
+            style={vscDarkPlus}
+            language={match[1]}
+            PreTag="div"
+            className="!mt-0 !rounded-t-none"
+            {...props}
+          >
+            {String(children).replace(/\n$/, '')}
+          </SyntaxHighlighter>
+        </div>
+      ) : (
+        <code className="bg-gray-200 text-red-600 px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+          {children}
+        </code>
+      );
+    },
+    p({ children }) {
+      return <p className="mb-3 last:mb-0 leading-relaxed">{children}</p>;
+    },
+    ul({ children }) {
+      return <ul className="list-disc list-inside mb-3 space-y-1">{children}</ul>;
+    },
+    ol({ children }) {
+      return <ol className="list-decimal list-inside mb-3 space-y-1">{children}</ol>;
+    },
+    li({ children }) {
+      return <li className="ml-2">{children}</li>;
+    },
+    h1({ children }) {
+      return <h1 className="text-2xl font-bold mb-3 mt-4">{children}</h1>;
+    },
+    h2({ children }) {
+      return <h2 className="text-xl font-bold mb-3 mt-4">{children}</h2>;
+    },
+    h3({ children }) {
+      return <h3 className="text-lg font-bold mb-2 mt-3">{children}</h3>;
+    },
+    blockquote({ children }) {
+      return (
+        <blockquote className="border-l-4 border-primary-500 pl-4 py-1 my-3 italic text-gray-700">
+          {children}
+        </blockquote>
+      );
+    },
+    a({ href, children }) {
+      return (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary-600 hover:text-primary-700 underline"
+        >
+          {children}
+        </a>
+      );
+    },
+    table({ children }) {
+      return (
+        <div className="overflow-x-auto my-4">
+          <table className="min-w-full divide-y divide-gray-300">{children}</table>
+        </div>
+      );
+    },
+    thead({ children }) {
+      return <thead className="bg-gray-50">{children}</thead>;
+    },
+    th({ children }) {
+      return <th className="px-4 py-2 text-left text-sm font-semibold text-gray-900">{children}</th>;
+    },
+    td({ children }) {
+      return <td className="px-4 py-2 text-sm text-gray-700 border-t border-gray-200">{children}</td>;
+    },
+  };
 
   // Initialize chat service
   useEffect(() => {
@@ -274,9 +389,20 @@ const AIChat = () => {
                               : 'bg-gray-100 text-gray-900'
                           }`}
                         >
-                          <p className="text-base whitespace-pre-wrap break-words leading-relaxed">
-                            {message.content}
-                          </p>
+                          {message.role === 'user' ? (
+                            <p className="text-base whitespace-pre-wrap break-words leading-relaxed">
+                              {message.content}
+                            </p>
+                          ) : (
+                            <div className="text-base prose prose-sm max-w-none">
+                              <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={MarkdownComponents}
+                              >
+                                {message.content}
+                              </ReactMarkdown>
+                            </div>
+                          )}
                         </div>
                         <p className="text-xs text-gray-500 mt-2 px-2">
                           {message.timestamp.toLocaleTimeString([], {
@@ -298,9 +424,14 @@ const AIChat = () => {
                     <div className="flex-1">
                       <div className="inline-block max-w-full">
                         <div className="px-6 py-4 rounded-2xl bg-gray-100 text-gray-900">
-                          <p className="text-base whitespace-pre-wrap break-words leading-relaxed">
-                            {streamingContent}
-                          </p>
+                          <div className="text-base prose prose-sm max-w-none">
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={MarkdownComponents}
+                            >
+                              {streamingContent}
+                            </ReactMarkdown>
+                          </div>
                         </div>
                       </div>
                     </div>
