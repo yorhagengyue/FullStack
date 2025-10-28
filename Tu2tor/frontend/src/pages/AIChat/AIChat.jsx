@@ -54,7 +54,17 @@ const AIChat = () => {
   }, [inputMessage]);
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isTyping || !chatServiceRef.current) return;
+    if (!inputMessage.trim() || isTyping) return;
+
+    // Initialize chat service if not already done
+    if (!chatServiceRef.current && isInitialized) {
+      chatServiceRef.current = new ChatService(aiService, { tutors });
+    }
+
+    if (!chatServiceRef.current) {
+      alert('AI service is still initializing. Please wait a moment and try again.');
+      return;
+    }
 
     const userMessage = {
       role: 'user',
@@ -336,7 +346,7 @@ const AIChat = () => {
               </div>
               <button
                 onClick={handleSendMessage}
-                disabled={!inputMessage.trim() || isTyping || !isInitialized}
+                disabled={!inputMessage.trim() || isTyping}
                 className="w-14 h-14 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-full transition-colors flex items-center justify-center flex-shrink-0"
               >
                 {isTyping ? (
