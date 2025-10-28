@@ -21,6 +21,7 @@ import ReviewSubmitPage from './pages/Reviews/ReviewSubmitPage';
 import SessionsPage from './pages/Sessions/SessionsPage';
 import NotificationsPage from './pages/Notifications/NotificationsPage';
 import MessagesPage from './pages/Messages/MessagesPage';
+import AIChat from './pages/AIChat/AIChat';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -80,6 +81,7 @@ function AppRoutes() {
         <Route path="sessions" element={<SessionsPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="messages" element={<MessagesPage />} />
+        <Route path="ai-chat" element={<AIChat />} />
       </Route>
 
       {/* Fallback */}

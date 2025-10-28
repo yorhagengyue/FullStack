@@ -1,6 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import AIAssistantButton from '../ai/AIAssistantButton';
 import {
   GraduationCap,
   Search,
@@ -13,7 +12,8 @@ import {
   Star,
   Settings,
   MessageSquare,
-  Award
+  Award,
+  Sparkles
 } from 'lucide-react';
 
 const Layout = () => {
@@ -28,6 +28,7 @@ const Layout = () => {
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/app/dashboard' },
+    { icon: Sparkles, label: 'AI Assistant', path: '/app/ai-chat' },
     { icon: Bell, label: 'Notifications', path: '/app/notifications', badge: 0 },
     { icon: Search, label: 'Find Tutors', path: '/app/search' },
     { icon: Calendar, label: 'My Bookings', path: '/app/bookings' },
@@ -186,9 +187,6 @@ const Layout = () => {
         <main className="flex-1 overflow-y-auto p-8">
           <Outlet />
         </main>
-
-        {/* AI Assistant Button */}
-        <AIAssistantButton />
       </div>
     </div>
   );
