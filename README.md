@@ -1,27 +1,36 @@
-# Full Stack Web Development Project
-## 全栈网页开发项目 - 导师查找系统
+# Tu2tor - Peer-to-Peer Tutor Finder
+## 全栈网页开发项目 - 点对点导师查找系统
 
 ### 📋 项目信息
+- **App Name:** Tu2tor
 - **课程:** CIT2C20 Full Stack Web Development
 - **学期:** AY2025/2026 October
 - **项目类型:** 个人项目
 - **技术栈:** MERN (MongoDB, Express.js, React.js, Node.js)
 
-### 🎯 案例选择
-**点对点学习/导师查找系统 (Peer-to-Peer Tutor Finder)**
+### 🎯 项目简介
+**Tu2tor** - 利用 "2" 代表 "two-way" 双向学习的创意,打造校园点对点导师查找平台。帮助学生快速找到合适的同学导师,提供便捷的预约和评价系统。
 
-帮助学生快速找到合适的同学导师,提供便捷的预约和评价系统。
+### 📚 主要文档
 
-### 📚 项目文档
+#### 核心需求文档
+- **[Tu2tor_Project_Requirements.md](./Tu2tor_Project_Requirements.md)** - 📖 **主需求文档** (持续更新)
+  - 项目概述
+  - 问题定义
+  - 项目目标
+  - 8个核心功能详细说明
+  - 3个主要页面线框图规划
+  - 5个数据模型设计
+  - 技术栈和开发计划
 
-#### Part 1: 项目提案 (20%)
-- [FWEB项目总结_中文版.md](./FWEB项目总结_中文版.md) - 完整项目指南
-- [Part1_案例分析_导师查找系统.md](./Part1_案例分析_导师查找系统.md) - 问题定义和项目目标
-- [Part1_建议功能列表.md](./Part1_建议功能列表.md) - 8个核心功能详细规划
-- [Part1_线框图规划.md](./Part1_线框图规划.md) - 3个主要页面设计
-- [Part1_数据模型设计.md](./Part1_数据模型设计.md) - 5个数据模型
-- [Part1_PPT内容大纲.md](./Part1_PPT内容大纲.md) - PPT制作指南
-- [Part1_精简总结.md](./Part1_精简总结.md) - 快速参考
+#### 归档文档
+- [archived_docs/](./archived_docs/) - 早期分散的文档已归档
+  - [FWEB项目总结_中文版.md](./archived_docs/FWEB项目总结_中文版.md)
+  - [Part1_案例分析_导师查找系统.md](./archived_docs/Part1_案例分析_导师查找系统.md)
+  - [Part1_建议功能列表.md](./archived_docs/Part1_建议功能列表.md)
+  - [Part1_线框图规划.md](./archived_docs/Part1_线框图规划.md)
+  - [Part1_数据模型设计.md](./archived_docs/Part1_数据模型设计.md)
+  - [Part1_PPT内容大纲.md](./archived_docs/Part1_PPT内容大纲.md)
 
 ### 🗓 时间线
 - **Part 1:** Week 5 - 2025年11月17日 ✍️ 进行中
