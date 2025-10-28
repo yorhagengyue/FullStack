@@ -26,6 +26,7 @@ export const AppProvider = ({ children }) => {
   const [subjects] = useState(mockSubjects);
   const [userFeedbacks, setUserFeedbacks] = useState([]);
   const [userPreference, setUserPreference] = useState(50); // 0-100, 默认50
+  const [messages, setMessages] = useState([]); // 消息状态
 
   // 从 localStorage 加载数据
   useEffect(() => {
@@ -34,6 +35,7 @@ export const AppProvider = ({ children }) => {
     const savedTransactions = localStorage.getItem('tu2tor_transactions');
     const savedFeedbacks = localStorage.getItem('tu2tor_feedbacks');
     const savedPreference = localStorage.getItem('tu2tor_preference');
+    const savedMessages = localStorage.getItem('tu2tor_messages');
 
     if (savedBookings) setBookings(JSON.parse(savedBookings));
     else setBookings(mockBookings);
@@ -44,6 +46,7 @@ export const AppProvider = ({ children }) => {
 
     if (savedFeedbacks) setUserFeedbacks(JSON.parse(savedFeedbacks));
     if (savedPreference) setUserPreference(Number(savedPreference));
+    if (savedMessages) setMessages(JSON.parse(savedMessages));
   }, []);
 
   // 预约相关方法
@@ -157,6 +160,61 @@ export const AppProvider = ({ children }) => {
     return creditTransactions.filter(t => t.userId === userId);
   };
 
+  // 消息相关方法
+  const sendMessage = (messageData) => {
+    const newMessage = {
+      ...messageData,
+      messageId: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: new Date().toISOString(),
+      isRead: false
+    };
+    const updated = [...messages, newMessage];
+    setMessages(updated);
+    localStorage.setItem('tu2tor_messages', JSON.stringify(updated));
+    return newMessage;
+  };
+
+  const markMessageAsRead = (messageId) => {
+    const updated = messages.map(m =>
+      m.messageId === messageId ? { ...m, isRead: true } : m
+    );
+    setMessages(updated);
+    localStorage.setItem('tu2tor_messages', JSON.stringify(updated));
+  };
+
+  const markConversationAsRead = (userId, contactId) => {
+    const updated = messages.map(m => {
+      const isInConversation =
+        (m.senderId === contactId && m.receiverId === userId) ||
+        (m.senderId === userId && m.receiverId === contactId);
+      return isInConversation && !m.isRead ? { ...m, isRead: true } : m;
+    });
+    setMessages(updated);
+    localStorage.setItem('tu2tor_messages', JSON.stringify(updated));
+  };
+
+  const getConversation = (userId, contactId) => {
+    return messages
+      .filter(m =>
+        (m.senderId === userId && m.receiverId === contactId) ||
+        (m.senderId === contactId && m.receiverId === userId)
+      )
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  };
+
+  const getUnreadCount = (userId, contactId) => {
+    return messages.filter(m =>
+      m.senderId === contactId &&
+      m.receiverId === userId &&
+      !m.isRead
+    ).length;
+  };
+
+  const getLastMessage = (userId, contactId) => {
+    const conversation = getConversation(userId, contactId);
+    return conversation[conversation.length - 1] || null;
+  };
+
   const value = {
     // 数据
     tutors,
@@ -166,6 +224,7 @@ export const AppProvider = ({ children }) => {
     subjects,
     userFeedbacks,
     userPreference,
+    messages,
 
     // 预约方法
     createBooking,
@@ -183,6 +242,14 @@ export const AppProvider = ({ children }) => {
     // 反馈方法
     addUserFeedback,
     updateUserPreference,
+
+    // 消息方法
+    sendMessage,
+    markMessageAsRead,
+    markConversationAsRead,
+    getConversation,
+    getUnreadCount,
+    getLastMessage,
 
     // 查询方法
     getTutorById,

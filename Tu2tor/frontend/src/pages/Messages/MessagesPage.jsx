@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { MessageSquare, Send, Search, MoreVertical, User, Paperclip, Smile } from 'lucide-react';
 
 const MessagesPage = () => {
   const { user } = useAuth();
-  const { tutors, bookings } = useApp();
+  const { tutors, bookings, sendMessage, getConversation, getUnreadCount, getLastMessage, markConversationAsRead } = useApp();
   const [selectedChat, setSelectedChat] = useState(null);
   const [messageInput, setMessageInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const messagesEndRef = useRef(null);
 
   // Get unique contacts from bookings
   const userBookings = bookings.filter(
@@ -20,30 +21,57 @@ const MessagesPage = () => {
     const contactId = isStudent ? booking.tutorId : booking.studentId;
     const contact = isStudent ? tutors.find(t => t.userId === contactId) : { userId: contactId, username: booking.studentId };
 
+    // Get real message data
+    const lastMsg = getLastMessage(user?.userId, contactId);
+    const unreadCount = getUnreadCount(user?.userId, contactId);
+
     return {
       id: contactId,
       name: contact?.username || contactId,
-      lastMessage: 'Start a conversation...',
-      timestamp: booking.createdAt,
-      unread: 0,
+      lastMessage: lastMsg ? lastMsg.content : 'Start a conversation...',
+      timestamp: lastMsg ? lastMsg.timestamp : booking.createdAt,
+      unread: unreadCount,
       avatar: contact?.username?.charAt(0).toUpperCase() || 'U',
       online: Math.random() > 0.5
     };
   }).filter((contact, index, self) =>
     index === self.findIndex(c => c.id === contact.id)
-  );
+  ).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); // Sort by most recent
 
   const filteredContacts = contacts.filter(contact =>
     contact.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Get conversation for selected chat
+  const conversation = selectedChat ? getConversation(user?.userId, selectedChat.id) : [];
+
+  // Auto-scroll to bottom when conversation changes
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [conversation]);
+
+  // Mark messages as read when opening a conversation
+  const handleSelectChat = (contact) => {
+    setSelectedChat(contact);
+    markConversationAsRead(user?.userId, contact.id);
+  };
+
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (messageInput.trim()) {
-      // In a real app, this would send to backend
-      console.log('Sending message:', messageInput);
+    if (messageInput.trim() && selectedChat) {
+      sendMessage({
+        senderId: user?.userId,
+        receiverId: selectedChat.id,
+        content: messageInput.trim()
+      });
       setMessageInput('');
     }
+  };
+
+  // Format timestamp
+  const formatTime = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -73,7 +101,7 @@ const MessagesPage = () => {
             filteredContacts.map((contact) => (
               <button
                 key={contact.id}
-                onClick={() => setSelectedChat(contact)}
+                onClick={() => handleSelectChat(contact)}
                 className={`w-full p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors text-left ${
                   selectedChat?.id === contact.id ? 'bg-primary-50 border-l-4 border-l-primary-600' : ''
                 }`}
@@ -142,27 +170,57 @@ const MessagesPage = () => {
 
             {/* Messages Area */}
             <div className="flex-1 p-6 overflow-y-auto bg-gray-50">
-              <div className="flex flex-col items-center justify-center h-full">
-                <div className="text-center max-w-md">
-                  <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Start a Conversation
-                  </h3>
-                  <p className="text-gray-500 text-sm mb-6">
-                    Send a message to {selectedChat.name} to start your conversation. Discuss session details, ask questions, or share materials.
-                  </p>
-                  <div className="bg-white p-4 rounded-lg border border-gray-200 text-left">
-                    <p className="text-sm text-gray-600 mb-2">
-                      <strong>💡 Tips for messaging:</strong>
+              {conversation.length > 0 ? (
+                <div className="space-y-4">
+                  {conversation.map((message) => {
+                    const isSent = message.senderId === user?.userId;
+                    return (
+                      <div
+                        key={message.messageId}
+                        className={`flex ${isSent ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div className={`max-w-[70%] ${isSent ? 'order-2' : 'order-1'}`}>
+                          <div
+                            className={`px-4 py-2 rounded-2xl ${
+                              isSent
+                                ? 'bg-primary-600 text-white'
+                                : 'bg-white text-gray-900 border border-gray-200'
+                            }`}
+                          >
+                            <p className="text-sm break-words">{message.content}</p>
+                          </div>
+                          <p className={`text-xs text-gray-500 mt-1 ${isSent ? 'text-right' : 'text-left'}`}>
+                            {formatTime(message.timestamp)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div ref={messagesEndRef} />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <div className="text-center max-w-md">
+                    <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      Start a Conversation
+                    </h3>
+                    <p className="text-gray-500 text-sm mb-6">
+                      Send a message to {selectedChat.name} to start your conversation. Discuss session details, ask questions, or share materials.
                     </p>
-                    <ul className="text-xs text-gray-500 space-y-1">
-                      <li>• Be clear about your learning goals</li>
-                      <li>• Share any relevant materials beforehand</li>
-                      <li>• Respect each other's time</li>
-                    </ul>
+                    <div className="bg-white p-4 rounded-lg border border-gray-200 text-left">
+                      <p className="text-sm text-gray-600 mb-2">
+                        <strong>💡 Tips for messaging:</strong>
+                      </p>
+                      <ul className="text-xs text-gray-500 space-y-1">
+                        <li>• Be clear about your learning goals</li>
+                        <li>• Share any relevant materials beforehand</li>
+                        <li>• Respect each other's time</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Message Input */}
