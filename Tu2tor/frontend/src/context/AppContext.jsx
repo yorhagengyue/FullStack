@@ -27,6 +27,8 @@ export const AppProvider = ({ children }) => {
   const [userFeedbacks, setUserFeedbacks] = useState([]);
   const [userPreference, setUserPreference] = useState(50); // 0-100, 默认50
   const [messages, setMessages] = useState([]); // 消息状态
+  const [notifications, setNotifications] = useState([]); // 通知状态
+  const [favoriteTutors, setFavoriteTutors] = useState([]); // 收藏的导师
 
   // 从 localStorage 加载数据
   useEffect(() => {
@@ -36,6 +38,8 @@ export const AppProvider = ({ children }) => {
     const savedFeedbacks = localStorage.getItem('tu2tor_feedbacks');
     const savedPreference = localStorage.getItem('tu2tor_preference');
     const savedMessages = localStorage.getItem('tu2tor_messages');
+    const savedNotifications = localStorage.getItem('tu2tor_notifications');
+    const savedFavorites = localStorage.getItem('tu2tor_favorites');
 
     if (savedBookings) setBookings(JSON.parse(savedBookings));
     else setBookings(mockBookings);
@@ -47,6 +51,8 @@ export const AppProvider = ({ children }) => {
     if (savedFeedbacks) setUserFeedbacks(JSON.parse(savedFeedbacks));
     if (savedPreference) setUserPreference(Number(savedPreference));
     if (savedMessages) setMessages(JSON.parse(savedMessages));
+    if (savedNotifications) setNotifications(JSON.parse(savedNotifications));
+    if (savedFavorites) setFavoriteTutors(JSON.parse(savedFavorites));
   }, []);
 
   // 预约相关方法
@@ -215,6 +221,80 @@ export const AppProvider = ({ children }) => {
     return conversation[conversation.length - 1] || null;
   };
 
+  // 通知相关方法
+  const addNotification = (notificationData) => {
+    const newNotification = {
+      ...notificationData,
+      id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: new Date().toISOString(),
+      read: false
+    };
+    const updated = [newNotification, ...notifications];
+    setNotifications(updated);
+    localStorage.setItem('tu2tor_notifications', JSON.stringify(updated));
+    return newNotification;
+  };
+
+  const markNotificationAsRead = (notificationId) => {
+    const updated = notifications.map(n =>
+      n.id === notificationId ? { ...n, read: true } : n
+    );
+    setNotifications(updated);
+    localStorage.setItem('tu2tor_notifications', JSON.stringify(updated));
+  };
+
+  const deleteNotification = (notificationId) => {
+    const updated = notifications.filter(n => n.id !== notificationId);
+    setNotifications(updated);
+    localStorage.setItem('tu2tor_notifications', JSON.stringify(updated));
+  };
+
+  const markAllNotificationsAsRead = (userId) => {
+    const updated = notifications.map(n =>
+      n.userId === userId ? { ...n, read: true } : n
+    );
+    setNotifications(updated);
+    localStorage.setItem('tu2tor_notifications', JSON.stringify(updated));
+  };
+
+  const clearAllNotifications = (userId) => {
+    const updated = notifications.filter(n => n.userId !== userId);
+    setNotifications(updated);
+    localStorage.setItem('tu2tor_notifications', JSON.stringify(updated));
+  };
+
+  const getUserNotifications = (userId) => {
+    return notifications.filter(n => n.userId === userId);
+  };
+
+  // 收藏导师相关方法
+  const toggleFavoriteTutor = (userId, tutorId) => {
+    const favoriteKey = `${userId}_${tutorId}`;
+    const isFavorited = favoriteTutors.includes(favoriteKey);
+
+    let updated;
+    if (isFavorited) {
+      updated = favoriteTutors.filter(f => f !== favoriteKey);
+    } else {
+      updated = [...favoriteTutors, favoriteKey];
+    }
+
+    setFavoriteTutors(updated);
+    localStorage.setItem('tu2tor_favorites', JSON.stringify(updated));
+    return !isFavorited;
+  };
+
+  const isTutorFavorited = (userId, tutorId) => {
+    const favoriteKey = `${userId}_${tutorId}`;
+    return favoriteTutors.includes(favoriteKey);
+  };
+
+  const getUserFavoriteTutors = (userId) => {
+    const favoriteKeys = favoriteTutors.filter(f => f.startsWith(`${userId}_`));
+    const tutorIds = favoriteKeys.map(f => f.split('_')[1]);
+    return tutors.filter(t => tutorIds.includes(t.userId));
+  };
+
   const value = {
     // 数据
     tutors,
@@ -225,6 +305,8 @@ export const AppProvider = ({ children }) => {
     userFeedbacks,
     userPreference,
     messages,
+    notifications,
+    favoriteTutors,
 
     // 预约方法
     createBooking,
@@ -250,6 +332,19 @@ export const AppProvider = ({ children }) => {
     getConversation,
     getUnreadCount,
     getLastMessage,
+
+    // 通知方法
+    addNotification,
+    markNotificationAsRead,
+    deleteNotification,
+    markAllNotificationsAsRead,
+    clearAllNotifications,
+    getUserNotifications,
+
+    // 收藏方法
+    toggleFavoriteTutor,
+    isTutorFavorited,
+    getUserFavoriteTutors,
 
     // 查询方法
     getTutorById,

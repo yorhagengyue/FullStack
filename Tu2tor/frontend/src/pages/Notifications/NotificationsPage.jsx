@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import {
@@ -16,40 +16,75 @@ import {
 
 const NotificationsPage = () => {
   const { user } = useAuth();
-  const { bookings, reviews } = useApp();
+  const {
+    bookings,
+    reviews,
+    notifications: savedNotifications,
+    addNotification,
+    markNotificationAsRead,
+    deleteNotification,
+    markAllNotificationsAsRead,
+    clearAllNotifications,
+    getUserNotifications
+  } = useApp();
   const [filter, setFilter] = useState('all');
 
-  // Generate notifications from bookings and reviews
-  const userBookings = bookings.filter(
-    b => b.studentId === user?.userId || b.tutorId === user?.userId
-  );
+  // Auto-generate notifications from new bookings and reviews
+  useEffect(() => {
+    if (!user) return;
 
-  const userReviews = reviews.filter(r => r.tutorId === user?.userId);
+    const userBookings = bookings.filter(
+      b => b.studentId === user.userId || b.tutorId === user.userId
+    );
+    const userReviews = reviews.filter(r => r.tutorId === user.userId);
 
-  const notifications = [
-    ...userBookings.map(booking => ({
-      id: `booking-${booking.bookingId}`,
-      type: 'booking',
-      title: `Booking ${booking.status}`,
-      message: `Your session for ${booking.subject} has been ${booking.status}`,
-      time: new Date(booking.createdAt),
-      read: false,
-      icon: booking.status === 'confirmed' ? CheckCircle :
-            booking.status === 'cancelled' ? AlertCircle : Calendar,
-      color: booking.status === 'confirmed' ? 'green' :
-             booking.status === 'cancelled' ? 'red' : 'yellow'
-    })),
-    ...userReviews.slice(0, 5).map(review => ({
-      id: `review-${review.reviewId}`,
-      type: 'review',
-      title: 'New Review Received',
-      message: `You received a ${review.rating}-star review`,
-      time: new Date(review.createdAt),
-      read: false,
-      icon: Star,
-      color: 'yellow'
-    }))
-  ].sort((a, b) => b.time - a.time);
+    // Check if notifications already exist for these items
+    const existingNotifIds = savedNotifications.map(n => n.sourceId);
+
+    // Create notifications for new bookings
+    userBookings.forEach(booking => {
+      const sourceId = `booking-${booking.bookingId}`;
+      if (!existingNotifIds.includes(sourceId)) {
+        addNotification({
+          userId: user.userId,
+          sourceId,
+          type: 'booking',
+          title: `Booking ${booking.status}`,
+          message: `Your session for ${booking.subject} has been ${booking.status}`,
+          icon: booking.status === 'confirmed' ? 'CheckCircle' :
+                booking.status === 'cancelled' ? 'AlertCircle' : 'Calendar',
+          color: booking.status === 'confirmed' ? 'green' :
+                 booking.status === 'cancelled' ? 'red' : 'yellow'
+        });
+      }
+    });
+
+    // Create notifications for new reviews
+    userReviews.forEach(review => {
+      const sourceId = `review-${review.reviewId}`;
+      if (!existingNotifIds.includes(sourceId)) {
+        addNotification({
+          userId: user.userId,
+          sourceId,
+          type: 'review',
+          title: 'New Review Received',
+          message: `You received a ${review.rating}-star review`,
+          icon: 'Star',
+          color: 'yellow'
+        });
+      }
+    });
+  }, [bookings, reviews, user]);
+
+  // Get user's notifications
+  const notifications = getUserNotifications(user?.userId || '').map(notif => ({
+    ...notif,
+    time: new Date(notif.timestamp),
+    icon: notif.icon === 'CheckCircle' ? CheckCircle :
+          notif.icon === 'AlertCircle' ? AlertCircle :
+          notif.icon === 'Calendar' ? Calendar :
+          notif.icon === 'Star' ? Star : Bell
+  }));
 
   const filteredNotifications = notifications.filter(notif => {
     if (filter === 'all') return true;
@@ -73,6 +108,28 @@ const NotificationsPage = () => {
     return time.toLocaleDateString();
   };
 
+  // Handler functions
+  const handleMarkAllAsRead = () => {
+    if (user) {
+      markAllNotificationsAsRead(user.userId);
+    }
+  };
+
+  const handleClearAll = () => {
+    if (user && confirm('Are you sure you want to clear all notifications?')) {
+      clearAllNotifications(user.userId);
+    }
+  };
+
+  const handleNotificationClick = (notificationId) => {
+    markNotificationAsRead(notificationId);
+  };
+
+  const handleDeleteNotification = (e, notificationId) => {
+    e.stopPropagation();
+    deleteNotification(notificationId);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -84,11 +141,19 @@ const NotificationsPage = () => {
           </p>
         </div>
         <div className="flex space-x-3">
-          <button className="btn-secondary flex items-center">
+          <button
+            onClick={handleMarkAllAsRead}
+            disabled={notifications.filter(n => !n.read).length === 0}
+            className="btn-secondary flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <Check className="w-4 h-4 mr-2" />
             Mark all as read
           </button>
-          <button className="btn-secondary flex items-center">
+          <button
+            onClick={handleClearAll}
+            disabled={notifications.length === 0}
+            className="btn-secondary flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <Trash2 className="w-4 h-4 mr-2" />
             Clear all
           </button>
@@ -139,6 +204,7 @@ const NotificationsPage = () => {
             return (
               <div
                 key={notification.id}
+                onClick={() => handleNotificationClick(notification.id)}
                 className={`bg-white rounded-xl border ${
                   notification.read ? 'border-gray-200' : 'border-primary-300 bg-primary-50/30'
                 } p-5 hover:shadow-md transition-all cursor-pointer`}
@@ -161,7 +227,10 @@ const NotificationsPage = () => {
                     </div>
                     <p className="text-gray-600 text-sm">{notification.message}</p>
                   </div>
-                  <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0">
+                  <button
+                    onClick={(e) => handleDeleteNotification(e, notification.id)}
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>

@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { rankTutorsFixed, rankTutorsDynamic } from '../../utils/rankingAlgorithm';
-import { Search, Star, MapPin, Clock, Award, SlidersHorizontal, X } from 'lucide-react';
+import { Search, Star, MapPin, Clock, Award, SlidersHorizontal, X, Heart } from 'lucide-react';
 
 const SearchPage = () => {
   const { user } = useAuth();
-  const { tutors, subjects } = useApp();
+  const { tutors, subjects, toggleFavoriteTutor, isTutorFavorited } = useApp();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
@@ -16,6 +16,15 @@ const SearchPage = () => {
   const [useSmartMatching, setUseSmartMatching] = useState(true);
   const [prioritySlider, setPrioritySlider] = useState(50); // 0-100
   const [showFilters, setShowFilters] = useState(false);
+
+  // Handle favorite toggle
+  const handleToggleFavorite = (e, tutorId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (user) {
+      toggleFavoriteTutor(user.userId, tutorId);
+    }
+  };
 
   // Get unique locations from tutors
   const locations = useMemo(() => {
@@ -347,6 +356,21 @@ const SearchPage = () => {
 
                   {/* Actions */}
                   <div className="flex md:flex-col gap-2 md:items-end">
+                    <button
+                      onClick={(e) => handleToggleFavorite(e, tutor.userId)}
+                      className={`p-3 rounded-lg transition-colors ${
+                        isTutorFavorited(user?.userId, tutor.userId)
+                          ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                      title={isTutorFavorited(user?.userId, tutor.userId) ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                      <Heart
+                        className={`w-5 h-5 ${
+                          isTutorFavorited(user?.userId, tutor.userId) ? 'fill-red-600' : ''
+                        }`}
+                      />
+                    </button>
                     <Link
                       to={`/app/tutor/${tutor.userId}`}
                       className="btn-primary text-center whitespace-nowrap"
