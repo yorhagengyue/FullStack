@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { rankTutorsFixed, rankTutorsDynamic } from '../../utils/rankingAlgorithm';
-import { Search, Star, MapPin, Clock, Award, SlidersHorizontal, X, Heart } from 'lucide-react';
+import AIRecommendations from '../../components/ai/AIRecommendations';
+import { Search, Star, MapPin, Clock, Award, SlidersHorizontal, X, Heart, Sparkles } from 'lucide-react';
 
 const SearchPage = () => {
   const { user } = useAuth();
@@ -16,6 +17,7 @@ const SearchPage = () => {
   const [useSmartMatching, setUseSmartMatching] = useState(true);
   const [prioritySlider, setPrioritySlider] = useState(50); // 0-100
   const [showFilters, setShowFilters] = useState(false);
+  const [showAIRecommendations, setShowAIRecommendations] = useState(false);
 
   // Handle favorite toggle
   const handleToggleFavorite = (e, tutorId) => {
@@ -246,12 +248,32 @@ const SearchPage = () => {
           <h2 className="text-xl font-bold text-gray-900">
             {filteredTutors.length} {filteredTutors.length === 1 ? 'Tutor' : 'Tutors'} Found
           </h2>
-          {useSmartMatching && (
-            <span className="text-sm text-primary-600 font-medium">
-              Sorted by Smart Matching
-            </span>
-          )}
+          <div className="flex items-center space-x-3">
+            {useSmartMatching && (
+              <span className="text-sm text-primary-600 font-medium">
+                Sorted by Smart Matching
+              </span>
+            )}
+            <button
+              onClick={() => setShowAIRecommendations(!showAIRecommendations)}
+              className="btn-primary flex items-center space-x-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>AI Insights</span>
+            </button>
+          </div>
         </div>
+
+        {/* AI Recommendations Panel */}
+        {showAIRecommendations && (
+          <div className="mb-6">
+            <AIRecommendations
+              tutors={filteredTutors}
+              searchQuery={searchTerm}
+              onClose={() => setShowAIRecommendations(false)}
+            />
+          </div>
+        )}
 
         {filteredTutors.length > 0 ? (
           <div className="grid gap-6">
