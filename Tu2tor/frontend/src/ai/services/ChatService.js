@@ -73,7 +73,7 @@ ${tutorContext}
   /**
    * Stream chat response for real-time updates
    */
-  async streamMessage(message, user, tutors, chatHistory, onChunk) {
+  async streamMessage(message, user, tutors, chatHistory, onChunk, options = {}) {
     try {
       const systemPrompt = this.createSystemPrompt(user, tutors);
 
@@ -86,6 +86,7 @@ ${tutorContext}
       const result = await this.aiService.streamChat(messages, onChunk, {
         temperature: 0.7,
         maxTokens: 1500,
+        ...options, // Spread additional options like thinkingMode
       });
 
       return {

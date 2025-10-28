@@ -28,6 +28,7 @@ const AIChat = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [showSettings, setShowSettings] = useState(false);
+  const [thinkingMode, setThinkingMode] = useState(false);
 
   const messagesEndRef = useRef(null);
   const chatServiceRef = useRef(null);
@@ -88,7 +89,8 @@ const AIChat = () => {
         (chunk) => {
           fullContent += chunk;
           setStreamingContent(fullContent);
-        }
+        },
+        { thinkingMode } // Pass thinking mode option
       );
 
       if (result.success) {
@@ -330,6 +332,35 @@ const AIChat = () => {
         {/* Input Area */}
         <div className="border-t border-gray-200 bg-white px-6 py-4">
           <div className="max-w-4xl mx-auto">
+            {/* Thinking Mode Toggle */}
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setThinkingMode(!thinkingMode)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    thinkingMode ? 'bg-primary-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      thinkingMode ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+                <div className="flex items-center space-x-2">
+                  <Sparkles className={`w-4 h-4 ${thinkingMode ? 'text-primary-600' : 'text-gray-400'}`} />
+                  <span className={`text-sm font-medium ${thinkingMode ? 'text-primary-600' : 'text-gray-600'}`}>
+                    深度思考模式
+                  </span>
+                </div>
+              </div>
+              {thinkingMode && (
+                <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                  使用 Gemini 2.5 Pro
+                </span>
+              )}
+            </div>
+
             <div className="flex items-end space-x-4">
               <div className="flex-1 relative">
                 <textarea

@@ -100,7 +100,17 @@ export class AIService {
         throw new Error(`Provider '${providerName}' not registered`);
       }
 
-      // Check provider health before switching
+      // Try to initialize provider first
+      if (!provider.isInitialized) {
+        try {
+          await provider.initialize();
+        } catch (initError) {
+          console.warn(`[AIService] Failed to initialize provider '${providerName}':`, initError.message);
+          throw new Error(`Provider '${providerName}' initialization failed: ${initError.message}`);
+        }
+      }
+
+      // After initialization, check health
       const health = await provider.checkHealth();
 
       if (!health.available) {
@@ -112,11 +122,6 @@ export class AIService {
         }
 
         throw new Error(`Provider '${providerName}' is not available: ${health.message}`);
-      }
-
-      // Initialize provider if not done
-      if (!provider.isInitialized) {
-        await provider.initialize();
       }
 
       this.activeProvider = provider;
@@ -254,8 +259,14 @@ export class AIService {
    */
   async streamChat(messages, onChunk, options = {}) {
     try {
+      // Lazy initialization if no active provider
       if (!this.activeProvider) {
-        throw new Error('No active AI provider');
+        console.warn('[AIService] No active provider, attempting lazy initialization...');
+        await this.initialize();
+      }
+
+      if (!this.activeProvider) {
+        throw new Error('No active AI provider. Please check your API configuration.');
       }
 
       const result = await this.activeProvider.streamChat(messages, onChunk, options);

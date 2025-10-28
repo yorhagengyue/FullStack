@@ -13,13 +13,27 @@ export class GeminiProvider extends BaseAIProvider {
     this.providerName = 'gemini';
     this.isOnline = true;
     this.apiKey = config.apiKey || import.meta.env.VITE_GEMINI_API_KEY;
-    this.modelName = config.model || import.meta.env.VITE_GEMINI_MODEL || 'gemini-pro';
+    this.modelName = config.model || import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.0-flash';
+    this.thinkingModelName = config.thinkingModel || import.meta.env.VITE_GEMINI_THINKING_MODEL || 'gemini-2.5-pro-exp-03-25';
     this.genAI = null;
     this.model = null;
+    this.thinkingModel = null;
     this.embeddingModel = null;
 
     // Gemini pricing (per 1000 characters)
     this.pricing = {
+      'gemini-2.0-flash': {
+        input: 0.00025,
+        output: 0.0005,
+      },
+      'gemini-2.5-pro-exp-03-25': {
+        input: 0.002,
+        output: 0.004,
+      },
+      'gemini-2.5-pro': {
+        input: 0.002,
+        output: 0.004,
+      },
       'gemini-pro': {
         input: 0.00025,
         output: 0.0005,
@@ -36,15 +50,24 @@ export class GeminiProvider extends BaseAIProvider {
    */
   async initialize() {
     try {
+      console.log('[GeminiProvider] Initializing...', {
+        hasApiKey: !!this.apiKey,
+        apiKeyPrefix: this.apiKey ? this.apiKey.substring(0, 10) + '...' : 'none',
+        modelName: this.modelName,
+        thinkingModelName: this.thinkingModelName,
+      });
+
       if (!this.apiKey) {
         throw new Error('Gemini API key not configured. Please set VITE_GEMINI_API_KEY in .env.local');
       }
 
       this.genAI = new GoogleGenerativeAI(this.apiKey);
       this.model = this.genAI.getGenerativeModel({ model: this.modelName });
+      this.thinkingModel = this.genAI.getGenerativeModel({ model: this.thinkingModelName });
       this.embeddingModel = this.genAI.getGenerativeModel({ model: 'embedding-001' });
 
       this.isInitialized = true;
+      console.log('[GeminiProvider] Initialized successfully');
       return true;
     } catch (error) {
       console.error('[GeminiProvider] Initialization failed:', error);
@@ -228,7 +251,13 @@ export class GeminiProvider extends BaseAIProvider {
 
       const lastMessage = messages[messages.length - 1];
 
-      const chat = this.model.startChat({
+      // Use thinking model if thinkingMode is enabled
+      const modelToUse = options.thinkingMode ? this.thinkingModel : this.model;
+      const modelNameUsed = options.thinkingMode ? this.thinkingModelName : this.modelName;
+
+      console.log('[GeminiProvider] Using model:', modelNameUsed, 'Thinking mode:', !!options.thinkingMode);
+
+      const chat = modelToUse.startChat({
         history,
         generationConfig: {
           temperature: options.temperature || 0.7,
@@ -250,7 +279,7 @@ export class GeminiProvider extends BaseAIProvider {
       const outputChars = fullContent.length;
       const totalTokens = Math.ceil((inputChars + outputChars) / 4);
 
-      const pricing = this.pricing[this.modelName] || this.pricing['gemini-pro'];
+      const pricing = this.pricing[modelNameUsed] || this.pricing['gemini-2.0-flash'];
       const cost =
         (inputChars / 1000) * pricing.input + (outputChars / 1000) * pricing.output;
 
@@ -259,7 +288,7 @@ export class GeminiProvider extends BaseAIProvider {
         tokens: totalTokens,
         cost: parseFloat(cost.toFixed(6)),
         provider: this.providerName,
-        model: this.modelName,
+        model: modelNameUsed,
       };
     } catch (error) {
       console.error('[GeminiProvider] Stream chat failed:', error);
