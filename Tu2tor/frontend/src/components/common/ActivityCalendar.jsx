@@ -134,21 +134,21 @@ const ActivityCalendar = ({ bookings, userId }) => {
       </div>
 
       {/* Calendar Grid */}
-      <div className="overflow-x-auto">
-        <div className="inline-flex gap-1">
+      <div className="overflow-x-auto pb-2">
+        <div className="inline-flex gap-2">
           {/* Week day labels */}
-          <div className="flex flex-col justify-around mr-2">
+          <div className="flex flex-col justify-around mr-3">
             {weekDays.map((day, idx) => (
-              <div key={day} className="h-3 text-[10px] text-gray-400 flex items-center">
+              <div key={day} className="h-5 text-xs text-gray-500 flex items-center font-medium">
                 {idx % 2 === 1 ? day : ''}
               </div>
             ))}
           </div>
 
           {/* Weeks */}
-          <div className="flex gap-1">
+          <div className="flex gap-2">
             {weeks.map((week, weekIdx) => (
-              <div key={weekIdx} className="flex flex-col gap-1">
+              <div key={weekIdx} className="flex flex-col gap-2">
                 {week.map((day, dayIdx) => (
                   <div
                     key={`${weekIdx}-${dayIdx}`}
@@ -157,8 +157,8 @@ const ActivityCalendar = ({ bookings, userId }) => {
                     onMouseLeave={() => setHoveredDay(null)}
                   >
                     <div
-                      className={`w-3 h-3 rounded-sm ${getColor(day.count)}
-                        hover:ring-2 hover:ring-primary-400 transition-all cursor-pointer`}
+                      className={`w-5 h-5 rounded ${getColor(day.count)}
+                        hover:ring-2 hover:ring-primary-500 hover:scale-110 transition-all cursor-pointer border border-gray-200`}
                       title={`${day.displayDate}: ${day.count} sessions`}
                     />
 
