@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
-import { CheckCircle, Calendar, Eye, Star, TrendingUp } from 'lucide-react';
+import { CheckCircle, Calendar, Star } from 'lucide-react';
 import { RadialBarChart, RadialBar, ResponsiveContainer, PolarAngleAxis } from 'recharts';
 import ActivityCalendar from '../../components/common/ActivityCalendar';
 
@@ -25,24 +25,6 @@ const Dashboard = () => {
     ? (userReviews.reduce((sum, r) => sum + r.rating, 0) / userReviews.length).toFixed(1)
     : 0;
 
-  // Recent activities
-  const recentActivities = [
-    ...userBookings.slice(0, 2).map(b => ({
-      type: 'booking',
-      message: `Your session for ${b.subject} has been ${b.status}`,
-      time: new Date(b.createdAt).toLocaleDateString(),
-      icon: CheckCircle,
-      color: 'green'
-    })),
-    ...userReviews.slice(0, 1).map(r => ({
-      type: 'review',
-      message: `You received a ${r.rating}-star review`,
-      time: new Date(r.createdAt).toLocaleDateString(),
-      icon: Star,
-      color: 'yellow'
-    }))
-  ].slice(0, 3);
-
   return (
     <div>
       {/* Overview Title */}
@@ -56,18 +38,9 @@ const Dashboard = () => {
         <div className="lg:col-span-2 space-y-6">
           {/* Welcome Card */}
           <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-2xl font-bold text-gray-900">
               Welcome back, {user?.username?.split(' ')[0]}! 👋
             </h2>
-            <p className="text-gray-600 mb-4">
-              Here's your tutoring activity summary. Keep up the great work!
-            </p>
-            <p className="text-sm text-gray-500">
-              You have <span className="font-semibold text-primary-600">{upcomingBookings}</span> upcoming sessions scheduled this week.
-              {completedSessions > 0 && (
-                <> You've completed <span className="font-semibold text-green-600">{completedSessions}</span> sessions so far.</>
-              )}
-            </p>
           </div>
 
           {/* Stats Cards */}
@@ -91,43 +64,6 @@ const Dashboard = () => {
               </div>
               <div className="text-gray-600 text-sm">Profile Views</div>
             </div>
-          </div>
-
-          {/* Last Activities */}
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Last Activities</h2>
-              <Link to="/app/bookings" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
-                See All
-              </Link>
-            </div>
-
-            {recentActivities.length > 0 ? (
-              <div className="space-y-4">
-                {recentActivities.map((activity, index) => (
-                  <div key={index} className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      activity.color === 'green' ? 'bg-green-100' :
-                      activity.color === 'yellow' ? 'bg-yellow-100' : 'bg-blue-100'
-                    }`}>
-                      <activity.icon className={`w-5 h-5 ${
-                        activity.color === 'green' ? 'text-green-600' :
-                        activity.color === 'yellow' ? 'text-yellow-600' : 'text-blue-600'
-                      }`} />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">{activity.message}</p>
-                      <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <TrendingUp className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p>No recent activities</p>
-              </div>
-            )}
           </div>
 
           {/* Activity Calendar */}
