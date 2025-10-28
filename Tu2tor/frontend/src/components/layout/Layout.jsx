@@ -1,5 +1,6 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import AIAssistantButton from '../ai/AIAssistantButton';
 import {
   GraduationCap,
   Search,
@@ -185,6 +186,9 @@ const Layout = () => {
         <main className="flex-1 overflow-y-auto p-8">
           <Outlet />
         </main>
+
+        {/* AI Assistant Button */}
+        <AIAssistantButton />
       </div>
     </div>
   );
