@@ -327,10 +327,10 @@ const AIChat = () => {
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Ask me anything about tutoring..."
+                  placeholder={!isInitialized ? "AI is initializing..." : "Ask me anything about tutoring..."}
                   rows="1"
                   className="w-full resize-none border border-gray-300 rounded-2xl px-6 py-4 pr-12 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-base max-h-40 overflow-y-auto"
-                  disabled={isTyping || !isInitialized}
+                  disabled={isTyping}
                   style={{ minHeight: '56px' }}
                 />
               </div>
