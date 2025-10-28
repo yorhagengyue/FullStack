@@ -1127,6 +1127,48 @@ export const mockReviews = [
     studentName: 'Student from T30',
     studentAvatar: 'https://ui-avatars.com/api/?name=Student&background=random',
     createdAt: '2024-09-22T15:00:00Z'
+  },
+  {
+    reviewId: 'review044',
+    tutorId: 'user001',
+    studentId: 'currentUser',
+    rating: 5,
+    comment: 'John is an excellent tutor for OOP! He helped me understand polymorphism and inheritance for my IT2001 module. His real-world examples made everything click. Highly recommend!',
+    tags: ['Clear Explanation', 'Patient', 'Well Prepared'],
+    isAnonymous: false,
+    isVerified: true,
+    helpfulCount: 3,
+    studentName: 'Alex Tan Kai Ming',
+    studentAvatar: 'https://ui-avatars.com/api/?name=Alex+Tan&background=4f46e5&color=fff',
+    createdAt: '2024-10-05T16:30:00Z'
+  },
+  {
+    reviewId: 'review045',
+    tutorId: 'user002',
+    studentId: 'currentUser',
+    rating: 5,
+    comment: 'Sarah\'s data analytics session was amazing! She taught me pandas and data visualization using real datasets. I finally understand how to clean and analyze data properly. Thank you!',
+    tags: ['Professional', 'Clear Explanation', 'Helpful'],
+    isAnonymous: false,
+    isVerified: true,
+    helpfulCount: 4,
+    studentName: 'Alex Tan Kai Ming',
+    studentAvatar: 'https://ui-avatars.com/api/?name=Alex+Tan&background=4f46e5&color=fff',
+    createdAt: '2024-09-18T14:00:00Z'
+  },
+  {
+    reviewId: 'review046',
+    tutorId: 'user006',
+    studentId: 'currentUser',
+    rating: 4,
+    comment: 'Rachel helped me with database normalization concepts. Her explanations were clear and she provided good practice questions. Would recommend for database modules!',
+    tags: ['Patient', 'Helpful'],
+    isAnonymous: false,
+    isVerified: true,
+    helpfulCount: 2,
+    studentName: 'Alex Tan Kai Ming',
+    studentAvatar: 'https://ui-avatars.com/api/?name=Alex+Tan&background=4f46e5&color=fff',
+    createdAt: '2024-08-25T11:30:00Z'
   }
 ];
 
