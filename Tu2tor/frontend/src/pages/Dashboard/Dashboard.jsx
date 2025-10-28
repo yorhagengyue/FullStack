@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { CheckCircle, Calendar, Eye, Star, TrendingUp } from 'lucide-react';
 import { RadialBarChart, RadialBar, ResponsiveContainer, PolarAngleAxis } from 'recharts';
+import ActivityCalendar from '../../components/common/ActivityCalendar';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -128,6 +129,9 @@ const Dashboard = () => {
               </div>
             )}
           </div>
+
+          {/* Activity Calendar */}
+          <ActivityCalendar bookings={bookings} userId={user?.userId} />
 
           {/* Quick Actions */}
           <div className="grid md:grid-cols-2 gap-6">
