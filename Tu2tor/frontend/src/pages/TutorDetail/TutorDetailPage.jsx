@@ -250,7 +250,7 @@ const TutorDetailPage = () => {
                           ))}
                         </div>
                         <p className="text-sm text-gray-600">
-                          {review.isAnonymous ? 'Anonymous Student' : review.studentId}
+                          {review.isAnonymous ? review.studentName || 'Anonymous Student' : review.studentName || review.studentId}
                         </p>
                       </div>
                       <span className="text-xs text-gray-500">

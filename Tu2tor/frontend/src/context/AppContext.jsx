@@ -45,6 +45,8 @@ export const AppProvider = ({ children }) => {
     else setBookings(mockBookings);
 
     if (savedReviews) setReviews(JSON.parse(savedReviews));
+    else setReviews(mockReviews);
+
     if (savedTransactions) setCreditTransactions(JSON.parse(savedTransactions));
     else setCreditTransactions(mockCreditTransactions);
 
