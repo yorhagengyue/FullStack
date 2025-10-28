@@ -8,13 +8,13 @@ import { Flame, TrendingUp } from 'lucide-react';
 const ActivityCalendar = ({ bookings, userId }) => {
   const [hoveredDay, setHoveredDay] = useState(null);
 
-  // Generate activity data for the past 12 weeks (84 days)
+  // Generate activity data for the past 24 weeks (168 days)
   const activityData = useMemo(() => {
     const today = new Date();
     const days = [];
 
-    // Generate 84 days of data (12 weeks)
-    for (let i = 83; i >= 0; i--) {
+    // Generate 168 days of data (24 weeks)
+    for (let i = 167; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
@@ -103,7 +103,7 @@ const ActivityCalendar = ({ bookings, userId }) => {
         <div>
           <h2 className="text-xl font-bold text-gray-900">Learning Activity</h2>
           <p className="text-sm text-gray-600 mt-1">
-            {stats.total} sessions in the last 12 weeks
+            {stats.total} sessions in the last 24 weeks
           </p>
         </div>
         {stats.currentStreak > 0 && (
