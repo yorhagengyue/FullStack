@@ -16,7 +16,8 @@ import {
   ChevronDown,
   ChevronUp,
   BookOpen,
-  Plus
+  Plus,
+  X
 } from 'lucide-react';
 
 
@@ -30,6 +31,14 @@ const BookingPage = () => {
     status: true,
     subject: true,
     date: false
+  });
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+    confirmText: 'Confirm',
+    confirmStyle: 'primary'
   });
 
   // Get tutor info from navigation state if coming from tutor detail page
@@ -81,15 +90,31 @@ const BookingPage = () => {
   };
 
   const handleCancelBooking = (bookingId) => {
-    if (confirm('Are you sure you want to cancel this booking?')) {
-      updateBooking(bookingId, { status: 'cancelled' });
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Cancel Booking',
+      message: 'Are you sure you want to cancel this booking? This action cannot be undone.',
+      confirmText: 'Cancel Booking',
+      confirmStyle: 'danger',
+      onConfirm: () => {
+        updateBooking(bookingId, { status: 'cancelled' });
+        setConfirmDialog({ ...confirmDialog, isOpen: false });
+      }
+    });
   };
 
   const handleCompleteBooking = (bookingId) => {
-    if (confirm('Mark this session as completed?')) {
-      updateBooking(bookingId, { status: 'completed' });
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Complete Session',
+      message: 'Mark this session as completed? You can leave a review after marking it complete.',
+      confirmText: 'Mark Complete',
+      confirmStyle: 'primary',
+      onConfirm: () => {
+        updateBooking(bookingId, { status: 'completed' });
+        setConfirmDialog({ ...confirmDialog, isOpen: false });
+      }
+    });
   };
 
   const toggleFilter = (filterName) => {
@@ -107,172 +132,173 @@ const BookingPage = () => {
   ];
 
   return (
-    <div className="flex gap-6">
-      {/* Left Sidebar - Filters */}
-      <aside className="w-72 flex-shrink-0">
-        <div className="bg-white rounded-xl border border-gray-200 p-4 sticky top-6">
+    <>
+      <div className="flex gap-6">
+        {/* Left Sidebar - Filters */}
+        <aside className="w-72 flex-shrink-0">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 sticky top-6">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
+              <div className="flex items-center">
+                <Filter className="w-5 h-5 text-primary-600 mr-2" />
+                <h2 className="text-lg font-bold text-gray-900">Filters</h2>
+              </div>
+              <button className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+                Clear All
+              </button>
+            </div>
+
+            {/* Status Filter */}
+            <div className="mb-4">
+              <button
+                onClick={() => toggleFilter('status')}
+                className="flex items-center justify-between w-full py-3 text-sm font-semibold text-gray-900 hover:text-primary-600 transition-colors"
+              >
+                <span>Status</span>
+                {expandedFilters.status ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </button>
+              {expandedFilters.status && (
+                <div className="space-y-2 mt-2 pl-2">
+                  {tabs.map((tab) => (
+                    <label key={tab.id} className="flex items-center cursor-pointer group">
+                      <input
+                        type="radio"
+                        name="status"
+                        checked={activeTab === tab.id}
+                        onChange={() => setActiveTab(tab.id)}
+                        className="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500"
+                      />
+                      <span className="ml-3 text-sm text-gray-700 group-hover:text-gray-900 flex-1">
+                        {tab.label}
+                      </span>
+                      <span className="text-xs text-gray-500 font-medium">
+                        {tab.count}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-gray-200 my-4"></div>
+
+            {/* Subject Filter */}
+            <div className="mb-4">
+              <button
+                onClick={() => toggleFilter('subject')}
+                className="flex items-center justify-between w-full py-3 text-sm font-semibold text-gray-900 hover:text-primary-600 transition-colors"
+              >
+                <span>Subject</span>
+                {expandedFilters.subject ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </button>
+              {expandedFilters.subject && (
+                <div className="space-y-2 mt-2 pl-2">
+                  {uniqueSubjects.slice(0, 5).map((subject) => (
+                    <label key={subject} className="flex items-center cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                      />
+                      <span className="ml-3 text-sm text-gray-700 group-hover:text-gray-900">
+                        {subject}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-gray-200 my-4"></div>
+
+            {/* Date Range Filter */}
+            <div className="mb-4">
+              <button
+                onClick={() => toggleFilter('date')}
+                className="flex items-center justify-between w-full py-3 text-sm font-semibold text-gray-900 hover:text-primary-600 transition-colors"
+              >
+                <span>Date Range</span>
+                {expandedFilters.date ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </button>
+              {expandedFilters.date && (
+                <div className="space-y-3 mt-2 pl-2">
+                  <div>
+                    <label className="text-xs text-gray-600 mb-1 block">From</label>
+                    <input
+                      type="date"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 mb-1 block">To</label>
+                    <input
+                      type="date"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Quick Stats */}
+            <div className="mt-6 p-4 bg-gradient-to-br from-primary-50 to-purple-50 rounded-lg border border-primary-100">
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Quick Stats</h3>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Total Sessions</span>
+                  <span className="font-bold text-gray-900">{userBookings.length}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">This Month</span>
+                  <span className="font-bold text-primary-600">
+                    {userBookings.filter(b => new Date(b.date).getMonth() === new Date().getMonth()).length}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <div className="flex-1 space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
-            <div className="flex items-center">
-              <Filter className="w-5 h-5 text-primary-600 mr-2" />
-              <h2 className="text-lg font-bold text-gray-900">Filters</h2>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">My Bookings</h1>
+              <p className="text-gray-600 mt-1">
+                Showing {sortedBookings.length} {activeTab === 'all' ? 'total' : activeTab} bookings
+              </p>
             </div>
-            <button className="text-sm text-primary-600 hover:text-primary-700 font-medium">
-              Clear All
-            </button>
-          </div>
-
-          {/* Status Filter */}
-          <div className="mb-4">
-            <button
-              onClick={() => toggleFilter('status')}
-              className="flex items-center justify-between w-full py-3 text-sm font-semibold text-gray-900 hover:text-primary-600 transition-colors"
+            <Link
+              to="/app/search"
+              className="btn-primary flex items-center"
             >
-              <span>Status</span>
-              {expandedFilters.status ? (
-                <ChevronUp className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
-            </button>
-            {expandedFilters.status && (
-              <div className="space-y-2 mt-2 pl-2">
-                {tabs.map((tab) => (
-                  <label key={tab.id} className="flex items-center cursor-pointer group">
-                    <input
-                      type="radio"
-                      name="status"
-                      checked={activeTab === tab.id}
-                      onChange={() => setActiveTab(tab.id)}
-                      className="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500"
-                    />
-                    <span className="ml-3 text-sm text-gray-700 group-hover:text-gray-900 flex-1">
-                      {tab.label}
-                    </span>
-                    <span className="text-xs text-gray-500 font-medium">
-                      {tab.count}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            )}
+              <Plus className="w-4 h-4 mr-2" />
+              New Booking
+            </Link>
           </div>
 
-          <div className="border-t border-gray-200 my-4"></div>
+          {/* Bookings Grid */}
+          {sortedBookings.length > 0 ? (
+            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {sortedBookings.map((booking) => {
+                const isStudent = booking.studentId === user?.userId;
+                const otherParty = isStudent
+                  ? tutors.find(t => t.userId === booking.tutorId)
+                  : null;
 
-          {/* Subject Filter */}
-          <div className="mb-4">
-            <button
-              onClick={() => toggleFilter('subject')}
-              className="flex items-center justify-between w-full py-3 text-sm font-semibold text-gray-900 hover:text-primary-600 transition-colors"
-            >
-              <span>Subject</span>
-              {expandedFilters.subject ? (
-                <ChevronUp className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
-            </button>
-            {expandedFilters.subject && (
-              <div className="space-y-2 mt-2 pl-2">
-                {uniqueSubjects.slice(0, 5).map((subject) => (
-                  <label key={subject} className="flex items-center cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                    />
-                    <span className="ml-3 text-sm text-gray-700 group-hover:text-gray-900">
-                      {subject}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="border-t border-gray-200 my-4"></div>
-
-          {/* Date Range Filter */}
-          <div className="mb-4">
-            <button
-              onClick={() => toggleFilter('date')}
-              className="flex items-center justify-between w-full py-3 text-sm font-semibold text-gray-900 hover:text-primary-600 transition-colors"
-            >
-              <span>Date Range</span>
-              {expandedFilters.date ? (
-                <ChevronUp className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
-            </button>
-            {expandedFilters.date && (
-              <div className="space-y-3 mt-2 pl-2">
-                <div>
-                  <label className="text-xs text-gray-600 mb-1 block">From</label>
-                  <input
-                    type="date"
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-600 mb-1 block">To</label>
-                  <input
-                    type="date"
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Quick Stats */}
-          <div className="mt-6 p-4 bg-gradient-to-br from-primary-50 to-purple-50 rounded-lg border border-primary-100">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Quick Stats</h3>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Total Sessions</span>
-                <span className="font-bold text-gray-900">{userBookings.length}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">This Month</span>
-                <span className="font-bold text-primary-600">
-                  {userBookings.filter(b => new Date(b.date).getMonth() === new Date().getMonth()).length}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <div className="flex-1 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">My Bookings</h1>
-            <p className="text-gray-600 mt-1">
-              Showing {sortedBookings.length} {activeTab === 'all' ? 'total' : activeTab} bookings
-            </p>
-          </div>
-          <Link
-            to="/app/search"
-            className="btn-primary flex items-center"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            New Booking
-          </Link>
-        </div>
-
-        {/* Bookings Grid */}
-        {sortedBookings.length > 0 ? (
-          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {sortedBookings.map((booking) => {
-              const isStudent = booking.studentId === user?.userId;
-              const otherParty = isStudent
-                ? tutors.find(t => t.userId === booking.tutorId)
-                : null;
-
-              return (
+                return (
                 <div
                   key={booking.bookingId}
                   className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col"
@@ -448,6 +474,52 @@ const BookingPage = () => {
         )}
       </div>
     </div>
+
+      {/* Custom Confirm Dialog */}
+      {confirmDialog.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200">
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-900">{confirmDialog.title}</h3>
+                <button
+                  onClick={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5">
+              <p className="text-gray-600 leading-relaxed">{confirmDialog.message}</p>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 bg-gray-50 flex items-center justify-end space-x-3">
+              <button
+                onClick={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+                className="px-5 py-2.5 border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-semibold rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDialog.onConfirm}
+                className={`px-5 py-2.5 font-semibold rounded-lg transition-colors ${
+                  confirmDialog.confirmStyle === 'danger'
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : 'bg-primary-600 hover:bg-primary-700 text-white'
+                }`}
+              >
+                {confirmDialog.confirmText}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

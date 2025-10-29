@@ -31,7 +31,7 @@ Available context:
 Help the student find the best match for their needs.`,
 
   // ==================== TUTOR RECOMMENDATIONS ====================
-  RECOMMEND_TUTORS: `Analyze the student's profile and requirements, then recommend the most suitable tutors.
+  RECOMMEND_TUTORS: `Analyze the student's profile and recommend the most suitable tutors.
 
 Student Profile:
 - Major: {studentMajor}
@@ -41,26 +41,48 @@ Student Profile:
 
 Student's Request: {query}
 
-Available Tutors:
+Available Tutors (with algorithm-calculated match scores):
 {tutorList}
 
-Provide:
-1. Top 3 recommended tutors with detailed reasoning
-2. Match score (0-100) for each
-3. Specific reasons why each tutor is a good match
-4. Any potential concerns or considerations
+IMPORTANT: Each tutor has been pre-scored by our matching algorithm based on:
+- Time Overlap: How well their schedule matches the student's preferences (0-100)
+- Rating Quality: Their historical performance and student feedback (0-100)
+- Response Speed: How quickly they typically respond to requests (0-100)
+- Same School: Whether they attend the same institution (0 or 100)
 
-Format your response as JSON:
+Your task:
+1. Use the Algorithm Match Score as your baseline recommendation score
+2. Analyze the dimension scores to understand WHY a tutor scored high/low
+3. Generate human-readable explanations that REFERENCE these specific scores
+4. Adjust the match score slightly (±5 points) only if the query context reveals important factors
+
+Provide top 3 tutors with:
+1. Match score (0-100) - USE the algorithm score, adjust only if contextually justified
+2. 2-3 specific reasons explaining WHY this tutor is a good match (complete sentences, 10-15 words each)
+   - MUST reference the dimension scores in your explanations
+   - ✅ GOOD: "Strong time overlap (85/100) with 4 matching evening slots for your schedule"
+   - ✅ GOOD: "Excellent rating quality (92/100) with consistent 5-star reviews in Database courses"
+   - ✅ GOOD: "Fast response speed (78/100) typically replies within 30 minutes on weekdays"
+   - ❌ BAD: "Expert in your major" (doesn't reference scores)
+   - ❌ BAD: "High ratings" (too vague, no numbers)
+3. 1 consideration if applicable (complete sentence, max 12 words)
+
+Format as JSON:
 {
   "recommendations": [
     {
       "tutorId": "user001",
-      "matchScore": 95,
-      "reasons": ["Reason 1", "Reason 2", "Reason 3"],
-      "concerns": ["Optional concern"]
+      "matchScore": 87,
+      "reasons": [
+        "Strong time overlap score (85/100) provides 4 shared availability slots this week",
+        "Outstanding rating quality (92/100) with proven track record in your subject area"
+      ],
+      "concerns": ["High demand may limit immediate availability during exam period"]
     }
   ]
-}`,
+}
+
+Focus on explaining the specific value this tutor provides based on the algorithm's analysis.`,
 
   // ==================== CONTENT GENERATION ====================
   GENERATE_TUTOR_BIO: `Generate a professional and engaging tutor bio for a student tutor.
@@ -257,13 +279,30 @@ export function createChatMessages(systemPrompt, userMessage, history = []) {
 export function formatTutorListForPrompt(tutors) {
   return tutors
     .map((tutor, index) => {
-      return `${index + 1}. ${tutor.username} (${tutor.userId})
+      let tutorInfo = `${index + 1}. ${tutor.username} (${tutor.userId})
    - Major: ${tutor.major}
    - Year: ${tutor.yearOfStudy}
-   - Rating: ${tutor.averageRating}/5 (${tutor.totalReviews} reviews)
-   - Subjects: ${tutor.subjects?.map(s => s.code).join(', ') || 'None'}
-   - Available: ${tutor.availableSlotsDisplay?.slice(0, 3).join(', ') || 'See profile'}
-   - Locations: ${tutor.preferredLocations?.join(', ') || 'TBD'}`;
+   - Rating: ${tutor.averageRating}/5 (${tutor.totalReviews} reviews)`;
+
+      // Add algorithm match score if available
+      if (tutor.matchScore !== undefined) {
+        tutorInfo += `\n   - Algorithm Match Score: ${tutor.matchScore}/100`;
+      }
+
+      // Add dimension scores if available
+      if (tutor.dimensionScores) {
+        tutorInfo += `\n   - Dimension Scores:`;
+        tutorInfo += `\n     * Time Overlap: ${Math.round(tutor.dimensionScores.timeOverlap)}/100`;
+        tutorInfo += `\n     * Rating Quality: ${Math.round(tutor.dimensionScores.rating)}/100`;
+        tutorInfo += `\n     * Response Speed: ${Math.round(tutor.dimensionScores.responseSpeed)}/100`;
+        tutorInfo += `\n     * Same School: ${Math.round(tutor.dimensionScores.sameSchool)}/100`;
+      }
+
+      tutorInfo += `\n   - Subjects: ${tutor.subjects?.map(s => s.code).join(', ') || 'None'}`;
+      tutorInfo += `\n   - Available: ${tutor.availableSlotsDisplay?.slice(0, 3).join(', ') || 'See profile'}`;
+      tutorInfo += `\n   - Locations: ${tutor.preferredLocations?.join(', ') || 'TBD'}`;
+
+      return tutorInfo;
     })
     .join('\n\n');
 }

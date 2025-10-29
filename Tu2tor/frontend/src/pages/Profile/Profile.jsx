@@ -442,60 +442,49 @@ const Profile = () => {
         </div>
 
         {/* Right Column - Stats & Achievements */}
-        <div className="space-y-6">
-          {/* Statistics Card */}
+        <div className="space-y-8">
+          {/* Statistics - Simple Table Style */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Your Statistics</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                <div className="flex items-center">
-                  <CreditCard className="w-5 h-5 text-yellow-600 mr-3" />
-                  <span className="text-sm text-gray-600">Total Credits</span>
-                </div>
-                <span className="font-bold text-gray-900">{user?.credits || 0}</span>
+            <h3 className="text-lg font-bold text-gray-900 mb-6">Statistics</h3>
+            <div className="space-y-5">
+              <div className="flex items-baseline justify-between pb-4 border-b border-gray-100">
+                <span className="text-gray-600">Total Credits</span>
+                <span className="text-3xl font-bold text-gray-900">{user?.credits || 0}</span>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div className="flex items-center">
-                  <Calendar className="w-5 h-5 text-green-600 mr-3" />
-                  <span className="text-sm text-gray-600">Sessions</span>
-                </div>
-                <span className="font-bold text-gray-900">{completedSessions}</span>
+              <div className="flex items-baseline justify-between pb-4 border-b border-gray-100">
+                <span className="text-gray-600">Sessions</span>
+                <span className="text-3xl font-bold text-gray-900">{completedSessions}</span>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                <div className="flex items-center">
-                  <Star className="w-5 h-5 text-blue-600 mr-3" />
-                  <span className="text-sm text-gray-600">Avg Rating</span>
-                </div>
-                <div className="flex items-center">
-                  <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 mr-1" />
-                  <span className="font-bold text-gray-900">{averageRating}</span>
-                </div>
+              <div className="flex items-baseline justify-between pb-4 border-b border-gray-100">
+                <span className="text-gray-600">Average Rating</span>
+                <span className="text-3xl font-bold text-gray-900">{averageRating}</span>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                <div className="flex items-center">
-                  <Award className="w-5 h-5 text-purple-600 mr-3" />
-                  <span className="text-sm text-gray-600">Badges</span>
-                </div>
-                <span className="font-bold text-gray-900">{user?.badges?.length || 0}</span>
+              <div className="flex items-baseline justify-between">
+                <span className="text-gray-600">Badges Earned</span>
+                <span className="text-3xl font-bold text-gray-900">{user?.badges?.length || 0}</span>
               </div>
             </div>
           </div>
 
-          {/* Achievements */}
+          {/* Achievements - Simple List */}
           {user?.badges && user.badges.length > 0 && (
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Achievements</h3>
-              <div className="grid grid-cols-2 gap-3">
+              <h3 className="text-lg font-bold text-gray-900 mb-6">Achievements</h3>
+              <div className="space-y-4">
                 {user.badges.map((badgeType, index) => {
                   const badge = BADGE_CONFIG[badgeType];
                   return (
-                    <div key={index} className="border border-gray-200 rounded-lg p-3 text-center hover:border-primary-300 transition-colors">
-                      <div className="text-3xl mb-2">{badge?.icon}</div>
-                      <p className="font-semibold text-gray-900 text-xs">{badge?.name}</p>
-                      <p className="text-xs text-gray-500 mt-1">{badge?.description}</p>
+                    <div key={index} className="pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-semibold text-gray-900">{badge?.name}</p>
+                          <p className="text-sm text-gray-500 mt-1">{badge?.description}</p>
+                        </div>
+                        <span className="text-2xl ml-4 flex-shrink-0">{badge?.icon}</span>
+                      </div>
                     </div>
                   );
                 })}
@@ -503,23 +492,20 @@ const Profile = () => {
             </div>
           )}
 
-          {/* Profile Completion */}
-          <div className="bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl p-6 text-white">
-            <h3 className="text-lg font-bold mb-2">Profile Completion</h3>
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm">Complete your profile</span>
-                <span className="font-bold">{user?.profileCompletion || 70}%</span>
-              </div>
-              <div className="bg-white/20 rounded-full h-2">
-                <div
-                  className="bg-white h-2 rounded-full transition-all"
-                  style={{ width: `${user?.profileCompletion || 70}%` }}
-                />
-              </div>
+          {/* Profile Completion - Minimal Design */}
+          <div className="bg-white rounded-xl border-2 border-primary-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Profile Completion</h3>
+              <span className="text-2xl font-bold text-primary-600">{user?.profileCompletion || 70}%</span>
             </div>
-            <p className="text-sm text-white/80">
-              Complete your profile to get more visibility and better matching with students!
+            <div className="bg-gray-100 rounded-full h-2 mb-4">
+              <div
+                className="bg-primary-600 h-2 rounded-full transition-all"
+                style={{ width: `${user?.profileCompletion || 70}%` }}
+              />
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Complete your profile to increase visibility and improve matching with students.
             </p>
           </div>
         </div>

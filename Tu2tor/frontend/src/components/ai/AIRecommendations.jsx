@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useAI } from '../../context/AIContext';
 import { RecommendationService } from '../../ai/services/RecommendationService';
@@ -7,14 +7,27 @@ import { Sparkles, Loader2, TrendingUp, AlertCircle, X } from 'lucide-react';
 
 const AIRecommendations = ({ tutors, searchQuery, onClose }) => {
   const { user } = useAuth();
-  const { isInitialized, isProcessing: aiProcessing } = useAI();
+  const { isInitialized } = useAI();
   const [isLoading, setIsLoading] = useState(false);
   const [recommendations, setRecommendations] = useState([]);
   const [error, setError] = useState(null);
-  const [hasGenerated, setHasGenerated] = useState(false);
+
+  // Auto-generate recommendations on mount
+  useEffect(() => {
+    if (isInitialized && user && tutors.length > 0 && recommendations.length === 0) {
+      console.log('[AIRecommendations] Ready to generate recommendations');
+      // Add a small delay to ensure everything is ready
+      setTimeout(() => {
+        handleGenerateRecommendations();
+      }, 500);
+    }
+  }, [isInitialized, user, tutors.length]);
 
   const handleGenerateRecommendations = async () => {
-    if (!isInitialized || !user) return;
+    if (!isInitialized || !user) {
+      setError('AI service not ready. Please try again.');
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -25,21 +38,30 @@ const AIRecommendations = ({ tutors, searchQuery, onClose }) => {
       // Get top 5 tutors for AI analysis
       const topTutors = tutors.slice(0, 5);
 
+      console.log('[AIRecommendations] Generating recommendations...', {
+        tutorCount: topTutors.length,
+        user: user?.username,
+        query: searchQuery || 'Looking for a good tutor',
+      });
+
       const result = await recService.getRecommendations(
         user,
         searchQuery || 'Looking for a good tutor',
         topTutors
       );
 
+      console.log('[AIRecommendations] Result:', result);
+
       if (result.success && result.recommendations.length > 0) {
         setRecommendations(result.recommendations);
-        setHasGenerated(true);
       } else {
-        setError('Unable to generate AI recommendations. Please try again.');
+        const errorMsg = result.error || 'Unable to generate AI recommendations. Please try again.';
+        console.error('[AIRecommendations] Failed:', errorMsg);
+        setError(errorMsg);
       }
     } catch (err) {
       console.error('[AIRecommendations] Error:', err);
-      setError('Failed to generate recommendations. Please try again.');
+      setError(err.message || 'Failed to generate recommendations. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -72,22 +94,6 @@ const AIRecommendations = ({ tutors, searchQuery, onClose }) => {
         )}
       </div>
 
-      {!hasGenerated && !isLoading && (
-        <div className="text-center py-6">
-          <button
-            onClick={handleGenerateRecommendations}
-            disabled={isLoading || !isInitialized || tutors.length === 0}
-            className="btn-primary inline-flex items-center space-x-2"
-          >
-            <Sparkles className="w-5 h-5" />
-            <span>Generate AI Recommendations</span>
-          </button>
-          <p className="text-xs text-gray-500 mt-3">
-            AI will analyze your profile and suggest the best tutors for you
-          </p>
-        </div>
-      )}
-
       {isLoading && (
         <div className="text-center py-8">
           <Loader2 className="w-8 h-8 text-primary-600 animate-spin mx-auto mb-3" />
@@ -98,11 +104,11 @@ const AIRecommendations = ({ tutors, searchQuery, onClose }) => {
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
           <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <div>
+          <div className="flex-1">
             <p className="text-sm text-red-800">{error}</p>
             <button
               onClick={handleGenerateRecommendations}
-              className="text-xs text-red-600 hover:text-red-700 font-medium mt-2"
+              className="text-xs text-red-600 hover:text-red-700 font-medium mt-2 underline"
             >
               Try Again
             </button>
@@ -110,7 +116,7 @@ const AIRecommendations = ({ tutors, searchQuery, onClose }) => {
         </div>
       )}
 
-      {hasGenerated && recommendations.length > 0 && (
+      {!isLoading && !error && recommendations.length > 0 && (
         <div className="space-y-4">
           {recommendations.map((rec, index) => {
             const tutor = findTutor(rec.tutorId);
@@ -161,6 +167,39 @@ const AIRecommendations = ({ tutors, searchQuery, onClose }) => {
                           </li>
                         ))}
                       </ul>
+                    </div>
+                  )}
+
+                  {/* Algorithm Dimension Scores */}
+                  {tutor.dimensionScores && (
+                    <div className="pt-3 border-t border-gray-100">
+                      <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Match Dimensions</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-600">Time Match</span>
+                          <span className="font-medium text-primary-600">
+                            {Math.round(tutor.dimensionScores.timeOverlap)}%
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-600">Rating</span>
+                          <span className="font-medium text-primary-600">
+                            {Math.round(tutor.dimensionScores.rating)}%
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-600">Response</span>
+                          <span className="font-medium text-primary-600">
+                            {Math.round(tutor.dimensionScores.responseSpeed)}%
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-600">Same School</span>
+                          <span className="font-medium text-primary-600">
+                            {Math.round(tutor.dimensionScores.sameSchool)}%
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>

@@ -27,10 +27,14 @@ export class RecommendationService {
         tutorList,
       });
 
-      const result = await this.aiService.generateContent(prompt, {
-        temperature: 0.3, // Lower temperature for more consistent recommendations
-        maxTokens: 1500,
-      });
+      // Use chat method to ensure we use OpenAI (current provider)
+      const result = await this.aiService.chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.3, // Lower temperature for consistent recommendations
+          maxTokens: 1500,
+        }
+      );
 
       // Extract JSON from response
       const recommendations = extractJSON(result.content);
@@ -40,8 +44,10 @@ export class RecommendationService {
         recommendations: recommendations.recommendations || [],
         rawResponse: result.content,
         tokens: result.tokens,
+        reasoningTokens: result.reasoningTokens,
         cost: result.cost,
         provider: result.provider,
+        model: result.model,
       };
     } catch (error) {
       console.error('[RecommendationService] Get recommendations failed:', error);
@@ -58,27 +64,24 @@ export class RecommendationService {
    */
   async explainMatch(user, tutor, context = '') {
     try {
-      const prompt = `Explain in 2-3 sentences why ${tutor.username} would be a good match for ${user.username}.
+      const prompt = `Explain in 1-2 brief sentences why ${tutor.username} matches ${user.username}.
 
-Student Profile:
-- Major: ${user.major}
-- Year: ${user.yearOfStudy}
-
-Tutor Profile:
-- Major: ${tutor.major}
-- Year: ${tutor.yearOfStudy}
-- Subjects: ${tutor.subjects?.map(s => s.name).join(', ')}
-- Rating: ${tutor.averageRating}/5 (${tutor.totalReviews} reviews)
-- Response Rate: ${tutor.responseRate}%
+Student: ${user.major}, Year ${user.yearOfStudy}
+Tutor: ${tutor.major}, Year ${tutor.yearOfStudy}
+Subjects: ${tutor.subjects?.map(s => s.name).join(', ')}
+Rating: ${tutor.averageRating}/5 (${tutor.totalReviews} reviews)
 
 ${context ? `Context: ${context}` : ''}
 
-Provide a personalized explanation focusing on relevant strengths.`;
+Be concise and specific.`;
 
-      const result = await this.aiService.generateContent(prompt, {
-        temperature: 0.7,
-        maxTokens: 200,
-      });
+      const result = await this.aiService.chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.7,
+          maxTokens: 150,
+        }
+      );
 
       return {
         success: true,
@@ -114,10 +117,13 @@ Extract and return as JSON:
   "budget": "credits willing to spend (if mentioned)"
 }`;
 
-      const result = await this.aiService.generateContent(prompt, {
-        temperature: 0.3,
-        maxTokens: 500,
-      });
+      const result = await this.aiService.chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.3,
+          maxTokens: 500,
+        }
+      );
 
       const analysis = extractJSON(result.content);
 
@@ -165,10 +171,13 @@ Return as JSON:
   "recommendation": "Overall recommendation based on comparison"
 }`;
 
-      const result = await this.aiService.generateContent(prompt, {
-        temperature: 0.5,
-        maxTokens: 1000,
-      });
+      const result = await this.aiService.chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.5,
+          maxTokens: 1000,
+        }
+      );
 
       const comparison = extractJSON(result.content);
 
@@ -196,10 +205,13 @@ Return as JSON:
         currentFilters: JSON.stringify(currentFilters),
       });
 
-      const result = await this.aiService.generateContent(prompt, {
-        temperature: 0.7,
-        maxTokens: 500,
-      });
+      const result = await this.aiService.chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.7,
+          maxTokens: 500,
+        }
+      );
 
       const suggestions = extractJSON(result.content);
 
@@ -237,10 +249,13 @@ Requirements:
 - 3-4 sentences, casual but professional
 - First person from tutor's perspective`;
 
-      const result = await this.aiService.generateContent(prompt, {
-        temperature: 0.8,
-        maxTokens: 300,
-      });
+      const result = await this.aiService.chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.8,
+          maxTokens: 300,
+        }
+      );
 
       return {
         success: true,

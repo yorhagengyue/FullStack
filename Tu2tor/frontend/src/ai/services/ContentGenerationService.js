@@ -26,10 +26,13 @@ export class ContentGenerationService {
         teachingStyle: tutorData.teachingStyle || 'patient and encouraging',
       });
 
-      const result = await this.aiService.generateContent(prompt, {
-        temperature: 0.8,
-        maxTokens: 500,
-      });
+      const result = await this.aiService.chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.8,
+          maxTokens: 500,
+        }
+      );
 
       return {
         success: true,
@@ -59,10 +62,13 @@ export class ContentGenerationService {
         prerequisites: courseData.prerequisites || 'None',
       });
 
-      const result = await this.aiService.generateContent(prompt, {
-        temperature: 0.7,
-        maxTokens: 300,
-      });
+      const result = await this.aiService.chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.7,
+          maxTokens: 300,
+        }
+      );
 
       return {
         success: true,
@@ -93,10 +99,13 @@ export class ContentGenerationService {
         messageType: messageData.type || 'initial_contact',
       });
 
-      const result = await this.aiService.generateContent(prompt, {
-        temperature: 0.7,
-        maxTokens: 300,
-      });
+      const result = await this.aiService.chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.7,
+          maxTokens: 300,
+        }
+      );
 
       return {
         success: true,
@@ -131,10 +140,13 @@ Requirements:
 - 2-3 sentences maximum
 - First person perspective`;
 
-      const result = await this.aiService.generateContent(prompt, {
-        temperature: 0.8,
-        maxTokens: 200,
-      });
+      const result = await this.aiService.chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.8,
+          maxTokens: 200,
+        }
+      );
 
       return {
         success: true,
@@ -165,10 +177,13 @@ Requirements:
 - Keep it concise
 - Return only the improved text, no explanations`;
 
-      const result = await this.aiService.generateContent(prompt, {
-        temperature: 0.5,
-        maxTokens: 400,
-      });
+      const result = await this.aiService.chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.5,
+          maxTokens: 400,
+        }
+      );
 
       return {
         success: true,
@@ -194,10 +209,13 @@ Requirements:
         learningStyle: subjectData.learningStyle || 'visual and hands-on',
       });
 
-      const result = await this.aiService.generateContent(prompt, {
-        temperature: 0.7,
-        maxTokens: 600,
-      });
+      const result = await this.aiService.chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.7,
+          maxTokens: 600,
+        }
+      );
 
       return {
         success: true,
@@ -225,10 +243,13 @@ Requirements:
         topics: examData.topics?.join(', ') || 'All topics',
       });
 
-      const result = await this.aiService.generateContent(prompt, {
-        temperature: 0.6,
-        maxTokens: 800,
-      });
+      const result = await this.aiService.chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.6,
+          maxTokens: 800,
+        }
+      );
 
       return {
         success: true,
@@ -268,10 +289,13 @@ Requirements:
 - Friendly, helpful tone
 - Include actionable advice if applicable`;
 
-      const result = await this.aiService.generateContent(prompt, {
-        temperature: 0.6,
-        maxTokens: 300,
-      });
+      const result = await this.aiService.chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.6,
+          maxTokens: 300,
+        }
+      );
 
       return {
         success: true,

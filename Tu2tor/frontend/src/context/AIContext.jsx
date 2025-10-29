@@ -45,6 +45,23 @@ export const AIProvider = ({ children }) => {
   useEffect(() => {
     const initAI = async () => {
       try {
+        // Skip initialization if already initialized (singleton pattern)
+        if (aiService.activeProvider && aiService.activeProviderName) {
+          console.log('[AIContext] AI service already initialized, reusing existing instance');
+
+          const providers = aiService.getProviders();
+          setAvailableProviders(providers);
+
+          const activeProvider = aiService.getActiveProviderName();
+          setCurrentProvider(activeProvider);
+
+          const mode = aiService.mode;
+          setIsOnlineMode(mode === 'online');
+
+          setIsInitialized(true);
+          return;
+        }
+
         await aiService.initialize();
 
         const providers = aiService.getProviders();
@@ -68,10 +85,9 @@ export const AIProvider = ({ children }) => {
 
     initAI();
 
-    // Cleanup on unmount
-    return () => {
-      aiService.cleanup();
-    };
+    // Don't cleanup the singleton aiService on unmount
+    // The service should persist across component remounts
+    // Only cleanup would be on actual app shutdown (which React doesn't handle)
   }, []);
 
   /**
@@ -270,7 +286,10 @@ export const AIProvider = ({ children }) => {
       return await aiService.isProviderAvailable(providerName);
     } catch (error) {
       console.error('[AIContext] Health check failed:', error);
-      return false;
+      return {
+        available: false,
+        message: error.message || 'Health check failed',
+      };
     }
   }, []);
 
@@ -299,6 +318,9 @@ export const AIProvider = ({ children }) => {
     isProcessing,
     usageStats,
     aiEnabled,
+
+    // AI Service instance
+    aiService,
 
     // Provider management
     switchProvider,
