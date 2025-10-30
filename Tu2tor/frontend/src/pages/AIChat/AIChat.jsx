@@ -18,6 +18,15 @@ import {
   Plus,
   Copy,
   Check,
+  Wifi,
+  WifiOff,
+  Globe,
+  HardDrive,
+  Paperclip,
+  X,
+  Image as ImageIcon,
+  Download,
+  Upload,
 } from 'lucide-react';
 import ProviderSelector from '../../components/ai/ProviderSelector';
 import UsageMonitor from '../../components/ai/UsageMonitor';
@@ -33,11 +42,70 @@ const AIChat = () => {
   const [streamingContent, setStreamingContent] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [thinkingMode, setThinkingMode] = useState(false);
+  const [reasoningEffort, setReasoningEffort] = useState('high'); // low, medium, high
   const [copiedCode, setCopiedCode] = useState(null);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [attachedFiles, setAttachedFiles] = useState([]);
 
   const messagesEndRef = useRef(null);
   const chatServiceRef = useRef(null);
   const textareaRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const importInputRef = useRef(null); // For importing conversations
+
+  // Load conversation history from localStorage on mount
+  useEffect(() => {
+    const savedMessages = localStorage.getItem('ai_chat_history');
+    if (savedMessages) {
+      try {
+        const parsed = JSON.parse(savedMessages);
+        // Convert timestamp strings back to Date objects
+        const messagesWithDates = parsed.map(msg => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp),
+        }));
+        setMessages(messagesWithDates);
+        console.log('[AIChat] Loaded conversation history:', messagesWithDates.length, 'messages');
+      } catch (error) {
+        console.error('[AIChat] Failed to load conversation history:', error);
+      }
+    }
+  }, []);
+
+  // Save conversation history to localStorage whenever messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      try {
+        localStorage.setItem('ai_chat_history', JSON.stringify(messages));
+        console.log('[AIChat] Saved conversation history:', messages.length, 'messages');
+      } catch (error) {
+        console.error('[AIChat] Failed to save conversation history:', error);
+      }
+    }
+  }, [messages]);
+
+  // Monitor network status and auto-switch providers
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      // Optionally: switch back to Gemini when online
+      console.log('[AIChat] Network online');
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      // Optionally: switch to Ollama when offline
+      console.log('[AIChat] Network offline - consider switching to Ollama if available');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Copy code to clipboard
   const handleCopyCode = (code, id) => {
@@ -162,8 +230,57 @@ const AIChat = () => {
     }
   }, [inputMessage]);
 
+  // Handle file upload
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files);
+
+    // Filter only image files
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+
+    if (imageFiles.length === 0) {
+      alert('Please select image files only (PNG, JPG, GIF, WebP)');
+      return;
+    }
+
+    // Limit file size to 4MB each
+    const validFiles = imageFiles.filter(file => file.size <= 4 * 1024 * 1024);
+
+    if (validFiles.length !== imageFiles.length) {
+      alert(`Some files were too large. Maximum size is 4MB per image.`);
+    }
+
+    // Convert to base64
+    const filePromises = validFiles.map(file => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          resolve({
+            name: file.name,
+            type: file.type,
+            data: e.target.result,
+            size: file.size,
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    Promise.all(filePromises).then(newFiles => {
+      setAttachedFiles(prev => [...prev, ...newFiles]);
+    });
+
+    // Clear input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const removeFile = (index) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isTyping) return;
+    if ((!inputMessage.trim() && attachedFiles.length === 0) || isTyping) return;
 
     // Initialize chat service if not already done
     if (!chatServiceRef.current && isInitialized) {
@@ -177,12 +294,14 @@ const AIChat = () => {
 
     const userMessage = {
       role: 'user',
-      content: inputMessage.trim(),
+      content: inputMessage.trim() || '(Image attached)',
+      files: attachedFiles.length > 0 ? attachedFiles : undefined,
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInputMessage('');
+    setAttachedFiles([]);
     setIsTyping(true);
     setStreamingContent('');
 
@@ -190,15 +309,18 @@ const AIChat = () => {
       let fullContent = '';
 
       const result = await chatServiceRef.current.streamMessage(
-        userMessage.content,
+        userMessage, // Pass the complete user message object with files
         user,
         tutors,
-        messages.map((m) => ({ role: m.role, content: m.content })),
+        messages, // Pass complete message history with files
         (chunk) => {
           fullContent += chunk;
           setStreamingContent(fullContent);
         },
-        { thinkingMode } // Pass thinking mode option
+        {
+          thinkingMode,
+          reasoningEffort // Pass reasoning effort level
+        }
       );
 
       if (result.success) {
@@ -207,8 +329,10 @@ const AIChat = () => {
           content: result.message,
           timestamp: new Date(),
           tokens: result.tokens,
+          reasoningTokens: result.reasoningTokens, // Add reasoning tokens
           cost: result.cost,
           provider: result.provider,
+          model: result.model, // Add model name
         };
 
         setMessages((prev) => [...prev, aiMessage]);
@@ -244,14 +368,65 @@ const AIChat = () => {
   };
 
   const handleClearChat = () => {
-    if (window.confirm('Clear all messages?')) {
+    if (window.confirm('Clear all messages? This will delete the conversation history.')) {
       setMessages([]);
       setStreamingContent('');
+      localStorage.removeItem('ai_chat_history');
+      console.log('[AIChat] Cleared conversation history');
     }
   };
 
   const handleNewChat = () => {
     handleClearChat();
+  };
+
+  // Export conversation to JSON file
+  const handleExportConversation = () => {
+    if (messages.length === 0) {
+      alert('No conversation to export');
+      return;
+    }
+
+    const dataStr = JSON.stringify(messages, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `tu2tor-chat-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    console.log('[AIChat] Exported conversation:', messages.length, 'messages');
+  };
+
+  // Import conversation from JSON file
+  const handleImportConversation = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const imported = JSON.parse(e.target.result);
+        // Convert timestamp strings back to Date objects
+        const messagesWithDates = imported.map(msg => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp),
+        }));
+        setMessages(messagesWithDates);
+        console.log('[AIChat] Imported conversation:', messagesWithDates.length, 'messages');
+      } catch (error) {
+        console.error('[AIChat] Failed to import conversation:', error);
+        alert('Failed to import conversation. Please check the file format.');
+      }
+    };
+    reader.readAsText(file);
+
+    // Clear the input
+    event.target.value = '';
   };
 
   const suggestedQuestions = chatServiceRef.current?.getSuggestedQuestions(user) || [
@@ -280,9 +455,26 @@ const AIChat = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Tu2tor Assistant</h1>
-                <p className="text-sm text-gray-600">
-                  {isOnlineMode ? '🟢' : '🔵'} {currentProvider} • {isOnlineMode ? 'Online' : 'Offline'}
-                </p>
+                <div className="flex items-center space-x-3 text-sm text-gray-600">
+                  {/* Network Status */}
+                  <div className="flex items-center space-x-1">
+                    {isOnline ? (
+                      <><Wifi className="w-4 h-4 text-green-600" /> <span className="text-green-600">Online</span></>
+                    ) : (
+                      <><WifiOff className="w-4 h-4 text-red-600" /> <span className="text-red-600">Offline</span></>
+                    )}
+                  </div>
+                  <span>•</span>
+                  {/* Provider */}
+                  <div className="flex items-center space-x-1">
+                    {currentProvider === 'gemini' ? (
+                      <Globe className="w-4 h-4" />
+                    ) : (
+                      <HardDrive className="w-4 h-4" />
+                    )}
+                    <span>{currentProvider}</span>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="flex items-center space-x-2">
@@ -292,6 +484,28 @@ const AIChat = () => {
                 title="New Chat"
               >
                 <Plus className="w-5 h-5 text-gray-600" />
+              </button>
+              <button
+                onClick={handleExportConversation}
+                disabled={messages.length === 0}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Export Conversation"
+              >
+                <Download className="w-5 h-5 text-gray-600" />
+              </button>
+              <input
+                ref={importInputRef}
+                type="file"
+                accept=".json"
+                className="hidden"
+                onChange={handleImportConversation}
+              />
+              <button
+                onClick={() => importInputRef.current?.click()}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Import Conversation"
+              >
+                <Upload className="w-5 h-5 text-gray-600" />
               </button>
               <button
                 onClick={handleClearChat}
@@ -366,9 +580,27 @@ const AIChat = () => {
                           }`}
                         >
                           {message.role === 'user' ? (
-                            <p className="text-base whitespace-pre-wrap break-words leading-relaxed">
-                              {message.content}
-                            </p>
+                            <div className="space-y-2">
+                              {/* Attached Images */}
+                              {message.files && message.files.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mb-2">
+                                  {message.files.map((file, idx) => (
+                                    <img
+                                      key={idx}
+                                      src={file.data}
+                                      alt={file.name}
+                                      className="max-w-xs rounded-lg border-2 border-white/20"
+                                    />
+                                  ))}
+                                </div>
+                              )}
+                              {/* Text Content */}
+                              {message.content && (
+                                <p className="text-base whitespace-pre-wrap break-words leading-relaxed">
+                                  {message.content}
+                                </p>
+                              )}
+                            </div>
                           ) : (
                             <div className="text-base prose prose-sm max-w-none">
                               <ReactMarkdown
@@ -380,12 +612,31 @@ const AIChat = () => {
                             </div>
                           )}
                         </div>
-                        <p className="text-xs text-gray-500 mt-2 px-2">
-                          {message.timestamp.toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </p>
+                        <div className="text-xs text-gray-500 mt-2 px-2 flex items-center space-x-3">
+                          <span>
+                            {message.timestamp.toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                          {message.reasoningTokens > 0 && (
+                            <>
+                              <span>•</span>
+                              <span className="flex items-center space-x-1">
+                                <Sparkles className="w-3 h-3 text-purple-500" />
+                                <span className="text-purple-600 font-medium">
+                                  {message.reasoningTokens.toLocaleString()} reasoning tokens
+                                </span>
+                              </span>
+                            </>
+                          )}
+                          {message.model && (
+                            <>
+                              <span>•</span>
+                              <span className="text-gray-400">{message.model}</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -421,10 +672,18 @@ const AIChat = () => {
                       <Bot className="w-6 h-6 text-white" />
                     </div>
                     <div className="px-6 py-4 rounded-2xl bg-gray-100">
-                      <div className="flex space-x-2">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+                      <div className="flex items-center space-x-3">
+                        <div className="flex space-x-2">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+                        </div>
+                        {thinkingMode && (
+                          <div className="flex items-center space-x-1 text-purple-600">
+                            <Sparkles className="w-4 h-4 animate-pulse" />
+                            <span className="text-xs font-medium">Deep reasoning...</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -439,7 +698,7 @@ const AIChat = () => {
         {/* Input Area */}
         <div className="border-t border-gray-200 bg-white px-6 py-4">
           <div className="max-w-4xl mx-auto">
-            {/* Thinking Mode Toggle */}
+            {/* Reasoning Mode Toggle */}
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <button
@@ -457,18 +716,78 @@ const AIChat = () => {
                 <div className="flex items-center space-x-2">
                   <Sparkles className={`w-4 h-4 ${thinkingMode ? 'text-primary-600' : 'text-gray-400'}`} />
                   <span className={`text-sm font-medium ${thinkingMode ? 'text-primary-600' : 'text-gray-600'}`}>
-                    Deep Think
+                    Deep Reasoning
                   </span>
                 </div>
               </div>
-              {thinkingMode && (
+              {thinkingMode && currentProvider === 'openai' && (
+                <div className="flex items-center space-x-2">
+                  <select
+                    value={reasoningEffort}
+                    onChange={(e) => setReasoningEffort(e.target.value)}
+                    className="text-xs bg-gray-100 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High (Best)</option>
+                  </select>
+                  <span className="text-xs text-gray-500">o3</span>
+                </div>
+              )}
+              {thinkingMode && currentProvider === 'gemini' && (
                 <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
                   Gemini 2.5 Pro
                 </span>
               )}
             </div>
 
+            {/* Attached Files Preview */}
+            {attachedFiles.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {attachedFiles.map((file, index) => (
+                  <div
+                    key={index}
+                    className="relative group bg-gray-100 rounded-lg p-2 flex items-center space-x-2 max-w-[200px]"
+                  >
+                    <img
+                      src={file.data}
+                      alt={file.name}
+                      className="w-12 h-12 object-cover rounded"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-700 truncate">{file.name}</p>
+                      <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)}KB</p>
+                    </div>
+                    <button
+                      onClick={() => removeFile(index)}
+                      className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="flex items-end space-x-4">
+              {/* File Upload Button */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isTyping}
+                className="w-12 h-12 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:cursor-not-allowed text-gray-600 rounded-full transition-colors flex items-center justify-center flex-shrink-0"
+                title="Attach image"
+              >
+                <Paperclip className="w-5 h-5" />
+              </button>
+
               <div className="flex-1 relative">
                 <textarea
                   ref={textareaRef}
@@ -484,7 +803,7 @@ const AIChat = () => {
               </div>
               <button
                 onClick={handleSendMessage}
-                disabled={!inputMessage.trim() || isTyping}
+                disabled={(!inputMessage.trim() && attachedFiles.length === 0) || isTyping}
                 className="w-14 h-14 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-full transition-colors flex items-center justify-center flex-shrink-0"
               >
                 {isTyping ? (

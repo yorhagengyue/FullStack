@@ -73,14 +73,15 @@ ${tutorContext}
   /**
    * Stream chat response for real-time updates
    */
-  async streamMessage(message, user, tutors, chatHistory, onChunk, options = {}) {
+  async streamMessage(userMessage, user, tutors, chatHistory, onChunk, options = {}) {
     try {
       const systemPrompt = this.createSystemPrompt(user, tutors);
 
+      // Build messages array with full message objects (including files)
       const messages = [
         { role: 'system', content: systemPrompt },
         ...chatHistory,
-        { role: 'user', content: message }
+        userMessage, // Pass the complete user message object with files
       ];
 
       const result = await this.aiService.streamChat(messages, onChunk, {
@@ -93,8 +94,10 @@ ${tutorContext}
         success: true,
         message: result.content,
         tokens: result.tokens,
+        reasoningTokens: result.reasoningTokens, // Include reasoning tokens
         cost: result.cost,
         provider: result.provider,
+        model: result.model, // Include model name
       };
     } catch (error) {
       console.error('[ChatService] Stream message failed:', error);

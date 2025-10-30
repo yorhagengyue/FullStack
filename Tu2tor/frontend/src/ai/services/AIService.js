@@ -7,6 +7,7 @@
 
 import { GeminiProvider } from '../providers/GeminiProvider';
 import { OllamaProvider } from '../providers/OllamaProvider';
+import { OpenAIProvider } from '../providers/OpenAIProvider';
 
 export class AIService {
   constructor() {
@@ -36,6 +37,14 @@ export class AIService {
       const geminiProvider = new GeminiProvider(geminiConfig);
       this.registerProvider('gemini', geminiProvider);
 
+      // Register OpenAI provider
+      const openaiConfig = {
+        apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+        model: import.meta.env.VITE_OPENAI_MODEL,
+      };
+      const openaiProvider = new OpenAIProvider(openaiConfig);
+      this.registerProvider('openai', openaiProvider);
+
       // Register Ollama provider
       const ollamaConfig = {
         baseUrl: import.meta.env.VITE_OLLAMA_BASE_URL,
@@ -45,7 +54,7 @@ export class AIService {
       this.registerProvider('ollama', ollamaProvider);
 
       // Try to set default provider without health check first
-      const defaultProvider = import.meta.env.VITE_DEFAULT_AI_PROVIDER || 'gemini';
+      const defaultProvider = import.meta.env.VITE_DEFAULT_AI_PROVIDER || 'openai';
 
       try {
         await this.switchProvider(defaultProvider);
@@ -67,9 +76,9 @@ export class AIService {
           }
         }
 
-        // If all providers failed, still initialize but with warning
-        console.warn('[AIService] No providers available at initialization. Will retry on first use.');
-        return true;
+        // If all providers failed, throw error instead of returning true
+        console.error('[AIService] No providers available at initialization.');
+        throw new Error('Failed to initialize any AI provider. Please check your API keys in .env.local');
       }
     } catch (error) {
       console.error('[AIService] Initialization failed:', error);
@@ -365,11 +374,14 @@ export class AIService {
   async isProviderAvailable(providerName) {
     const provider = this.providers.get(providerName);
     if (!provider) {
-      return false;
+      return {
+        available: false,
+        message: `Provider '${providerName}' not registered`,
+      };
     }
 
     const health = await provider.checkHealth();
-    return health.available;
+    return health;
   }
 
   /**

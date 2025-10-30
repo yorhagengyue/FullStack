@@ -244,18 +244,71 @@ export class GeminiProvider extends BaseAIProvider {
         await this.initialize();
       }
 
-      const history = messages.slice(0, -1).map(msg => ({
-        role: msg.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: msg.content }],
-      }));
+      // Filter out system messages (Gemini doesn't support system role)
+      // System prompt is typically handled in the application context
+      const filteredMessages = messages.filter(msg => msg.role !== 'system');
 
-      const lastMessage = messages[messages.length - 1];
+      // Convert message history to Gemini format
+      const history = filteredMessages.slice(0, -1).map(msg => {
+        const parts = [];
+
+        // Add text content
+        if (msg.content) {
+          parts.push({ text: msg.content });
+        }
+
+        // Add image files if present
+        if (msg.files && msg.files.length > 0) {
+          msg.files.forEach(file => {
+            // Convert data URL to Gemini format
+            const base64Data = file.data.split(',')[1];
+            const mimeType = file.type || 'image/jpeg';
+
+            parts.push({
+              inlineData: {
+                data: base64Data,
+                mimeType: mimeType,
+              },
+            });
+          });
+        }
+
+        return {
+          role: msg.role === 'assistant' ? 'model' : 'user',
+          parts,
+        };
+      });
+
+      const lastMessage = filteredMessages[filteredMessages.length - 1];
+
+      // Build parts for last message
+      const lastMessageParts = [];
+
+      // Add text content
+      if (lastMessage.content) {
+        lastMessageParts.push({ text: lastMessage.content });
+      }
+
+      // Add image files if present
+      if (lastMessage.files && lastMessage.files.length > 0) {
+        lastMessage.files.forEach(file => {
+          const base64Data = file.data.split(',')[1];
+          const mimeType = file.type || 'image/jpeg';
+
+          lastMessageParts.push({
+            inlineData: {
+              data: base64Data,
+              mimeType: mimeType,
+            },
+          });
+        });
+      }
 
       // Use thinking model if thinkingMode is enabled
       const modelToUse = options.thinkingMode ? this.thinkingModel : this.model;
       const modelNameUsed = options.thinkingMode ? this.thinkingModelName : this.modelName;
 
-      console.log('[GeminiProvider] Using model:', modelNameUsed, 'Thinking mode:', !!options.thinkingMode);
+      console.log('[GeminiProvider] Using model:', modelNameUsed, 'Thinking mode:', !!options.thinkingMode, 'Has images:', lastMessage.files?.length > 0);
 
       const chat = modelToUse.startChat({
         history,
@@ -265,7 +318,7 @@ export class GeminiProvider extends BaseAIProvider {
         },
       });
 
-      const result = await chat.sendMessageStream(lastMessage.content);
+      const result = await chat.sendMessageStream(lastMessageParts);
 
       let fullContent = '';
       for await (const chunk of result.stream) {

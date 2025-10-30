@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAI } from '../../context/AIContext';
-import { Wifi, WifiOff, Loader2, Check, AlertCircle } from 'lucide-react';
+import { Wifi, WifiOff, Loader2, Check, AlertCircle, RefreshCw } from 'lucide-react';
 
 const ProviderSelector = () => {
   const {
@@ -10,9 +10,46 @@ const ProviderSelector = () => {
     switchProvider,
     isProcessing,
     getCapabilities,
+    isInitialized,
+    checkProviderHealth,
   } = useAI();
 
   const [checking, setChecking] = useState(false);
+  const [healthStatus, setHealthStatus] = useState({
+    gemini: null,
+    openai: null,
+    ollama: null,
+  });
+
+  // Check provider health on mount (only after AI is initialized)
+  useEffect(() => {
+    if (isInitialized) {
+      checkProvidersHealth();
+    }
+  }, [isInitialized]);
+
+  const checkProvidersHealth = async () => {
+    if (!isInitialized) {
+      console.warn('[ProviderSelector] AI not initialized yet');
+      return;
+    }
+
+    try {
+      const geminiHealth = await checkProviderHealth('gemini');
+      const openaiHealth = await checkProviderHealth('openai');
+      const ollamaHealth = await checkProviderHealth('ollama');
+
+      setHealthStatus({
+        gemini: geminiHealth,
+        openai: openaiHealth,
+        ollama: ollamaHealth,
+      });
+
+      console.log('[ProviderSelector] Health check:', { geminiHealth, openaiHealth, ollamaHealth });
+    } catch (error) {
+      console.error('[ProviderSelector] Health check failed:', error);
+    }
+  };
 
   const handleSwitchProvider = async (providerName) => {
     try {
@@ -55,7 +92,7 @@ const ProviderSelector = () => {
               </div>
               <div className="text-left">
                 <div className="flex items-center space-x-2">
-                  <h4 className="font-semibold text-gray-900">Google Gemini</h4>
+                  <h4 className="font-semibold text-gray-900">Gemini</h4>
                   {currentProvider === 'gemini' && (
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                       <Check className="w-3 h-3 mr-1" />
@@ -63,25 +100,18 @@ const ProviderSelector = () => {
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-600 mt-1">
-                  Online • Fast & powerful responses
-                </p>
-                <div className="flex items-center space-x-3 mt-2 text-xs text-gray-500">
-                  <span>Chat ✓</span>
-                  <span>Embeddings ✓</span>
-                  <span>Streaming ✓</span>
-                </div>
+                <p className="text-sm text-gray-600 mt-1">Online</p>
               </div>
             </div>
           </div>
         </button>
 
-        {/* Ollama (Offline) */}
+        {/* OpenAI (Online) */}
         <button
-          onClick={() => handleSwitchProvider('ollama')}
+          onClick={() => handleSwitchProvider('openai')}
           disabled={checking || isProcessing}
           className={`w-full p-4 rounded-lg border-2 transition-all ${
-            currentProvider === 'ollama'
+            currentProvider === 'openai'
               ? 'border-primary-600 bg-primary-50'
               : 'border-gray-200 hover:border-primary-300 bg-white'
           } ${checking || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -90,14 +120,55 @@ const ProviderSelector = () => {
             <div className="flex items-start space-x-3">
               <div
                 className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                  currentProvider === 'ollama'
+                  currentProvider === 'openai'
                     ? 'bg-primary-600 text-white'
                     : 'bg-gray-100 text-gray-600'
                 }`}
               >
-                <WifiOff className="w-5 h-5" />
+                <Wifi className="w-5 h-5" />
               </div>
               <div className="text-left">
+                <div className="flex items-center space-x-2">
+                  <h4 className="font-semibold text-gray-900">OpenAI</h4>
+                  {currentProvider === 'openai' && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                      <Check className="w-3 h-3 mr-1" />
+                      Active
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600 mt-1">Online</p>
+              </div>
+            </div>
+          </div>
+        </button>
+
+        {/* Ollama (Offline) */}
+        <button
+          onClick={() => handleSwitchProvider('ollama')}
+          disabled={checking || isProcessing || !healthStatus.ollama?.available}
+          className={`w-full p-4 rounded-lg border-2 transition-all ${
+            currentProvider === 'ollama'
+              ? 'border-primary-600 bg-primary-50'
+              : healthStatus.ollama?.available
+              ? 'border-gray-200 hover:border-primary-300 bg-white'
+              : 'border-red-200 bg-red-50'
+          } ${checking || isProcessing || !healthStatus.ollama?.available ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex items-start space-x-3">
+              <div
+                className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                  currentProvider === 'ollama'
+                    ? 'bg-primary-600 text-white'
+                    : healthStatus.ollama?.available
+                    ? 'bg-gray-100 text-gray-600'
+                    : 'bg-red-100 text-red-600'
+                }`}
+              >
+                <WifiOff className="w-5 h-5" />
+              </div>
+              <div className="text-left flex-1">
                 <div className="flex items-center space-x-2">
                   <h4 className="font-semibold text-gray-900">Ollama</h4>
                   {currentProvider === 'ollama' && (
@@ -106,15 +177,15 @@ const ProviderSelector = () => {
                       Active
                     </span>
                   )}
+                  {!healthStatus.ollama?.available && healthStatus.ollama && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                      Unavailable
+                    </span>
+                  )}
                 </div>
                 <p className="text-sm text-gray-600 mt-1">
-                  Offline • Private & free
+                  {healthStatus.ollama?.available ? 'Local' : 'Not available'}
                 </p>
-                <div className="flex items-center space-x-3 mt-2 text-xs text-gray-500">
-                  <span>Chat ✓</span>
-                  <span>Local ✓</span>
-                  <span>Free ✓</span>
-                </div>
               </div>
             </div>
           </div>
@@ -148,15 +219,15 @@ const ProviderSelector = () => {
         </div>
       </div>
 
-      {/* Info */}
-      <div className="mt-4 p-3 bg-blue-50 rounded-lg flex items-start space-x-2">
-        <AlertCircle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-        <p className="text-xs text-blue-800">
-          {isOnlineMode
-            ? 'Using online AI requires internet connection and may incur costs.'
-            : 'Offline mode requires Ollama to be installed and running on your computer.'}
-        </p>
-      </div>
+      {/* Refresh Button */}
+      <button
+        onClick={checkProvidersHealth}
+        disabled={checking}
+        className="mt-4 w-full py-2 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center space-x-2 text-sm font-medium text-gray-700"
+      >
+        <RefreshCw className={`w-4 h-4 ${checking ? 'animate-spin' : ''}`} />
+        <span>Refresh</span>
+      </button>
     </div>
   );
 };
