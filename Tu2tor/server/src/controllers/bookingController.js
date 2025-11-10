@@ -63,7 +63,9 @@ export const getBookings = async (req, res) => {
       count: bookings.length,
       bookings: bookings.map(booking => {
         const result = {
+          _id: booking._id,
           id: booking._id,
+          bookingId: booking._id,
           subject: booking.subject,
           date: booking.date,
           timeSlot: booking.timeSlot,
@@ -72,6 +74,9 @@ export const getBookings = async (req, res) => {
           status: booking.status,
           cost: booking.cost,
           notes: booking.notes,
+          sessionType: booking.sessionType,
+          meetingRoomId: booking.meetingRoomId,
+          hasReview: booking.hasReview,
           createdAt: booking.createdAt,
           updatedAt: booking.updatedAt
         };

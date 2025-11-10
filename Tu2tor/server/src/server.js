@@ -43,11 +43,13 @@ import testRoutes from './routes/testRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import tutorRoutes from './routes/tutorRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
 
 app.use('/api/test', testRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/tutors', tutorRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

@@ -774,6 +774,7 @@ const seedDatabase = async () => {
         timeSlot: '13:00-15:00',
         duration: 2,
         location: 'Online',
+        sessionType: 'online',
         status: 'completed',
         cost: 60,
         notes: 'Calculus review for midterm',
@@ -786,6 +787,7 @@ const seedDatabase = async () => {
         timeSlot: '18:00-19:00',
         duration: 1,
         location: 'Online',
+        sessionType: 'online',
         status: 'completed',
         cost: 28,
         notes: 'Balance sheet fundamentals',
@@ -803,6 +805,20 @@ const seedDatabase = async () => {
         notes: 'Circuit analysis practice',
       },
       // Confirmed upcoming bookings
+      // TEST BOOKING - Active now for video testing
+      {
+        studentId: students[0]._id, // alice
+        tutorId: tutors[4]._id, // henry
+        subject: 'WEB201 - Video Test Session',
+        date: new Date(), // Current time
+        timeSlot: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+        duration: 1,
+        location: 'Online',
+        sessionType: 'online',
+        status: 'confirmed',
+        cost: 35,
+        notes: 'Test video session - Join now to test video conferencing',
+      },
       {
         studentId: students[0]._id, // alice
         tutorId: tutors[4]._id, // henry
@@ -811,6 +827,7 @@ const seedDatabase = async () => {
         timeSlot: '15:00-17:00',
         duration: 2,
         location: 'Online',
+        sessionType: 'online',
         status: 'confirmed',
         cost: 70,
         notes: 'React hooks and state management',
@@ -848,6 +865,7 @@ const seedDatabase = async () => {
         timeSlot: '18:00-19:00',
         duration: 1,
         location: 'Online',
+        sessionType: 'online',
         status: 'pending',
         cost: 28,
         notes: 'Business strategy concepts',
@@ -860,6 +878,7 @@ const seedDatabase = async () => {
         timeSlot: '14:00-15:00',
         duration: 1,
         location: 'Online',
+        sessionType: 'online',
         status: 'pending',
         cost: 30,
         notes: 'Derivatives and integrals',
@@ -873,6 +892,7 @@ const seedDatabase = async () => {
         timeSlot: '15:00-16:00',
         duration: 1,
         location: 'Online',
+        sessionType: 'online',
         status: 'completed',
         cost: 35,
         notes: 'HTML and CSS basics',
@@ -946,6 +966,7 @@ const seedDatabase = async () => {
         timeSlot: '14:00-16:00',
         duration: 2,
         location: 'Online',
+        sessionType: 'online',
         status: 'confirmed',
         cost: 60,
         notes: 'User research and wireframing',
@@ -958,6 +979,7 @@ const seedDatabase = async () => {
         timeSlot: '18:00-19:00',
         duration: 1,
         location: 'Online',
+        sessionType: 'online',
         status: 'confirmed',
         cost: 28,
         notes: 'Financial statements',
@@ -982,6 +1004,7 @@ const seedDatabase = async () => {
         timeSlot: '16:00-18:00',
         duration: 2,
         location: 'Online',
+        sessionType: 'online',
         status: 'confirmed',
         cost: 76,
         notes: 'Network security fundamentals',
@@ -995,6 +1018,7 @@ const seedDatabase = async () => {
         timeSlot: '15:00-17:00',
         duration: 2,
         location: 'Online',
+        sessionType: 'online',
         status: 'pending',
         cost: 70,
         notes: 'SQL queries and database design',

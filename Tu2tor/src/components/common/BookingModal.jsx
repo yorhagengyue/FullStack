@@ -6,6 +6,7 @@ const BookingModal = ({ isOpen, onClose, tutor, subject, onSubmit }) => {
   const [formData, setFormData] = useState({
     date: '',
     timeSlot: '',
+    duration: 1,
     location: '',
     notes: ''
   });
@@ -37,11 +38,17 @@ const BookingModal = ({ isOpen, onClose, tutor, subject, onSubmit }) => {
 
     setIsSubmitting(true);
     try {
+      // Combine date and time into proper datetime
+      const dateTime = new Date(`${formData.date}T${formData.timeSlot.split('-')[0]}:00`);
+
       await onSubmit({
-        ...formData,
+        tutorId: tutor._id || tutor.id, // Use tutor's MongoDB _id
         subject,
-        tutorId: tutor.userId,
-        hourlyRate: tutor.hourlyRate || 10
+        date: dateTime.toISOString(),
+        timeSlot: formData.timeSlot,
+        duration: formData.duration,
+        location: formData.location,
+        notes: formData.notes
       });
       onClose();
     } catch (error) {
@@ -115,13 +122,59 @@ const BookingModal = ({ isOpen, onClose, tutor, subject, onSubmit }) => {
               className={`w-full px-4 py-3 border-2 ${errors.timeSlot ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all`}
             >
               <option value="">Choose a time slot</option>
-              {tutor?.availableSlots?.map((slot, index) => (
-                <option key={index} value={slot}>{slot}</option>
-              ))}
+              {tutor?.availableSlots && tutor.availableSlots.length > 0 ? (
+                tutor.availableSlots.map((slot, index) => {
+                  // Handle both string and object formats
+                  const slotValue = typeof slot === 'string'
+                    ? slot
+                    : `${slot.startTime}-${slot.endTime}`;
+                  const slotLabel = typeof slot === 'string'
+                    ? slot
+                    : `${slot.day}: ${slot.startTime} - ${slot.endTime}`;
+
+                  return (
+                    <option key={index} value={slotValue}>
+                      {slotLabel}
+                    </option>
+                  );
+                })
+              ) : (
+                <>
+                  <option value="09:00-10:00">09:00 - 10:00</option>
+                  <option value="10:00-11:00">10:00 - 11:00</option>
+                  <option value="11:00-12:00">11:00 - 12:00</option>
+                  <option value="13:00-14:00">13:00 - 14:00</option>
+                  <option value="14:00-15:00">14:00 - 15:00</option>
+                  <option value="15:00-16:00">15:00 - 16:00</option>
+                  <option value="16:00-17:00">16:00 - 17:00</option>
+                  <option value="17:00-18:00">17:00 - 18:00</option>
+                  <option value="18:00-19:00">18:00 - 19:00</option>
+                  <option value="19:00-20:00">19:00 - 20:00</option>
+                </>
+              )}
             </select>
             {errors.timeSlot && (
               <p className="text-red-500 text-sm mt-1">{errors.timeSlot}</p>
             )}
+          </div>
+
+          {/* Duration */}
+          <div>
+            <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+              <Clock className="w-4 h-4 mr-2 text-primary-600" />
+              Duration (hours) *
+            </label>
+            <select
+              value={formData.duration}
+              onChange={(e) => handleChange('duration', Number(e.target.value))}
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+            >
+              <option value={0.5}>30 minutes</option>
+              <option value={1}>1 hour</option>
+              <option value={1.5}>1.5 hours</option>
+              <option value={2}>2 hours</option>
+              <option value={3}>3 hours</option>
+            </select>
           </div>
 
           {/* Location */}
@@ -136,9 +189,18 @@ const BookingModal = ({ isOpen, onClose, tutor, subject, onSubmit }) => {
               className={`w-full px-4 py-3 border-2 ${errors.location ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all`}
             >
               <option value="">Choose a location</option>
-              {tutor?.preferredLocations?.map((location, index) => (
-                <option key={index} value={location}>{location}</option>
-              ))}
+              {tutor?.preferredLocations && tutor.preferredLocations.length > 0 ? (
+                tutor.preferredLocations.map((location, index) => (
+                  <option key={index} value={location}>{location}</option>
+                ))
+              ) : (
+                <>
+                  <option value="Online">Online (Video Call)</option>
+                  <option value="Library">School Library</option>
+                  <option value="Study Room">Study Room</option>
+                  <option value="Canteen">Canteen</option>
+                </>
+              )}
             </select>
             {errors.location && (
               <p className="text-red-500 text-sm mt-1">{errors.location}</p>
@@ -167,11 +229,14 @@ const BookingModal = ({ isOpen, onClose, tutor, subject, onSubmit }) => {
               <div className="flex items-center">
                 <CreditCard className="w-4 h-4 text-primary-600 mr-2" />
                 <span className="text-xl font-bold text-gray-900">
-                  {tutor?.hourlyRate || 10} credits
+                  {Math.round((tutor?.hourlyRate || 30) * formData.duration)} credits
                 </span>
               </div>
             </div>
             <p className="text-xs text-gray-500">
+              {tutor?.hourlyRate || 30} credits/hour × {formData.duration} hour(s)
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
               Credits will be deducted upon tutor confirmation
             </p>
           </div>

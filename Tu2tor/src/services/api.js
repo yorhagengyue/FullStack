@@ -204,6 +204,76 @@ export const bookingsAPI = {
 };
 
 // ============================================================================
+// Reviews API
+// ============================================================================
+
+export const reviewsAPI = {
+  /**
+   * Create a new review
+   */
+  createReview: async (reviewData) => {
+    const response = await api.post('/reviews', reviewData);
+    return response.data;
+  },
+
+  /**
+   * Get reviews for a tutor
+   */
+  getTutorReviews: async (tutorId, params = {}) => {
+    const response = await api.get(`/reviews/tutor/${tutorId}`, { params });
+    return response.data;
+  },
+
+  /**
+   * Get review for a booking
+   */
+  getBookingReview: async (bookingId) => {
+    const response = await api.get(`/reviews/booking/${bookingId}`);
+    return response.data;
+  },
+
+  /**
+   * Get reviews by a student
+   */
+  getStudentReviews: async (studentId) => {
+    const response = await api.get(`/reviews/student/${studentId}`);
+    return response.data;
+  },
+
+  /**
+   * Update a review
+   */
+  updateReview: async (reviewId, updates) => {
+    const response = await api.put(`/reviews/${reviewId}`, updates);
+    return response.data;
+  },
+
+  /**
+   * Delete a review (admin only)
+   */
+  deleteReview: async (reviewId) => {
+    const response = await api.delete(`/reviews/${reviewId}`);
+    return response.data;
+  },
+
+  /**
+   * Mark review as helpful
+   */
+  markAsHelpful: async (reviewId) => {
+    const response = await api.post(`/reviews/${reviewId}/helpful`);
+    return response.data;
+  },
+
+  /**
+   * Add tutor response to review
+   */
+  addTutorResponse: async (reviewId, response) => {
+    const res = await api.post(`/reviews/${reviewId}/response`, { response });
+    return res.data;
+  },
+};
+
+// ============================================================================
 // Test API (for development)
 // ============================================================================
 

@@ -28,16 +28,28 @@ const TutorDetailPage = () => {
   const [selectedSubject, setSelectedSubject] = useState('');
   const [showBookingModal, setShowBookingModal] = useState(false);
 
-  // Find the tutor
-  const tutor = tutors.find(t => t.userId === tutorId);
+  // Find the tutor - try multiple ID fields
+  const tutor = tutors.find(t =>
+    t.userId === tutorId ||
+    t._id === tutorId ||
+    t.id === tutorId
+  );
 
   // Get tutor's reviews
-  const tutorReviews = reviews.filter(r => r.tutorId === tutorId);
+  const tutorReviews = reviews.filter(r =>
+    r.tutorId === tutorId ||
+    r.tutorId === tutor?.userId ||
+    r.tutorId === tutor?._id
+  );
 
   if (!tutor) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600">Tutor not found</p>
+        <div className="mb-4">
+          <p className="text-gray-600 mb-2">Tutor not found</p>
+          <p className="text-sm text-gray-500">Tutor ID: {tutorId}</p>
+          <p className="text-sm text-gray-500">Available tutors: {tutors.length}</p>
+        </div>
         <Link to="/app/search" className="text-primary-600 hover:text-primary-700 mt-4 inline-block">
           Back to Search
         </Link>
@@ -55,15 +67,20 @@ const TutorDetailPage = () => {
 
   const handleBookingSubmit = async (bookingData) => {
     try {
-      createBooking({
+      // BookingModal already formats the data correctly
+      // Just add sessionType based on location
+      const bookingPayload = {
         ...bookingData,
-        studentId: user.userId,
-        tutorId: tutor.userId,
-      });
+        sessionType: bookingData.location?.toLowerCase().includes('online') ? 'online' : 'offline',
+      };
+
+      await createBooking(bookingPayload);
       toast.success('Booking request sent successfully!');
+      setShowBookingModal(false);
       navigate('/app/bookings');
     } catch (error) {
-      toast.error('Failed to create booking. Please try again.');
+      console.error('Booking error:', error);
+      toast.error(error.response?.data?.message || 'Failed to create booking. Please try again.');
     }
   };
 

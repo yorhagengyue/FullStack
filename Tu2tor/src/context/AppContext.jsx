@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { tutorsAPI, bookingsAPI } from '../services/api';
+import { tutorsAPI, bookingsAPI, reviewsAPI } from '../services/api';
 import {
   mockTutors,
   mockReviews,
@@ -204,42 +204,92 @@ export const AppProvider = ({ children }) => {
   };
 
   // ========================================================================
-  // Review methods (still using mock data - to be implemented in backend)
+  // Review methods (connected to real API)
   // ========================================================================
 
-  const createReview = (reviewData) => {
-    const newReview = {
-      ...reviewData,
-      reviewId: `review_${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      isVerified: true,
-      helpfulCount: 0
-    };
-    const updated = [...reviews, newReview];
-    setReviews(updated);
-    localStorage.setItem('tu2tor_reviews', JSON.stringify(updated));
+  /**
+   * Create a new review
+   */
+  const createReview = async (reviewData) => {
+    try {
+      const newReview = await reviewsAPI.createReview(reviewData);
 
-    // Update tutor rating
-    updateTutorRating(reviewData.tutorId);
+      // Update local state
+      setReviews(prev => [...prev, newReview]);
 
-    return newReview;
-  };
+      // Refresh tutors to get updated ratings
+      await fetchTutors();
 
-  const updateTutorRating = (tutorId) => {
-    const tutorReviews = reviews.filter(r => r.tutorId === tutorId);
-    if (tutorReviews.length > 0) {
-      const avgRating = tutorReviews.reduce((sum, r) => sum + r.rating, 0) / tutorReviews.length;
-      const updated = tutors.map(t =>
-        t.userId === tutorId
-          ? { ...t, averageRating: Number(avgRating.toFixed(1)), totalReviews: tutorReviews.length }
-          : t
-      );
-      setTutors(updated);
+      return newReview;
+    } catch (err) {
+      console.error('Failed to create review:', err);
+      throw err;
     }
   };
 
-  const getTutorReviews = (tutorId) => {
-    return reviews.filter(r => r.tutorId === tutorId);
+  /**
+   * Get reviews for a tutor
+   */
+  const getTutorReviews = async (tutorId) => {
+    try {
+      const response = await reviewsAPI.getTutorReviews(tutorId);
+      return response.reviews;
+    } catch (err) {
+      console.error('Failed to get tutor reviews:', err);
+      // Fallback to local state
+      return reviews.filter(r => r.tutorId === tutorId);
+    }
+  };
+
+  /**
+   * Get review for a booking
+   */
+  const getBookingReview = async (bookingId) => {
+    try {
+      const review = await reviewsAPI.getBookingReview(bookingId);
+      return review;
+    } catch (err) {
+      console.error('Failed to get booking review:', err);
+      return null;
+    }
+  };
+
+  /**
+   * Update a review
+   */
+  const updateReview = async (reviewId, updates) => {
+    try {
+      const updatedReview = await reviewsAPI.updateReview(reviewId, updates);
+
+      // Update local state
+      setReviews(prev =>
+        prev.map(r => (r._id === reviewId ? updatedReview : r))
+      );
+
+      return updatedReview;
+    } catch (err) {
+      console.error('Failed to update review:', err);
+      throw err;
+    }
+  };
+
+  /**
+   * Mark review as helpful
+   */
+  const markReviewAsHelpful = async (reviewId) => {
+    try {
+      await reviewsAPI.markAsHelpful(reviewId);
+
+      // Update local state
+      setReviews(prev =>
+        prev.map(r =>
+          r._id === reviewId ? { ...r, helpfulCount: (r.helpfulCount || 0) + 1 } : r
+        )
+      );
+    } catch (err) {
+      console.error('Failed to mark review as helpful:', err);
+      throw err;
+    }
   };
 
   // ========================================================================
@@ -452,6 +502,9 @@ export const AppProvider = ({ children }) => {
     // Review methods
     createReview,
     getTutorReviews,
+    getBookingReview,
+    updateReview,
+    markReviewAsHelpful,
 
     // Credit methods
     addCreditTransaction,

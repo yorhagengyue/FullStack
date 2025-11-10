@@ -44,6 +44,33 @@ const bookingSchema = new mongoose.Schema({
   hasReview: {
     type: Boolean,
     default: false
+  },
+
+  // Session fields
+  sessionType: {
+    type: String,
+    enum: ['online', 'offline'],
+    default: 'online'
+  },
+  meetingRoomId: {
+    type: String,
+    // Auto-generate meeting room ID when booking is created
+    default: function() {
+      return `tu2tor-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    }
+  },
+  actualStartTime: {
+    type: Date
+  },
+  actualEndTime: {
+    type: Date
+  },
+  actualDuration: {
+    type: Number // in minutes
+  },
+  sessionNotes: {
+    type: String,
+    maxlength: 2000
   }
 }, {
   timestamps: true

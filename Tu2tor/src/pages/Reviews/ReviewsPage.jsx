@@ -1,38 +1,69 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
-import { Star, User, Calendar, MessageSquare, Award, Filter } from 'lucide-react';
+import { reviewsAPI } from '../../services/api';
+import { Star, User, Calendar, MessageSquare, Award, Filter, Loader2 } from 'lucide-react';
 
 const ReviewsPage = () => {
   const { user } = useAuth();
-  const { reviews, bookings, tutors } = useApp();
+  const { bookings, tutors } = useApp();
 
   const [activeTab, setActiveTab] = useState('received');
   const [filterRating, setFilterRating] = useState(0);
+  const [receivedReviews, setReceivedReviews] = useState([]);
+  const [givenReviews, setGivenReviews] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState(null);
 
-  // Get reviews received (as tutor)
-  const receivedReviews = reviews.filter(r => r.tutorId === user?.userId);
+  // Fetch reviews from API
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!user) return;
 
-  // Get reviews given (as student)
-  const givenReviews = reviews.filter(r => r.studentId === user?.userId && !r.isAnonymous);
+      setIsLoading(true);
+      try {
+        // Fetch received reviews if user is a tutor
+        if (user.role === 'tutor') {
+          const response = await reviewsAPI.getTutorReviews(user.userId);
+          setReceivedReviews(response.reviews || []);
+          setStats(response.stats);
+        }
+
+        // Fetch given reviews (as student)
+        if (user.id) {
+          const givenResponse = await reviewsAPI.getStudentReviews(user.id);
+          setGivenReviews(givenResponse || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch reviews:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, [user]);
 
   // Filter by rating
   const filteredReviews = (activeTab === 'received' ? receivedReviews : givenReviews).filter(
     review => filterRating === 0 || review.rating === filterRating
   );
 
-  // Calculate stats
-  const averageRating = receivedReviews.length > 0
-    ? (receivedReviews.reduce((sum, r) => sum + r.rating, 0) / receivedReviews.length).toFixed(1)
-    : 0;
+  // Calculate stats from API data or local calculation
+  const averageRating = stats?.averageRating?.toFixed(1) || '0.0';
 
-  const ratingDistribution = [5, 4, 3, 2, 1].map(rating => ({
-    rating,
-    count: receivedReviews.filter(r => r.rating === rating).length,
-    percentage: receivedReviews.length > 0
-      ? ((receivedReviews.filter(r => r.rating === rating).length / receivedReviews.length) * 100).toFixed(0)
-      : 0
-  }));
+  const ratingDistribution = [5, 4, 3, 2, 1].map(rating => {
+    const breakdown = stats?.ratingBreakdown || [];
+    const ratingData = breakdown.find(r => r._id === rating);
+    const count = ratingData?.count || 0;
+    const totalReviews = stats?.totalReviews || receivedReviews.length || 1;
+
+    return {
+      rating,
+      count,
+      percentage: totalReviews > 0 ? ((count / totalReviews) * 100).toFixed(0) : 0
+    };
+  });
 
   const tabs = [
     { id: 'received', label: 'Received', count: receivedReviews.length },
@@ -56,6 +87,13 @@ const ReviewsPage = () => {
         <p className="text-gray-600 mt-2">Manage and view your reviews</p>
       </div>
 
+      {/* Loading State */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
+          <span className="ml-3 text-gray-600">Loading reviews...</span>
+        </div>
+      ) : (
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Left Column - Reviews List */}
         <div className="lg:col-span-2 space-y-6">
@@ -125,12 +163,20 @@ const ReviewsPage = () => {
           {filteredReviews.length > 0 ? (
             <div className="space-y-4">
               {filteredReviews.map((review) => {
-                const booking = bookings.find(b => b.bookingId === review.bookingId);
-                const tutor = tutors.find(t => t.userId === review.tutorId);
+                // Handle both populated and non-populated booking data
+                const booking = review.bookingId?.subject
+                  ? review.bookingId
+                  : bookings.find(b => b._id === review.bookingId || b.bookingId === review.bookingId);
+
+                // Handle populated student/tutor data
+                const studentName = review.studentId?.username || 'Student';
+                const tutorData = review.tutorId?.username
+                  ? review.tutorId
+                  : tutors.find(t => t.userId === review.tutorId);
 
                 return (
                   <div
-                    key={review.reviewId}
+                    key={review._id}
                     className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-start justify-between mb-4">
@@ -139,8 +185,8 @@ const ReviewsPage = () => {
                         <div className="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
                           <span className="text-white font-bold text-lg">
                             {activeTab === 'received'
-                              ? (review.isAnonymous ? '?' : review.studentId?.charAt(0).toUpperCase())
-                              : tutor?.username?.charAt(0).toUpperCase()}
+                              ? (review.isAnonymous ? '?' : studentName.charAt(0).toUpperCase())
+                              : (tutorData?.username || 'T').charAt(0).toUpperCase()}
                           </span>
                         </div>
 
@@ -148,8 +194,8 @@ const ReviewsPage = () => {
                         <div className="flex-1">
                           <h3 className="font-semibold text-gray-900 mb-1">
                             {activeTab === 'received'
-                              ? (review.isAnonymous ? 'Anonymous Student' : review.studentId)
-                              : tutor?.username}
+                              ? (review.isAnonymous ? 'Anonymous Student' : studentName)
+                              : tutorData?.username || 'Tutor'}
                           </h3>
                           <div className="flex items-center mb-2">
                             {renderStars(review.rating)}
@@ -292,6 +338,7 @@ const ReviewsPage = () => {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 };

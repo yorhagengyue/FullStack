@@ -45,7 +45,13 @@
       "Bash(rsync:*)",
       "Bash(npm run seed:*)",
       "Bash(if [ -f \"../nul\" ])",
-      "Bash(then rm ../nul)"
+      "Bash(then rm ../nul)",
+      "Bash(npm start)",
+      "Bash(timeout:*)",
+      "Bash(ping:*)",
+      "Bash(nul)",
+      "Bash(node -e:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []

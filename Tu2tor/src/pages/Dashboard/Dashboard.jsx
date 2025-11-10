@@ -121,13 +121,13 @@ const Dashboard = () => {
             <div className="grid grid-cols-3 gap-4 mt-6">
               {/* Profile Progress */}
               <div className="text-center">
-                <div className="relative w-20 h-20 mx-auto">
-                  <ResponsiveContainer width="100%" height="100%">
+                <div className="relative mx-auto" style={{ width: 80, height: 80 }}>
+                  <ResponsiveContainer width={80} height={80}>
                     <RadialBarChart
-                      cx="50%"
-                      cy="50%"
-                      innerRadius="70%"
-                      outerRadius="100%"
+                      cx={40}
+                      cy={40}
+                      innerRadius={28}
+                      outerRadius={40}
                       barSize={8}
                       data={[{ value: user?.profileCompletion || 70, fill: '#6366f1' }]}
                       startAngle={90}
@@ -159,13 +159,13 @@ const Dashboard = () => {
 
               {/* Progress */}
               <div className="text-center">
-                <div className="relative w-20 h-20 mx-auto">
-                  <ResponsiveContainer width="100%" height="100%">
+                <div className="relative mx-auto" style={{ width: 80, height: 80 }}>
+                  <ResponsiveContainer width={80} height={80}>
                     <RadialBarChart
-                      cx="50%"
-                      cy="50%"
-                      innerRadius="70%"
-                      outerRadius="100%"
+                      cx={40}
+                      cy={40}
+                      innerRadius={28}
+                      outerRadius={40}
                       barSize={8}
                       data={[{ value: completedSessions > 0 ? Math.min(completedSessions * 10, 100) : 0, fill: '#10b981' }]}
                       startAngle={90}
@@ -197,13 +197,13 @@ const Dashboard = () => {
 
               {/* Rating */}
               <div className="text-center">
-                <div className="relative w-20 h-20 mx-auto">
-                  <ResponsiveContainer width="100%" height="100%">
+                <div className="relative mx-auto" style={{ width: 80, height: 80 }}>
+                  <ResponsiveContainer width={80} height={80}>
                     <RadialBarChart
-                      cx="50%"
-                      cy="50%"
-                      innerRadius="70%"
-                      outerRadius="100%"
+                      cx={40}
+                      cy={40}
+                      innerRadius={28}
+                      outerRadius={40}
                       barSize={8}
                       data={[{ value: averageRating > 0 ? Math.round((averageRating / 5) * 100) : 0, fill: '#06b6d4' }]}
                       startAngle={90}

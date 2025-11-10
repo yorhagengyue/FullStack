@@ -17,7 +17,8 @@ import {
   ChevronUp,
   BookOpen,
   Plus,
-  X
+  X,
+  Video
 } from 'lucide-react';
 
 
@@ -393,19 +394,32 @@ const BookingPage = () => {
 
                       {booking.status === 'confirmed' && (
                         <>
+                          {booking.sessionType === 'online' && (
+                            <Link
+                              to={`/app/session/${booking._id || booking.bookingId}`}
+                              className="w-full py-2.5 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white rounded-lg font-semibold text-sm transition-colors flex items-center justify-center"
+                            >
+                              <Video className="w-4 h-4 mr-2" />
+                              Join Video Session
+                            </Link>
+                          )}
                           <button
                             onClick={() => handleCompleteBooking(booking.bookingId)}
-                            className="w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold text-sm transition-colors"
+                            className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm transition-colors"
                           >
                             Mark Complete
                           </button>
-                          <div className="grid grid-cols-2 gap-2">
-                            <button className="py-2 border border-gray-300 hover:border-primary-500 rounded-lg font-medium text-gray-700 hover:text-primary-600 text-xs transition-colors flex items-center justify-center">
+                          <div className={`grid ${isStudent ? 'grid-cols-2' : 'grid-cols-1'} gap-2`}>
+                            <button
+                              key="message-btn"
+                              className="py-2 border border-gray-300 hover:border-primary-500 rounded-lg font-medium text-gray-700 hover:text-primary-600 text-xs transition-colors flex items-center justify-center"
+                            >
                               <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
                               Message
                             </button>
                             {isStudent && (
                               <Link
+                                key="profile-link"
                                 to={`/app/tutor/${booking.tutorId}`}
                                 className="py-2 border border-gray-300 hover:border-primary-500 rounded-lg font-medium text-gray-700 hover:text-primary-600 text-xs transition-colors flex items-center justify-center"
                               >

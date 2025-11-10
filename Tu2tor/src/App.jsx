@@ -3,6 +3,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppProvider } from './context/AppContext';
 import { ToastProvider } from './context/ToastContext';
 import { AIProvider } from './context/AIContext';
+import { VideoProvider, useVideo } from './context/VideoContext';
+import FloatingVideoWindow from './components/session/FloatingVideoWindow';
 
 // Layout
 import Layout from './components/layout/Layout';
@@ -19,6 +21,7 @@ import BookingPage from './pages/Booking/BookingPage';
 import ReviewsPage from './pages/Reviews/ReviewsPage';
 import ReviewSubmitPage from './pages/Reviews/ReviewSubmitPage';
 import SessionsPage from './pages/Sessions/SessionsPage';
+import SessionRoomPage from './pages/Sessions/SessionRoomPage';
 import NotificationsPage from './pages/Notifications/NotificationsPage';
 import MessagesPage from './pages/Messages/MessagesPage';
 import AIChat from './pages/AIChat/AIChat';
@@ -79,6 +82,7 @@ function AppRoutes() {
         <Route path="reviews" element={<ReviewsPage />} />
         <Route path="review/:bookingId" element={<ReviewSubmitPage />} />
         <Route path="sessions" element={<SessionsPage />} />
+        <Route path="session/:bookingId" element={<SessionRoomPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="messages" element={<MessagesPage />} />
         <Route path="ai-chat" element={<AIChat />} />
@@ -90,6 +94,23 @@ function AppRoutes() {
   );
 }
 
+// Component to handle floating video
+function FloatingVideoHandler() {
+  const { floatingVideo, stopFloatingVideo } = useVideo();
+
+  if (!floatingVideo) return null;
+
+  return (
+    <FloatingVideoWindow
+      roomId={floatingVideo.roomId}
+      displayName={floatingVideo.displayName}
+      sessionInfo={floatingVideo.sessionInfo}
+      onClose={stopFloatingVideo}
+      onMaximize={floatingVideo.onMaximize}
+    />
+  );
+}
+
 function App() {
   return (
     <Router>
@@ -97,7 +118,10 @@ function App() {
         <AuthProvider>
           <AppProvider>
             <AIProvider>
-              <AppRoutes />
+              <VideoProvider>
+                <AppRoutes />
+                <FloatingVideoHandler />
+              </VideoProvider>
             </AIProvider>
           </AppProvider>
         </AuthProvider>

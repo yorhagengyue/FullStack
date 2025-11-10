@@ -18,9 +18,12 @@ const ReviewSubmitPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  // Find the booking
-  const booking = bookings.find(b => b.bookingId === bookingId);
-  const tutor = booking ? tutors.find(t => t.userId === booking.tutorId) : null;
+  // Find the booking (API uses _id, but we may receive bookingId as param)
+  const booking = bookings.find(b => b._id === bookingId || b.bookingId === bookingId);
+
+  // Get tutor - handle both populated and non-populated tutor data
+  const tutorId = booking?.tutor?.userId || booking?.tutorId;
+  const tutor = tutorId ? tutors.find(t => t.userId === tutorId) : null;
 
   // Available tags
   const availableTags = [
@@ -102,27 +105,26 @@ const ReviewSubmitPage = () => {
     setIsSubmitting(true);
 
     try {
-      // Create review
+      // Create review using API
       await createReview({
-        bookingId,
-        tutorId: booking.tutorId,
-        studentId: user.userId,
+        bookingId: booking._id || bookingId,
+        tutorId: tutorId,
         rating,
         comment: comment.trim(),
         tags: selectedTags,
-        isAnonymous,
-        createdAt: new Date().toISOString()
+        isAnonymous
       });
 
-      // Mark booking as reviewed
-      await updateBooking(bookingId, { hasReview: true });
+      // Mark booking as reviewed (API handles this automatically)
+      // No need to call updateBooking - the backend middleware does this
 
       // Redirect to bookings page
       navigate('/app/bookings', {
         state: { message: 'Review submitted successfully!' }
       });
     } catch (err) {
-      setError('Failed to submit review. Please try again.');
+      console.error('Submit review error:', err);
+      setError(err.message || 'Failed to submit review. Please try again.');
       setIsSubmitting(false);
     }
   };

@@ -1,9 +1,10 @@
-# Part 1: PPT演示文稿内容大纲
+# Part 1: Tu2tor项目PPT演示文稿
 
 ## 📊 PPT结构概览
 
-**总页数建议:** 15-20页
-**演示时长:** 如需演示,约10-15分钟
+**项目名称:** Tu2tor - Campus Peer Tutoring Platform
+**总页数:** 18-22页
+**演示时长:** 10-15分钟
 **命名格式:** `你的姓名_学号_班级_Part1.pptx`
 
 ---
@@ -15,27 +16,28 @@
 ```
 ┌─────────────────────────────────────┐
 │                                     │
-│   全栈网页开发 - 项目提案            │
 │   Full Stack Web Development        │
 │        Project Proposal             │
 │                                     │
-│   【导师查找系统】                   │
-│   Peer-to-Peer Tutor Finder         │
+│        Tu2tor Platform              │
+│   Campus Peer Tutoring System       │
 │                                     │
+│   🎓 Connecting Students for        │
+│      Better Learning                │
 │                                     │
 │   你的姓名                           │
-│   学号: 1234567D                    │
-│   班级: P01                         │
+│   学号: 你的学号                     │
+│   班级: 你的班级                     │
 │                                     │
-│   2024年10月                        │
+│   Temasek Polytechnic               │
+│   November 2024                     │
 └─────────────────────────────────────┘
 ```
 
 **设计建议:**
-- 使用简洁专业的配色
-- 添加学校logo(如有)
-- 居中对齐
-- 使用较大字号
+- 使用Tu2tor的配色：Primary Blue (#6366f1) + Purple gradient
+- 添加TP logo
+- 使用教育相关图标（书本、学生、连接）
 
 ---
 
@@ -43,553 +45,790 @@
 
 ```
 学术诚信声明
-Declaration of Originality
+Declaration of Academic Integrity
 
-□ 我声明这是我的原创作品
-□ 我已适当引用所有参考资料
-□ 我理解抄袭的定义和后果
-□ 我使用了AI工具辅助(已记录使用情况)
+本项目声明:
+☑ 这是我的原创作品
+☑ 所有参考资料已适当引用
+☑ 我理解学术诚信的重要性
+☑ 我使用了AI工具辅助开发（已记录）
 
-签名: [你的签名]
-日期: 2024年10月27日
+AI工具使用:
+• OpenAI o1-preview - 智能推荐系统
+• Claude Sonnet - 代码生成与调试辅助
+• GitHub Copilot - 代码补全
+
+签名: _______________
+日期: 2024年11月
 ```
-
-**设计建议:**
-- checkbox列表
-- 底部添加签名和日期
-- 简洁清晰
 
 ---
 
-### 幻灯片 3: AI工具使用声明
+### 幻灯片 3: 目录
 
 ```
-AI工具使用声明
-Use of Generative AI Tools
+目录
+Table of Contents
 
-本项目中我使用了以下AI工具:
-• ChatGPT (Claude) - 用于头脑风暴功能点
-• [其他工具]
-
-使用示例:
-┌──────────────────────────────────┐
-│ 提示: "帮我分析导师查找系统的    │
-│ 核心用户需求"                    │
-│                                  │
-│ AI回应: [截图]                   │
-└──────────────────────────────────┘
-
-引用格式:
-OpenAI. (2024). ChatGPT (Oct 27 version)
-[Large language model].
-https://chat.openai.com/chat
+1. 场景分析与问题识别 .................... 4
+2. 项目目标 ............................... 8
+3. 解决方案与功能 ........................ 10
+4. 系统架构 ............................... 14
+5. 数据模型设计 .......................... 16
+6. 项目规划 ............................... 20
 ```
-
-**设计建议:**
-- 包含1-2个对话截图
-- 说明AI如何辅助你的思考
-- 强调你验证了AI的信息
 
 ---
 
-### 幻灯片 4: 选定案例
+## 第一部分：场景分析与问题识别
+
+### 幻灯片 4: 场景概述
 
 ```
-✅ 选定案例
-Selected Case Study
+场景概述
+Scenario Overview
 
-点对点学习/导师查找系统
-Peer-to-Peer Tutor Finder
+📚 What is Tu2tor?
+校园同伴导师匹配平台，专为TP学生设计
 
-问题陈述:
-学生经常需要学术帮助,但很难找到具有合适
-专业知识的同学,导致错过学习机会和获取支
-持的机会不均等。
-```
+👥 Who are the users?
+• Primary: Students (寻求帮助) & Student Tutors (提供辅导)
+• Secondary: School Administration
 
-**设计建议:**
-- 高亮显示选择的案例
-- 简洁陈述问题
-- 使用视觉元素(图标/图片)
+🎯 What is the goal?
+• Students: 快速找到合适的导师，提高学习效率
+• Tutors: 展示专业技能，建立声誉，获得认可
+• School: 促进学生互助文化，提高整体学习质量
 
----
-
-### 幻灯片 5-6: 问题定义 (4%)
-
-**幻灯片 5:**
-```
-问题定义/客户需求 (1/2)
-Problem Definition / Customer Needs
-
-理解场景:
-• 当前情况: 学生在学习中遇到困难,但找不到合适的同学帮助
-• 主要用户: 需要帮助的学生 & 愿意分享知识的学生
-• 使用目标: 快速找到可靠的导师,方便预约辅导
-
-关键问题 1: 信息发现困难 🔍
-• 问题: 学生不知道谁擅长什么科目
-• 影响: 寻求帮助的学生、优秀学生、学校
-• 用户需求: "我希望能快速搜索和查看擅长数学的
-  同学,以便找到合适的导师"
-```
-
-**幻灯片 6:**
-```
-问题定义/客户需求 (2/2)
-
-关键问题 2: 缺乏信任机制 ⭐
-• 问题: 无法判断导师的真实水平和教学质量
-• 用户需求: 需要看到其他学生的评价和反馈
-
-关键问题 3: 时间协调复杂 📅
-• 问题: 难以协调合适的辅导时间
-• 用户需求: 导师设置可用时间,学生直接预约
-
-关键问题 4: 缺乏激励机制 🎯
-• 问题: 学生没有足够动力去帮助他人
-• 用户需求: 努力得到认可(积分、徽章、证书)
-```
-
-**设计建议:**
-- 每个问题使用图标
-- 简洁的bullet points
-- 突出显示用户需求(使用引号或不同颜色)
-
----
-
-### 幻灯片 7-8: 项目目标 (3%)
-
-**幻灯片 7:**
-```
-项目目标 (1/2)
-Project Objectives
-
-应用的目的和必要性:
-
-目标:
-连接需要帮助的学生与愿意分享知识的同龄导师,
-创建一个便捷、可信、高效的点对点学习平台
-
-为什么需要它?
-✓ 消除学生寻找导师的信息障碍
-✓ 建立可信的导师-学生匹配系统
-✓ 简化时间协调流程
-✓ 激励更多学生参与互助学习
-
-填补的差距:
-现状 → 差距 → 解决方案
-社交网络 → 缺乏专门平台 → 一站式导师查找平台
-```
-
-**幻灯片 8:**
-```
-项目目标 (2/2)
-
-目标用户:
-
-1. 寻求帮助的学生 (Tutees)
-   需求: 快速找到可靠导师、查看专业领域、方便预约
-   目标: 提高成绩、理解概念、准备考试
-
-2. 提供帮助的学生 (Tutors)
-   需求: 展示技能、灵活管理时间、获得认可
-   目标: 帮助他人、巩固知识、获取推荐信
-
-独特价值主张:
-• 专为学生设计 - 校园内点对点学习
-• 智能匹配系统 - 基于科目、时间的匹配
-• 完整信任机制 - 身份验证、评价系统、徽章
-• 游戏化激励 - 积分、徽章、排行榜
-• 无缝预约体验 - 日历集成、自动提醒
+📊 Current Situation:
+传统方式依赖朋友推荐、WhatsApp群组、布告栏
+→ 效率低、信息不对称、质量无保障
 ```
 
 **设计建议:**
 - 使用图标代表不同用户群体
-- 独特价值主张使用图标或图形
-- 对比表格(vs 竞品)
+- 添加TP校园场景图片
+- 使用对比图展示现状vs理想状态
 
 ---
 
-### 幻灯片 9-11: 建议功能 (3%)
+### 幻灯片 5: 关键问题 #1 - 发现困难
 
-**幻灯片 9:**
 ```
-建议功能 (1/3)
-Proposed Features
+关键问题 #1: Difficulty Finding Qualified Tutors
+发现困难 - 找不到合适的导师
 
-功能概览:
-• 8个核心功能模块
-• MVP阶段: 5个基础功能
-• 完整版本: 8个功能
-• 高级功能: 积分与徽章系统(游戏化)
-```
+❌ Problem:
+学生很难找到擅长特定科目、时间匹配、且评价良好的导师
 
-**幻灯片 10:**
-```
-建议功能 (2/3)
+📉 Why it matters:
+• 信息不对称 - 不知道谁可以提供帮助
+• 时间浪费 - 需要大量时间询问和联系
+• 质量不确定 - 无法事先了解导师能力
 
-功能列表 - MVP阶段:
+👤 Who is affected:
+• Students - 找不到帮助，错过学习机会
+• Tutors - 优秀学生无法有效推广服务
+• School - 学习资源未被充分利用
 
-1. 用户注册与登录
-   • 学校邮箱注册、邮箱验证
-   → 确保只有在校学生可以访问
-
-2. 个人资料管理
-   • 上传头像、填写技能标签、设置角色
-   → 展示导师专长和个人信息
-
-3. 导师搜索与筛选
-   • 按科目搜索、按评分筛选
-   → 快速找到符合条件的导师
-
-4. 导师详情页
-   • 完整资料、评价、可用时间
-   → 全面了解导师背景
-
-5. 预约辅导(基础版)
-   • 选择时间、填写需求、提交预约
-   → 简化时间协调流程
-```
-
-**幻灯片 11:**
-```
-建议功能 (3/3)
-
-功能列表 - 完整版本:
-
-6. 预约管理
-   • 查看/管理预约、接受/拒绝请求
-   → 高效管理辅导安排
-
-7. 评价系统
-   • 评分(1-5星)、撰写评论
-   → 建立信任机制
-
-8. 积分与徽章系统 (高级功能)
-   • 完成辅导获得积分、解锁徽章
-   → 游戏化激励,增加用户粘性
+💡 Customer Need:
+"As a student struggling with WEB201,
+I want to quickly find experienced tutors available this week,
+So that I can get help before my exam."
 ```
 
 **设计建议:**
-- 使用表格或卡片布局
-- 每个功能配图标
-- 区分MVP和完整版本(不同颜色)
+- 使用🔍图标
+- 添加场景插图（学生困惑地寻找导师）
+- 用户故事使用引号框突出显示
 
 ---
 
-### 幻灯片 12-14: 线框图 (5%)
+### 幻灯片 6: 关键问题 #2 - 预订混乱
 
-**幻灯片 12:**
 ```
-线框图 - 页面1
-Wireframe - Home / Search Page
+关键问题 #2: Lack of Booking System
+预订混乱 - 缺乏统一的预订系统
 
-首页/导师搜索页
+❌ Problem:
+通过WhatsApp/Email预订容易遗漏、时间冲突、沟通误解
 
-[插入线框图图片或简化示意图]
+📉 Why it matters:
+• 预订混乱 - 没有中央化管理
+• 时间冲突 - 导师可能双重预订
+• 缺乏记录 - 无历史记录可查
+• 支付不明 - 学分交易不透明
 
-关键功能:
-✓ 搜索框 - 搜索科目、课程或导师
-✓ 侧边栏筛选器 - 按科目、评分、时间筛选
-✓ 导师卡片列表 - 显示头像、评分、技能
-✓ 排序功能 - 按评分/辅导次数排序
-```
+👤 Who is affected:
+• Students - 不确定预订是否成功
+• Tutors - 难以管理多个预订
+• Both - 沟通成本高，效率低
 
-**幻灯片 13:**
-```
-线框图 - 页面2
-Wireframe - Tutor Profile Page
-
-导师详情页
-
-[插入线框图图片或简化示意图]
-
-关键功能:
-✓ 左侧信息卡片 - 头像、评分、统计数据
-✓ 关于我 - 个人简介
-✓ 擅长科目 - 技能标签展示
-✓ 可用时间 - 日历视图
-✓ 学生评价 - 评分分布、评价列表
-✓ 预约按钮 - 固定可见
+💡 Customer Need:
+"As a tutor,
+I want a centralized booking system showing all appointments,
+So that I can avoid double-booking and manage efficiently."
 ```
 
-**幻灯片 14:**
+---
+
+### 幻灯片 7: 关键问题 #3 - 质量保障缺失
+
 ```
-线框图 - 页面3
-Wireframe - Dashboard / Bookings
+关键问题 #3: No Quality Assurance
+质量保障缺失 - 无法判断导师水平
 
-个人仪表板/我的预约
+❌ Problem:
+选择导师前无法了解教学质量，缺乏评价系统
 
-[插入线框图图片或简化示意图]
+📉 Why it matters:
+• 信任问题 - 不知道导师是否靠谱
+• 质量参差 - 没有激励优质服务
+• 无法改进 - 导师得不到反馈
 
-关键功能:
-✓ 统计卡片 - 待确认、已确认、总积分
-✓ 左侧导航 - 预约分类、快捷操作
-✓ 预约列表 - 不同状态的预约卡片
-✓ 操作按钮 - 接受/拒绝/取消/详情
-✓ 最近活动流 - 显示最新动态
+👤 Who is affected:
+• Students - 可能浪费时间和学分
+• Good Tutors - 无法展示优势
+• Poor Tutors - 得不到改进建议
+
+💡 Customer Need:
+"As a student,
+I want to see reviews and ratings from previous students,
+So that I can make informed decisions."
+```
+
+---
+
+### 幻灯片 8: 关键问题 #4 & #5
+
+```
+其他关键问题
+Additional Key Problems
+
+🎥 Problem #4: Inefficient Session Management
+会议管理低效
+
+• 线上/线下混合模式缺乏集成工具
+• 需要在多个平台切换（Zoom, Teams, WhatsApp）
+• 视频链接容易丢失
+
+💡 Need: "一键加入视频会议，无需切换平台"
+
+🤖 Problem #5: No Personalization
+缺乏个性化推荐
+
+• 需要手动浏览大量导师信息
+• 没有智能推荐系统
+• 选择疲劳，效率低下
+
+💡 Need: "基于历史和需求的AI智能推荐"
+```
+
+---
+
+## 第二部分：项目目标
+
+### 幻灯片 9: 项目目标与价值主张
+
+```
+项目目标与独特价值
+Project Objectives & Value Proposition
+
+🎯 Primary Objective:
+连接需要帮助的学生与愿意分享知识的同龄导师，
+创建便捷、可信、高效的点对点学习平台
+
+✨ Unique Value Propositions:
+
+1. 🔍 Smart Discovery
+   • AI驱动的导师推荐
+   • 多维度筛选（科目、评分、价格、时间）
+   • 实时可用性显示
+
+2. 📅 Seamless Booking
+   • 统一预订管理系统
+   • 自动时间冲突检测
+   • 学分自动结算
+
+3. ⭐ Trust & Quality
+   • 完整评价系统
+   • 身份验证（TP学生专属）
+   • 徽章与认证体系
+
+4. 🎥 Integrated Video
+   • 内置Jitsi视频会议
+   • 小窗化多任务支持
+   • 会议历史记录
+```
+
+---
+
+### 幻灯片 10: 目标用户画像
+
+```
+目标用户画像
+Target User Personas
+
+👨‍🎓 Student (Tutee)
+Name: Alice, Year 1 IT Student
+Needs:
+• 找WEB201的导师准备考试
+• 查看导师评价和专业度
+• 方便预订和在线学习
+Goals:
+• 提高成绩 (C → B)
+• 理解难懂的概念
+• 高效利用时间
+Pain Points:
+• 不知道找谁
+• 担心浪费学分
+• 时间协调困难
+
+👨‍🏫 Student Tutor
+Name: Henry, Year 3 IT Student
+Needs:
+• 展示编程技能
+• 灵活管理辅导时间
+• 获得收入和认可
+Goals:
+• 帮助学弟学妹
+• 巩固自己的知识
+• 建立个人品牌
+Pain Points:
+• 难以找到学生
+• 预订管理混乱
+• 缺乏成就感
 ```
 
 **设计建议:**
-- 插入实际的线框图图片(手绘扫描或Figma导出)
-- 或使用ASCII艺术/简化的框图
-- 标注关键功能区域
-- 保持简洁清晰
+- 使用persona卡片
+- 添加用户照片或图标
+- 颜色区分两类用户
 
 ---
 
-### 幻灯片 15-17: 数据模型 (5%)
+## 第三部分：解决方案与功能
 
-**幻灯片 15:**
+### 幻灯片 11: 功能概览
+
 ```
-数据模型 (1/3)
-Data Modeling
+Tu2tor功能概览
+Feature Overview
 
-数据模型概览:
-• 5个核心数据模型
-• 支持所有功能需求
-• 明确的关系设计
+🏗️ Architecture:
+Frontend: React.js + Tailwind CSS
+Backend: Node.js + Express.js + MongoDB
+Video: Jitsi Meet Integration
+AI: OpenAI o1-preview
 
-模型1: User (用户)
-┌────────────────────────────┐
-│ userId, email, password    │
-│ username, studentId        │
-│ major, yearOfStudy        │
-│ avatar, role              │
-│ points, badges            │
-└────────────────────────────┘
+📦 8 Core Modules:
 
-用途: 用户注册登录、存储基本信息、管理角色权限
-关键属性: email(唯一), role(数组), points(积分)
-```
-
-**幻灯片 16:**
-```
-数据模型 (2/3)
-
-模型2: TutorProfile (导师档案)
-┌────────────────────────────┐
-│ profileId, userId          │
-│ bio, subjects[]           │
-│ completedCourses[]        │
-│ availableSlots[]          │
-│ totalSessions, avgRating  │
-└────────────────────────────┘
-
-用途: 展示导师详细信息、管理可用时间、统计表现
-示例: subjects = [{"subjectId": "sub001",
-      "subjectName": "Python", "proficiencyLevel": "expert"}]
-
-模型3: Booking (预约)
-┌────────────────────────────┐
-│ bookingId, studentId       │
-│ tutorId, subjectId        │
-│ sessionDate, duration     │
-│ location, status          │
-└────────────────────────────┘
-
-用途: 管理预约请求、追踪预约状态、记录辅导历史
-状态流转: pending → confirmed → completed
+1. 🔐 Authentication & Authorization
+2. 👤 User Profile Management
+3. 🔍 Search & Filter System
+4. 📅 Booking Management
+5. 🎥 Video Session System
+6. ⭐ Review & Rating System
+7. 🤖 AI Recommendation Engine
+8. 💬 Messaging System
 ```
 
-**幻灯片 17:**
+---
+
+### 幻灯片 12: 核心功能详解 (1/2)
+
 ```
-数据模型 (3/3)
+核心功能详解 Part 1
+Core Features - Part 1
 
-模型4: Review (评价)
-┌────────────────────────────┐
-│ reviewId, bookingId        │
-│ tutorId, studentId        │
-│ rating, comment           │
-│ tags[], helpfulCount      │
-└────────────────────────────┘
+1️⃣ Smart Search & Filter
+   ✓ 按科目、价格、评分、时间筛选
+   ✓ AI优先级滑块（评分优先 vs 时间优先）
+   ✓ 实时搜索结果
+   ✓ 高级筛选：经验值、响应时间
 
-用途: 存储评价、计算平均评分、建立信任机制
-业务规则: 每个预约只能评价一次、完成后7天内评价
+2️⃣ Tutor Profile System
+   ✓ 完整个人资料（头像、简介、技能）
+   ✓ 评分与徽章展示
+   ✓ 可用时间日历
+   ✓ 学生评价列表
+   ✓ 完成课程统计
 
-模型5: Subject (科目)
-┌────────────────────────────┐
-│ subjectId, name, code      │
-│ category, level           │
-│ tutorCount, avgRating     │
-└────────────────────────────┘
+3️⃣ Booking Management
+   ✓ 选择日期、时间、时长、地点
+   ✓ 在线/离线模式选择
+   ✓ 状态流转：Pending → Confirmed → Completed
+   ✓ 学分自动计算与扣除
+   ✓ 预订历史记录
 
-用途: 标准化科目名称、支持分类搜索、统计热门科目
+4️⃣ Video Session Integration
+   ✓ Jitsi Meet内嵌视频
+   ✓ 一键加入会议
+   ✓ 小窗化浮动窗口（可拖动）
+   ✓ 会议内notes记录
+   ✓ Active/Upcoming/Completed分类
+```
 
-数据关系:
-User 1:1 TutorProfile
-User 1:M Booking
+---
+
+### 幻灯片 13: 核心功能详解 (2/2)
+
+```
+核心功能详解 Part 2
+Core Features - Part 2
+
+5️⃣ Review & Rating System
+   ✓ 5星评分系统
+   ✓ 文字评论（10-1000字）
+   ✓ 标签选择（Clear, Patient, Knowledgeable）
+   ✓ 匿名评价选项
+   ✓ 导师回复功能
+   ✓ 有用投票（helpful count）
+
+6️⃣ AI Recommendation Engine
+   ✓ OpenAI o1-preview驱动
+   ✓ 多轮对话支持
+   ✓ 基于学习历史的个性化推荐
+   ✓ 代码语法高亮显示
+   ✓ 保存聊天历史
+
+7️⃣ Credits & Badges System
+   ✓ 积分系统（完成辅导获得积分）
+   ✓ 徽章体系（Newbie, Expert, Top Tutor等）
+   ✓ 排行榜功能
+   ✓ 游戏化激励
+
+8️⃣ Dashboard & Analytics
+   ✓ 个人统计数据可视化
+   ✓ 活动日历
+   ✓ 快速操作入口
+   ✓ 通知中心
+```
+
+---
+
+### 幻灯片 14: 系统架构
+
+```
+系统架构
+System Architecture
+
+┌─────────────────────────────────────┐
+│         Frontend (React)            │
+│  ┌──────────┬──────────┬─────────┐ │
+│  │ Pages    │Components│ Context │ │
+│  │• Search  │• Modal   │• Auth   │ │
+│  │• Session │• Video   │• App    │ │
+│  │• Review  │• Calendar│• AI     │ │
+│  └──────────┴──────────┴─────────┘ │
+└─────────────────────────────────────┘
+              ↓ Axios API
+┌─────────────────────────────────────┐
+│      Backend (Node.js + Express)    │
+│  ┌──────────────────────────────┐  │
+│  │  REST API Routes             │  │
+│  │  • /auth  • /bookings        │  │
+│  │  • /tutors • /reviews        │  │
+│  │  • /ai                       │  │
+│  └──────────────────────────────┘  │
+└─────────────────────────────────────┘
+              ↓ Mongoose ODM
+┌─────────────────────────────────────┐
+│       Database (MongoDB)            │
+│  • Users    • Bookings             │
+│  • Tutors   • Reviews              │
+│  • Subjects                        │
+└─────────────────────────────────────┘
+
+External Services:
+• Jitsi Meet (meet.jit.si) - Video
+• OpenAI API - AI Recommendations
+```
+
+---
+
+## 第四部分：数据模型设计
+
+### 幻灯片 15: 数据模型概览
+
+```
+数据模型概览
+Data Models Overview
+
+🗄️ 6 Core Models:
+
+1. User - 用户基础信息
+2. Tutor - 导师详细档案
+3. Booking - 预订记录
+4. Review - 评价数据
+5. Subject - 科目信息
+6. Message - 消息记录（Future）
+
+🔗 Relationships:
+User 1:1 Tutor
+User 1:M Booking (as student/tutor)
 Booking 1:1 Review
 Subject 1:M Booking
 ```
 
-**设计建议:**
-- 使用表格或框图展示模型
-- 突出关键属性
-- 简化展示(不需要所有属性)
-- 可以添加ER图(可选)
+---
+
+### 幻灯片 16: User & Tutor Models
+
+```
+User & Tutor 数据模型
+User & Tutor Models
+
+📊 User Model:
+{
+  _id: ObjectId,
+  username: String (required),
+  email: String (unique, required),
+  password: String (hashed),
+  role: [String], // ['student', 'tutor']
+  school: String,
+  major: String,
+  yearOfStudy: Number,
+  credits: Number (default: 500),
+  badges: [String],
+  profileCompletion: Number,
+  createdAt: Date
+}
+
+用途: 身份验证、权限管理、基础信息存储
+
+📊 Tutor Model:
+{
+  _id: ObjectId,
+  userId: ObjectId (ref: User),
+  bio: String (maxlength: 500),
+  subjects: [String],
+  hourlyRate: Number,
+  availableSlots: [{
+    day: String,
+    startTime: String,
+    endTime: String
+  }],
+  preferredLocations: [String],
+  totalSessions: Number,
+  completedSessions: Number,
+  averageRating: Number,
+  totalReviews: Number,
+  isAvailable: Boolean
+}
+
+用途: 导师档案管理、搜索匹配、评分统计
+```
+
+---
+
+### 幻灯片 17: Booking & Review Models
+
+```
+Booking & Review 数据模型
+Booking & Review Models
+
+📊 Booking Model:
+{
+  _id: ObjectId,
+  studentId: ObjectId (ref: User),
+  tutorId: ObjectId (ref: Tutor),
+  subject: String,
+  date: Date,
+  timeSlot: String, // "14:00-15:00"
+  duration: Number, // hours
+  location: String,
+  sessionType: String, // 'online' | 'offline'
+  meetingRoomId: String, // for Jitsi
+  status: String, // 'pending' | 'confirmed' | 'completed'
+  cost: Number,
+  notes: String,
+  hasReview: Boolean,
+  createdAt: Date
+}
+
+状态流转: pending → confirmed → completed
+
+📊 Review Model:
+{
+  _id: ObjectId,
+  bookingId: ObjectId (ref: Booking),
+  tutorId: ObjectId (ref: User),
+  studentId: ObjectId (ref: User),
+  rating: Number (1-5, required),
+  comment: String (10-1000 chars),
+  tags: [String], // ['Clear', 'Patient', ...]
+  isAnonymous: Boolean,
+  isVerified: Boolean,
+  helpfulCount: Number,
+  tutorResponse: String,
+  createdAt: Date
+}
+
+业务规则:
+• 每个booking只能评价一次
+• 只有completed状态的booking可以评价
+• 评价后自动更新tutor的averageRating
+```
 
 ---
 
 ### 幻灯片 18: 数据示例
 
 ```
-数据示例
-Sample Data
+完整数据示例
+Sample Data Example
 
-导师完整信息示例:
+👤 Complete Tutor Profile:
 
 User:
 {
-  "username": "张三",
-  "email": "zhang.san@student.tp.edu.sg",
+  "username": "henry_tutor",
+  "email": "henry@tp.edu.sg",
   "role": ["student", "tutor"],
-  "points": 280,
-  "badges": ["newbie", "expert"]
+  "credits": 450,
+  "badges": ["expert", "top-tutor"],
+  "profileCompletion": 95
 }
 
-TutorProfile:
+Tutor:
 {
-  "bio": "计算机科学大三学生,擅长编程...",
-  "subjects": ["Python", "Java", "数据结构"],
-  "totalSessions": 45,
-  "averageRating": 4.9,
-  "totalReviews": 28
+  "bio": "Year 3 IT student, passionate about web dev",
+  "subjects": ["WEB201", "JavaScript", "React"],
+  "hourlyRate": 35,
+  "completedSessions": 48,
+  "averageRating": 4.8,
+  "totalReviews": 32,
+  "availableSlots": [
+    {"day": "Monday", "startTime": "14:00", "endTime": "18:00"},
+    {"day": "Wednesday", "startTime": "10:00", "endTime": "16:00"}
+  ]
+}
+
+Booking:
+{
+  "subject": "WEB201",
+  "date": "2024-11-20T14:00:00Z",
+  "duration": 1.5,
+  "sessionType": "online",
+  "status": "confirmed",
+  "cost": 52.5 // 35 * 1.5
 }
 ```
 
-**设计建议:**
-- 使用代码格式展示JSON
-- 或使用可视化卡片展示数据
-- 突出关键字段
-
 ---
 
-### 幻灯片 19: 项目规划
+## 第五部分：实现亮点与规划
+
+### 幻灯片 19: 技术亮点
 
 ```
-项目规划与时间线
-Project Planning & Timeline
+技术实现亮点
+Technical Highlights
 
-Part 1: 项目提案 (20%) ✓
-• Week 5 - 2024年11月17日截止
-• 问题定义、功能规划、数据模型
+🎨 Frontend Excellence:
+✓ React + React Router - SPA体验
+✓ Tailwind CSS - 响应式设计
+✓ Context API - 全局状态管理
+✓ Axios Interceptors - 统一请求处理
 
-Part 2: MVP (45%)
-• Week 12 - 2026年1月5日截止
-• 前端开发、组件实现、基础功能
+🔧 Backend Robustness:
+✓ JWT Authentication - 安全的用户认证
+✓ Mongoose Middleware - 自动更新评分
+✓ Input Validation - 数据完整性保障
+✓ Error Handling - 统一错误处理
 
-Part 3: 最终应用 (35%)
-• Week 16 - 2026年2月2日截止
-• 后端集成、数据库、高级功能(游戏化)
+🎥 Video Innovation:
+✓ Jitsi Meet集成 - 免服务器配置
+✓ 浮动小窗口 - 可拖动，多任务支持
+✓ 自动会议室ID - 唯一标识生成
+✓ 时间窗口验证 - ±15分钟弹性加入
 
-技术栈:
-Frontend: React.js + Tailwind CSS
-Backend: Node.js + Express.js
-Database: MongoDB + Mongoose
-```
-
----
-
-### 幻灯片 20: 总结
-
-```
-总结
-Summary
-
-本项目解决方案:
-✓ 解决学生找导师困难的问题
-✓ 建立可信的点对点学习平台
-✓ 提供完整的预约和评价系统
-✓ 通过游戏化提高用户参与度
-
-预期影响:
-• 提高学习效率
-• 促进学生互助文化
-• 增强学习社区归属感
-• 为学校提供学习支持数据
-
-谢谢!
-Questions?
+🤖 AI Integration:
+✓ OpenAI o1-preview - 智能推荐
+✓ 多轮对话 - 上下文理解
+✓ 代码高亮 - 技术问答支持
+✓ 历史记录 - 可追溯对话
 ```
 
 ---
 
-## 🎨 PPT设计建议
+### 幻灯片 20: 项目规划与里程碑
 
-### 整体风格:
-- **配色方案**:
-  - 主色: 蓝色 (#4F46E5) - 专业、可信
-  - 辅助色: 绿色 (#10B981) - 成功、积极
-  - 强调色: 橙色 (#F59E0B) - 重要信息
-  - 背景: 白色或浅灰色
+```
+项目规划与里程碑
+Project Timeline & Milestones
 
-- **字体**:
-  - 标题: 加粗,24-36pt
-  - 正文: 常规,16-20pt
-  - 中英文混合使用微软雅黑或思源黑体
+📅 Phase 1: Foundation (Week 1-3) ✅
+✓ 项目规划与需求分析
+✓ 数据模型设计
+✓ 技术栈选型
+✓ 开发环境搭建
 
-- **布局**:
-  - 保持一致的页眉页脚
-  - 每页内容不要过多(6-7点为宜)
-  - 使用充足的留白
+📅 Phase 2: Core Development (Week 4-8) ✅
+✓ 用户认证系统
+✓ 导师搜索与筛选
+✓ 预订管理系统
+✓ 个人资料页面
+
+📅 Phase 3: Advanced Features (Week 9-12) ✅
+✓ 视频会议集成
+✓ 评价系统
+✓ AI推荐引擎
+✓ 浮动视频窗口
+
+📅 Phase 4: Polish & Deploy (Week 13-16)
+○ 性能优化
+○ 用户测试
+○ Bug修复
+○ 部署上线
+
+🚀 Current Status: 90% Complete
+```
+
+---
+
+### 幻灯片 21: 功能完成度
+
+```
+功能完成度
+Feature Completion Status
+
+✅ Completed Features:
+1. ✅ Authentication & User Management - 100%
+2. ✅ Tutor Search & Advanced Filters - 100%
+3. ✅ Booking System - 100%
+4. ✅ Video Session (Jitsi Integration) - 100%
+5. ✅ Floating Video Window - 100%
+6. ✅ Review & Rating System - 100%
+7. ✅ AI Recommendations - 100%
+8. ✅ Dashboard with Charts - 100%
+
+🔄 In Progress:
+9. ⚙️ Messaging System - 30%
+10. ⚙️ Notification System - 50%
+
+📋 Future Enhancements:
+• Mobile App (React Native)
+• Real-time Chat (Socket.io)
+• Payment Integration
+• Advanced Analytics Dashboard
+• Multi-language Support
+```
+
+---
+
+### 幻灯片 22: 总结与展望
+
+```
+总结与展望
+Summary & Future Vision
+
+✅ What We Achieved:
+• 完整的端到端解决方案
+• 解决5个关键用户痛点
+• 8个核心功能模块
+• 现代化技术栈
+• 优秀的用户体验
+
+📊 Impact:
+• 提高学习效率 - 快速找到合适导师
+• 促进互助文化 - 鼓励知识分享
+• 增强社区归属 - 建立学习社交网络
+• 提供数据洞察 - 帮助学校了解学习需求
+
+🚀 Future Vision:
+• 扩展到更多学校
+• 支持小组辅导
+• 集成课程资源库
+• 职业指导功能
+• 校友导师网络
+
+🎯 Key Takeaway:
+Tu2tor不仅是一个预订平台，
+更是一个促进peer learning的社区生态系统。
+```
+
+---
+
+### 幻灯片 23: Q&A
+
+```
+Thank You!
+感谢聆听
+
+Questions & Answers
+问题与解答
+
+📧 Contact:
+Email: your.email@tp.edu.sg
+GitHub: github.com/yourusername/tu2tor
+
+🔗 Demo:
+Live Demo: tu2tor.vercel.app (if deployed)
+Code: github.com/yourusername/tu2tor
+
+💬 Open for Questions
+```
+
+---
+
+## 🎨 PPT设计指南
+
+### 配色方案 (基于Tu2tor实际UI):
+```css
+Primary: #6366f1 (Indigo)
+Secondary: #8b5cf6 (Purple)
+Success: #10b981 (Green)
+Warning: #f59e0b (Amber)
+Error: #ef4444 (Red)
+Background: #f9fafb (Gray-50)
+Text: #111827 (Gray-900)
+```
+
+### 字体建议:
+- 标题: **Inter Bold** 或 **Microsoft YaHei Bold** (28-36pt)
+- 正文: Inter Regular / Microsoft YaHei (16-20pt)
+- 代码: Consolas / Fira Code (14-16pt)
+
+### 布局原则:
+- 每页1个主题
+- 6-7个bullet points最多
+- 充足留白
+- 一致的页眉页脚
 
 ### 视觉元素:
-- **图标**: 使用一致的图标集(Font Awesome或Material Icons)
-- **图表**: 简洁的表格和流程图
-- **配图**: 相关的UI截图或mockup(如有)
-- **动画**: 适度使用(切换效果不要太花哨)
-
-### 每页元素:
-- **页眉**: 项目名称或学校logo
-- **页码**: 右下角
-- **每页标题**: 清晰醒目
-- **内容**: bullet points或图表
+- 图标: Lucide React icons (项目中使用的)
+- 图表: Recharts (与实际项目一致)
+- 截图: 实际项目界面截图
+- 流程图: 使用mermaid或draw.io
 
 ---
 
-## ✅ PPT检查清单
+## ✅ 提交检查清单
 
-提交前确认:
-- [ ] 封面页包含所有必需信息
+- [ ] 封面页包含所有信息
 - [ ] 学术诚信声明完整
-- [ ] AI工具使用有截图和引用
-- [ ] 问题定义至少3个关键问题
-- [ ] 项目目标包含目的、用户、价值主张
-- [ ] 功能列表详细且清晰
-- [ ] 3个页面的线框图都包含
-- [ ] 至少4个数据模型(实际5个)
+- [ ] AI工具使用有记录
+- [ ] 至少3个关键问题 (实际5个)
+- [ ] 项目目标清晰
+- [ ] 8个功能详细说明
+- [ ] 6个数据模型完整
+- [ ] 包含系统架构图
+- [ ] 添加实际项目截图
 - [ ] 文件命名正确
-- [ ] 所有文字检查无错别字
-- [ ] 图片清晰可见
-- [ ] 整体风格一致专业
+- [ ] 无拼写错误
+- [ ] 整体风格专业一致
 
 ---
 
-## 📦 提交材料
+## 📦 提交信息
 
-**文件名**: `你的姓名_学号_班级_Part1.pptx`
-**示例**: `张三_1234567D_P01_Part1.pptx`
-
-**提交位置**: LMS - "All About Assessment" 文件夹
-
-**截止日期**: Week 5, 2024年11月17日, 星期一 9:00 AM
-
-**备份**: 请在本地和云端(OneDrive/Google Drive)各保存一份
+**文件名格式:** `姓名_学号_班级_Part1.pptx`
+**提交平台:** LMS
+**截止日期:** Week 5, 2024年11月17日 9:00 AM
 
 ---
 
-## 🎯 演示技巧(如需要)
-
-如果需要演示PPT:
-1. **时间控制**: 10-15分钟,每页约30-45秒
-2. **重点突出**: 强调独特价值主张和关键功能
-3. **流畅讲解**: 提前练习2-3次
-4. **准备问答**: 预想可能的问题并准备答案
-5. **展示热情**: 对项目充满信心和热情
-
----
-
-**Part 1所有内容准备完毕!** 🎉
-
-现在你可以根据这些文档制作PPT了!
+**PPT内容准备完毕！** 🎉
+根据这个大纲制作PPT，突出Tu2tor的完整功能和技术实现！
