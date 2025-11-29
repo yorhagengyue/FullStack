@@ -46,15 +46,12 @@ const Layout = () => {
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
-        {/* Logo */}
+        {/* Logo Area Removed */}
         <div className="p-6 border-b border-gray-200">
-          <Link to="/app/dashboard" className="flex items-center space-x-3">
-            <img src="/icon.png" alt="Tu2tor" className="w-10 h-10" />
-            <div>
-              <span className="text-lg font-bold text-gray-900">Tu2tor</span>
-              <p className="text-xs text-gray-500">Student Platform</p>
-            </div>
-          </Link>
+           {/* Kept only the subtitle or removed image/brand name as requested */}
+           <Link to="/app/dashboard" className="flex flex-col">
+             <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Student Platform</span>
+           </Link>
         </div>
 
         {/* User Profile */}
