@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { useVideo } from '../../context/VideoContext';
 import JitsiMeetRoom from '../../components/session/JitsiMeetRoom';
+import CodeCollabEditor from '../../components/session/CodeCollabEditor';
 import {
   ArrowLeft,
   Clock,
@@ -15,6 +16,8 @@ import {
   Minimize,
   Minimize2,
   BookOpen,
+  Code2,
+  SplitSquareHorizontal,
 } from 'lucide-react';
 
 const SessionRoomPage = () => {
@@ -29,6 +32,7 @@ const SessionRoomPage = () => {
   const [sessionStarted, setSessionStarted] = useState(false);
   const [startTime, setStartTime] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showCodeEditor, setShowCodeEditor] = useState(false);
 
   // Fetch booking details
   useEffect(() => {
@@ -58,11 +62,12 @@ const SessionRoomPage = () => {
     if (booking.status !== 'confirmed') return false;
 
     // Check if session time is within ±15 minutes of scheduled time
-    const bookingTime = new Date(booking.date).getTime();
-    const now = Date.now();
-    const fifteenMinutes = 15 * 60 * 1000;
+    // const bookingTime = new Date(booking.date).getTime();
+    // const now = Date.now();
+    // const fifteenMinutes = 15 * 60 * 1000;
 
-    return Math.abs(now - bookingTime) <= fifteenMinutes;
+    // return Math.abs(now - bookingTime) <= fifteenMinutes;
+    return true; // Allow joining anytime for testing
   };
 
   const handleMeetingEnd = () => {
@@ -83,6 +88,10 @@ const SessionRoomPage = () => {
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
+  };
+
+  const toggleCodeEditor = () => {
+    setShowCodeEditor(!showCodeEditor);
   };
 
   const minimizeToFloating = () => {
@@ -166,9 +175,9 @@ const SessionRoomPage = () => {
 
       {/* Main Video Content */}
       <div className={`${isFullscreen ? 'h-full' : 'max-w-[1920px] mx-auto p-6'}`}>
-        <div className={`${isFullscreen ? 'h-full' : 'h-[calc(100vh-180px)]'} relative`}>
+        <div className={`${isFullscreen ? 'h-full' : 'h-[calc(100vh-180px)]'} relative flex gap-4`}>
           {/* Video Window */}
-          <div className={`bg-black ${isFullscreen ? 'h-full' : 'h-full rounded-lg'} overflow-hidden relative`}>
+          <div className={`bg-black ${isFullscreen ? 'h-full' : 'h-full rounded-lg'} overflow-hidden relative ${showCodeEditor ? 'w-1/2' : 'w-full'} transition-all duration-300`}>
             {sessionStarted ? (
               <>
                 <div className="h-full w-full">
@@ -181,6 +190,13 @@ const SessionRoomPage = () => {
 
                 {/* Floating controls */}
                 <div className="absolute top-4 right-4 flex gap-2 z-10">
+                  <button
+                    onClick={toggleCodeEditor}
+                    className={`p-3 ${showCodeEditor ? 'bg-indigo-600' : 'bg-black/70'} hover:bg-indigo-700 text-white rounded-lg transition-colors backdrop-blur-sm`}
+                    title={showCodeEditor ? 'Hide code editor' : 'Show code editor'}
+                  >
+                    {showCodeEditor ? <SplitSquareHorizontal className="w-5 h-5" /> : <Code2 className="w-5 h-5" />}
+                  </button>
                   <button
                     onClick={minimizeToFloating}
                     className="p-3 bg-black/70 hover:bg-black/90 text-white rounded-lg transition-colors backdrop-blur-sm"
@@ -208,7 +224,7 @@ const SessionRoomPage = () => {
                 </div>
               </>
             ) : (
-              <div className="h-full bg-gradient-to-br from-primary-600 to-purple-600 flex items-center justify-center">
+              <div className="h-full bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center">
                 <div className="text-center text-white">
                   <Video className="w-24 h-24 mx-auto mb-6 opacity-90" />
                   <h2 className="text-3xl font-bold mb-4">Ready to Join?</h2>
@@ -236,9 +252,22 @@ const SessionRoomPage = () => {
             )}
           </div>
 
-          {/* Session Info - Below video */}
+          {/* Code Editor Panel */}
+          {showCodeEditor && sessionStarted && (
+            <div className={`${isFullscreen ? 'h-full' : 'h-full rounded-lg'} w-1/2 overflow-hidden`}>
+              <CodeCollabEditor
+                bookingId={bookingId}
+                language={booking.subject?.toLowerCase().includes('python') ? 'python' : 'javascript'}
+                username={user?.username || 'Guest'}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Session Info - Below video */}
+        <div className="mt-4">
           {!isFullscreen && (
-            <div className="mt-4 bg-gray-800 rounded-lg p-4">
+            <div className="bg-gray-800 rounded-lg p-4">
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2 text-gray-300">

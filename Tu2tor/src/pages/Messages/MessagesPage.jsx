@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { MessageSquare, Send, Search, MoreVertical, User, Paperclip, Smile } from 'lucide-react';
 
 const MessagesPage = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const { tutors, bookings, sendMessage, getConversation, getUnreadCount, getLastMessage, markConversationAsRead } = useApp();
   const [selectedChat, setSelectedChat] = useState(null);
   const [messageInput, setMessageInput] = useState('');
@@ -37,6 +39,37 @@ const MessagesPage = () => {
   }).filter((contact, index, self) =>
     index === self.findIndex(c => c.id === contact.id)
   ).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); // Sort by most recent
+
+  // Handle auto-selection from navigation
+  useEffect(() => {
+    if (location.state?.selectedContactId) {
+      const contactId = location.state.selectedContactId;
+      const existingContact = contacts.find(c => c.id === contactId);
+
+      if (existingContact) {
+        handleSelectChat(existingContact);
+      } else {
+        // If not in contacts (e.g. new chat with tutor), try to find in tutors list
+        const tutor = tutors.find(t => t.userId === contactId);
+
+        if (tutor) {
+          const newContact = {
+            id: tutor.userId,
+            name: tutor.username,
+            lastMessage: 'Start a conversation...',
+            timestamp: new Date().toISOString(),
+            unread: 0,
+            avatar: tutor.username.charAt(0).toUpperCase(),
+            online: true // Assume online for now
+          };
+          setSelectedChat(newContact);
+        }
+      }
+
+      // Clear state to prevent re-selection on re-render (optional but good practice)
+      // window.history.replaceState({}, document.title);
+    }
+  }, [location.state, tutors]); // Depend on tutors to ensure we can find them if loaded late
 
   const filteredContacts = contacts.filter(contact =>
     contact.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -102,9 +135,8 @@ const MessagesPage = () => {
               <button
                 key={contact.id}
                 onClick={() => handleSelectChat(contact)}
-                className={`w-full p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors text-left ${
-                  selectedChat?.id === contact.id ? 'bg-primary-50 border-l-4 border-l-primary-600' : ''
-                }`}
+                className={`w-full p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors text-left ${selectedChat?.id === contact.id ? 'bg-primary-50 border-l-4 border-l-primary-600' : ''
+                  }`}
               >
                 <div className="flex items-center space-x-3">
                   <div className="relative">
@@ -181,11 +213,10 @@ const MessagesPage = () => {
                       >
                         <div className={`max-w-[70%] ${isSent ? 'order-2' : 'order-1'}`}>
                           <div
-                            className={`px-4 py-2 rounded-2xl ${
-                              isSent
-                                ? 'bg-primary-600 text-white'
-                                : 'bg-white text-gray-900 border border-gray-200'
-                            }`}
+                            className={`px-4 py-2 rounded-2xl ${isSent
+                              ? 'bg-primary-600 text-white'
+                              : 'bg-white text-gray-900 border border-gray-200'
+                              }`}
                           >
                             <p className="text-sm break-words">{message.content}</p>
                           </div>
@@ -210,7 +241,7 @@ const MessagesPage = () => {
                     </p>
                     <div className="bg-white p-4 rounded-lg border border-gray-200 text-left">
                       <p className="text-sm text-gray-600 mb-2">
-                        <strong>💡 Tips for messaging:</strong>
+                        <strong>Tips for messaging:</strong>
                       </p>
                       <ul className="text-xs text-gray-500 space-y-1">
                         <li>• Be clear about your learning goals</li>

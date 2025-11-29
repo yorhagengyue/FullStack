@@ -169,11 +169,10 @@ const TutorDetailPage = () => {
                 <div
                   key={subject.code}
                   onClick={() => setSelectedSubject(subject.code)}
-                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                    selectedSubject === subject.code
+                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${selectedSubject === subject.code
                       ? 'border-primary-500 bg-primary-50'
                       : 'border-gray-200 hover:border-primary-300'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -260,9 +259,8 @@ const TutorDetailPage = () => {
                           {[...Array(5)].map((_, i) => (
                             <Star
                               key={i}
-                              className={`w-4 h-4 ${
-                                i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
-                              }`}
+                              className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+                                }`}
                             />
                           ))}
                         </div>
@@ -331,17 +329,19 @@ const TutorDetailPage = () => {
             <button
               onClick={handleBookSession}
               disabled={!selectedSubject}
-              className={`w-full py-3 rounded-lg font-semibold transition-colors mb-3 ${
-                selectedSubject
+              className={`w-full py-3 rounded-lg font-semibold transition-colors mb-3 ${selectedSubject
                   ? 'bg-primary-600 hover:bg-primary-700 text-white'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
+                }`}
             >
               Book Session
             </button>
 
             {/* Message Button */}
-            <button className="w-full py-3 border-2 border-gray-300 hover:border-primary-500 rounded-lg font-semibold text-gray-700 hover:text-primary-600 transition-colors flex items-center justify-center">
+            <button
+              onClick={() => navigate('/app/messages', { state: { selectedContactId: tutor.userId } })}
+              className="w-full py-3 border-2 border-gray-300 hover:border-primary-500 rounded-lg font-semibold text-gray-700 hover:text-primary-600 transition-colors flex items-center justify-center"
+            >
               <MessageSquare className="w-5 h-5 mr-2" />
               Send Message
             </button>

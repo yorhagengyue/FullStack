@@ -207,11 +207,10 @@ const ReviewSubmitPage = () => {
                   className="transition-transform hover:scale-110"
                 >
                   <Star
-                    className={`w-12 h-12 ${
-                      value <= (hoveredRating || rating)
+                    className={`w-12 h-12 ${value <= (hoveredRating || rating)
                         ? 'text-yellow-400 fill-yellow-400'
                         : 'text-gray-300'
-                    }`}
+                      }`}
                   />
                 </button>
               ))}
@@ -221,8 +220,8 @@ const ReviewSubmitPage = () => {
             </div>
             {rating > 0 && (
               <p className="mt-2 text-sm text-gray-600">
-                {rating === 5 && 'Excellent! 🌟'}
-                {rating === 4 && 'Great session! 👍'}
+                {rating === 5 && 'Excellent!'}
+                {rating === 4 && 'Great session!'}
                 {rating === 3 && 'Good session'}
                 {rating === 2 && 'Could be better'}
                 {rating === 1 && 'Poor experience'}
@@ -262,11 +261,10 @@ const ReviewSubmitPage = () => {
                   key={tag}
                   type="button"
                   onClick={() => handleTagToggle(tag)}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
-                    selectedTags.includes(tag)
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${selectedTags.includes(tag)
                       ? 'bg-primary-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                    }`}
                 >
                   {tag}
                 </button>

@@ -450,7 +450,7 @@ const AIChat = () => {
         <div className="border-b border-gray-200 px-6 py-4 bg-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-r from-primary-600 to-purple-600 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-r from-primary-600 to-primary-700 rounded-full flex items-center justify-center">
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -547,16 +547,14 @@ const AIChat = () => {
                 {messages.map((message, index) => (
                   <div
                     key={index}
-                    className={`flex items-start space-x-4 ${
-                      message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-                    }`}
+                    className={`flex items-start space-x-4 ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
+                      }`}
                   >
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        message.role === 'user'
+                      className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${message.role === 'user'
                           ? 'bg-primary-600'
-                          : 'bg-gradient-to-r from-primary-600 to-purple-600'
-                      }`}
+                          : 'bg-gradient-to-r from-primary-600 to-primary-700'
+                        }`}
                     >
                       {message.role === 'user' ? (
                         <User className="w-6 h-6 text-white" />
@@ -566,18 +564,16 @@ const AIChat = () => {
                     </div>
                     <div className={`flex-1 ${message.role === 'user' ? 'text-right' : 'text-left'}`}>
                       <div
-                        className={`inline-block max-w-full ${
-                          message.role === 'user' ? 'text-right' : 'text-left'
-                        }`}
+                        className={`inline-block max-w-full ${message.role === 'user' ? 'text-right' : 'text-left'
+                          }`}
                       >
                         <div
-                          className={`px-6 py-4 rounded-2xl ${
-                            message.role === 'user'
+                          className={`px-6 py-4 rounded-2xl ${message.role === 'user'
                               ? 'bg-primary-600 text-white'
                               : message.isError
-                              ? 'bg-red-50 text-red-900 border border-red-200'
-                              : 'bg-gray-100 text-gray-900'
-                          }`}
+                                ? 'bg-red-50 text-red-900 border border-red-200'
+                                : 'bg-gray-100 text-gray-900'
+                            }`}
                         >
                           {message.role === 'user' ? (
                             <div className="space-y-2">
@@ -623,8 +619,8 @@ const AIChat = () => {
                             <>
                               <span>•</span>
                               <span className="flex items-center space-x-1">
-                                <Sparkles className="w-3 h-3 text-purple-500" />
-                                <span className="text-purple-600 font-medium">
+                                <Sparkles className="w-3 h-3 text-primary-500" />
+                                <span className="text-primary-600 font-medium">
                                   {message.reasoningTokens.toLocaleString()} reasoning tokens
                                 </span>
                               </span>
@@ -645,7 +641,7 @@ const AIChat = () => {
                 {/* Streaming message */}
                 {isTyping && streamingContent && (
                   <div className="flex items-start space-x-4">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-r from-primary-600 to-purple-600">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-r from-primary-600 to-primary-700">
                       <Bot className="w-6 h-6 text-white" />
                     </div>
                     <div className="flex-1">
@@ -668,7 +664,7 @@ const AIChat = () => {
                 {/* Typing indicator */}
                 {isTyping && !streamingContent && (
                   <div className="flex items-start space-x-4">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-r from-primary-600 to-purple-600">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-r from-primary-600 to-primary-700">
                       <Bot className="w-6 h-6 text-white" />
                     </div>
                     <div className="px-6 py-4 rounded-2xl bg-gray-100">
@@ -679,7 +675,7 @@ const AIChat = () => {
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
                         </div>
                         {thinkingMode && (
-                          <div className="flex items-center space-x-1 text-purple-600">
+                          <div className="flex items-center space-x-1 text-primary-600">
                             <Sparkles className="w-4 h-4 animate-pulse" />
                             <span className="text-xs font-medium">Deep reasoning...</span>
                           </div>
@@ -703,14 +699,12 @@ const AIChat = () => {
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => setThinkingMode(!thinkingMode)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    thinkingMode ? 'bg-primary-600' : 'bg-gray-300'
-                  }`}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${thinkingMode ? 'bg-primary-600' : 'bg-gray-300'
+                    }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      thinkingMode ? 'translate-x-6' : 'translate-x-1'
-                    }`}
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${thinkingMode ? 'translate-x-6' : 'translate-x-1'
+                      }`}
                   />
                 </button>
                 <div className="flex items-center space-x-2">

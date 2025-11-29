@@ -14,6 +14,7 @@ dotenv.config({ path: join(__dirname, '../../.env') });
 import User from '../models/User.js';
 import Tutor from '../models/Tutor.js';
 import Booking from '../models/Booking.js';
+import Review from '../models/Review.js';
 
 const seedDatabase = async () => {
   try {
@@ -28,6 +29,7 @@ const seedDatabase = async () => {
     await User.deleteMany({});
     await Tutor.deleteMany({});
     await Booking.deleteMany({});
+    await Review.deleteMany({});
     console.log('✅ Existing data cleared');
 
     // Create Users (Students & Tutors)
@@ -566,10 +568,10 @@ const seedDatabase = async () => {
         userId: tutorUsers[9]._id, // maya_tutor
         bio: 'AI and Machine Learning specialist. Passionate about data science, Python, and neural networks.',
         subjects: [
-          { code: 'AI101', name: 'Artificial Intelligence Fundamentals', grade: 'A+' },
-          { code: 'ML201', name: 'Machine Learning', grade: 'A+' },
-          { code: 'DS301', name: 'Data Science', grade: 'A+' },
-          { code: 'PY201', name: 'Advanced Python', grade: 'A+' },
+          { code: 'IOT', name: 'Internet of Things', grade: 'A+' },
+          { code: 'ADEV', name: 'Advanced Development', grade: 'A+' },
+          { code: 'FULL-stack', name: 'Full Stack Development', grade: 'A+' },
+          { code: 'DBAV', name: 'Database and Advanced Visualization', grade: 'A+' },
         ],
         hourlyRate: 45,
         availableSlots: [
@@ -577,7 +579,7 @@ const seedDatabase = async () => {
           { day: 'Thursday', startTime: '19:00', endTime: '22:00' },
           { day: 'Saturday', startTime: '14:00', endTime: '18:00' },
         ],
-        preferredLocations: ['Online', 'TP IT Lab', 'Starbucks @ TP'],
+        preferredLocations: ['Online', 'TP IT Lab', 'IIT-pixel X'],
         averageRating: 4.95,
         totalReviews: 32,
         totalSessions: 75,
@@ -757,19 +759,19 @@ const seedDatabase = async () => {
       {
         studentId: students[0]._id, // alice
         tutorId: tutors[0]._id, // bob
-        subject: 'CS101',
+        subject: 'DBAV',
         date: new Date('2025-10-15T14:00:00'),
         timeSlot: '14:00-15:00',
         duration: 1,
         location: 'TP Library',
         status: 'completed',
         cost: 25,
-        notes: 'Help with sorting algorithms',
+        notes: 'Help with database optimization',
       },
       {
         studentId: students[0]._id, // alice
         tutorId: tutors[1]._id, // emily
-        subject: 'MATH101',
+        subject: 'NECT',
         date: new Date('2025-10-20T13:00:00'),
         timeSlot: '13:00-15:00',
         duration: 2,
@@ -777,7 +779,7 @@ const seedDatabase = async () => {
         sessionType: 'online',
         status: 'completed',
         cost: 60,
-        notes: 'Calculus review for midterm',
+        notes: 'Network technology review for midterm',
       },
       {
         studentId: students[1]._id, // charlie
@@ -809,7 +811,7 @@ const seedDatabase = async () => {
       {
         studentId: students[0]._id, // alice
         tutorId: tutors[4]._id, // henry
-        subject: 'WEB201 - Video Test Session',
+        subject: 'ADEV - Video Test Session',
         date: new Date(), // Current time
         timeSlot: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
         duration: 1,
@@ -822,7 +824,7 @@ const seedDatabase = async () => {
       {
         studentId: students[0]._id, // alice
         tutorId: tutors[4]._id, // henry
-        subject: 'WEB201',
+        subject: 'FULL-stack',
         date: new Date('2025-11-10T15:00:00'),
         timeSlot: '15:00-17:00',
         duration: 2,
@@ -830,7 +832,7 @@ const seedDatabase = async () => {
         sessionType: 'online',
         status: 'confirmed',
         cost: 70,
-        notes: 'React hooks and state management',
+        notes: 'Full stack development and deployment',
       },
       {
         studentId: students[1]._id, // charlie
@@ -860,7 +862,7 @@ const seedDatabase = async () => {
       {
         studentId: students[0]._id, // alice
         tutorId: tutors[2]._id, // frank
-        subject: 'BUS101',
+        subject: 'IOT',
         date: new Date('2025-11-15T18:00:00'),
         timeSlot: '18:00-19:00',
         duration: 1,
@@ -868,7 +870,7 @@ const seedDatabase = async () => {
         sessionType: 'online',
         status: 'pending',
         cost: 28,
-        notes: 'Business strategy concepts',
+        notes: 'Internet of Things fundamentals',
       },
       {
         studentId: students[1]._id, // charlie
@@ -1075,11 +1077,147 @@ const seedDatabase = async () => {
 
     console.log(`✅ Created ${bookings.length} bookings`);
 
+    // Create Reviews
+    console.log('⭐ Creating reviews...');
+
+    const reviews = await Review.insertMany([
+      // Alice's review for bob (DBAV session)
+      {
+        bookingId: bookings[0]._id,
+        tutorId: tutorUsers[0]._id, // bob
+        studentId: students[0]._id, // alice
+        rating: 5,
+        comment: 'Excellent tutor! Bob explained database optimization concepts very clearly and patiently. The session was well-structured and I learned a lot about query performance.',
+        tags: ['Clear Explanations', 'Patient', 'Knowledgeable'],
+        isAnonymous: false,
+        isVerified: true,
+        helpfulCount: 3,
+        createdAt: new Date('2025-10-15T16:00:00'),
+      },
+      // Alice's review for emily (NECT session)
+      {
+        bookingId: bookings[1]._id,
+        tutorId: tutorUsers[1]._id, // emily
+        studentId: students[0]._id, // alice
+        rating: 5,
+        comment: 'Emily is an amazing tutor! She made network technology easy to understand and provided great real-world examples. Highly recommend!',
+        tags: ['Clear Explanations', 'Great Examples', 'Knowledgeable'],
+        isAnonymous: false,
+        isVerified: true,
+        helpfulCount: 5,
+        tutorResponse: 'Thank you Alice! It was great working with you. Keep up the excellent work!',
+        tutorResponseDate: new Date('2025-10-21T10:00:00'),
+        createdAt: new Date('2025-10-20T17:00:00'),
+      },
+      // Charlie's review for frank (ACC101 session)
+      {
+        bookingId: bookings[2]._id,
+        tutorId: tutorUsers[2]._id, // frank
+        studentId: students[1]._id, // charlie
+        rating: 4,
+        comment: 'Frank was helpful with accounting fundamentals. Good session overall, though I wished we had more practice problems.',
+        tags: ['Knowledgeable', 'Helpful Materials'],
+        isAnonymous: false,
+        isVerified: true,
+        helpfulCount: 2,
+        createdAt: new Date('2025-10-18T20:00:00'),
+      },
+      // Diana's review for grace (ENG201 session)
+      {
+        bookingId: bookings[3]._id,
+        tutorId: tutorUsers[3]._id, // grace
+        studentId: students[2]._id, // diana
+        rating: 5,
+        comment: 'Grace is incredibly patient and thorough! She helped me understand circuit analysis step by step. Great tutor!',
+        tags: ['Patient', 'Clear Explanations', 'Knowledgeable'],
+        isAnonymous: false,
+        isVerified: true,
+        helpfulCount: 4,
+        createdAt: new Date('2025-10-22T14:00:00'),
+      },
+      // Edward's review for henry (WEB101 session)
+      {
+        bookingId: bookings[10]._id,
+        tutorId: tutorUsers[4]._id, // henry
+        studentId: students[3]._id, // edward
+        rating: 5,
+        comment: 'Henry is a fantastic web development tutor! Very knowledgeable about HTML, CSS, and JavaScript. Explained everything clearly.',
+        tags: ['Clear Explanations', 'Knowledgeable', 'Well Prepared'],
+        isAnonymous: false,
+        isVerified: true,
+        helpfulCount: 6,
+        tutorResponse: 'Thanks Edward! Happy to help anytime. Good luck with your projects!',
+        tutorResponseDate: new Date('2025-10-26T09:00:00'),
+        createdAt: new Date('2025-10-25T18:00:00'),
+      },
+      // Fiona's review for iris (DES101 session)
+      {
+        bookingId: bookings[11]._id,
+        tutorId: tutorUsers[5]._id, // iris
+        studentId: students[4]._id, // fiona
+        rating: 5,
+        comment: 'Iris is an excellent design tutor! She really helped me understand design principles and color theory. Her examples were spot on and very practical.',
+        tags: ['Clear Explanations', 'Great Examples', 'Engaging'],
+        isAnonymous: false,
+        isVerified: true,
+        helpfulCount: 7,
+        tutorResponse: 'Thank you so much Fiona! Really enjoyed our session. Keep creating!',
+        tutorResponseDate: new Date('2025-10-20T11:00:00'),
+        createdAt: new Date('2025-10-19T18:00:00'),
+      },
+      // George's review for leo (ECON101 session)
+      {
+        bookingId: bookings[12]._id,
+        tutorId: tutorUsers[8]._id, // leo
+        studentId: students[5]._id, // george
+        rating: 4,
+        comment: 'Leo knows his economics well. He explained supply and demand concepts clearly with good real-world examples. Would have liked more practice questions though.',
+        tags: ['Knowledgeable', 'Great Examples', 'Well Prepared'],
+        isAnonymous: false,
+        isVerified: true,
+        helpfulCount: 3,
+        createdAt: new Date('2025-10-21T15:00:00'),
+      },
+      // Hannah's review for grace (ENG101 session)
+      {
+        bookingId: bookings[13]._id,
+        tutorId: tutorUsers[3]._id, // grace
+        studentId: students[6]._id, // hannah
+        rating: 5,
+        comment: 'Grace is amazing! So patient and thorough with explaining statics and force diagrams. She made sure I understood each concept before moving on. Highly recommend!',
+        tags: ['Patient', 'Clear Explanations', 'Encouraging'],
+        isAnonymous: false,
+        isVerified: true,
+        helpfulCount: 8,
+        tutorResponse: 'Thank you Hannah! You worked really hard in our session. Keep it up!',
+        tutorResponseDate: new Date('2025-10-18T09:00:00'),
+        createdAt: new Date('2025-10-17T14:00:00'),
+      },
+      // Ivan's review for jack (NET101 session)
+      {
+        bookingId: bookings[14]._id,
+        tutorId: tutorUsers[6]._id, // jack
+        studentId: students[7]._id, // ivan
+        rating: 5,
+        comment: 'Jack is excellent at teaching networking! His explanations of TCP/IP and network layers were crystal clear. He also provided great study materials and practice questions.',
+        tags: ['Clear Explanations', 'Helpful Materials', 'Knowledgeable'],
+        isAnonymous: false,
+        isVerified: true,
+        helpfulCount: 9,
+        tutorResponse: 'Great to hear Ivan! You asked excellent questions during the session. Best of luck!',
+        tutorResponseDate: new Date('2025-10-24T10:00:00'),
+        createdAt: new Date('2025-10-23T20:00:00'),
+      },
+    ]);
+
+    console.log(`✅ Created ${reviews.length} reviews`);
+
     console.log('\n🎉 Database seeding completed successfully!');
     console.log('\n📊 Summary:');
     console.log(`   Users: ${users.length} (${students.length} students, ${tutorUsers.length} tutors)`);
     console.log(`   Tutor Profiles: ${tutors.length}`);
     console.log(`   Bookings: ${bookings.length}`);
+    console.log(`   Reviews: ${reviews.length}`);
     console.log('\n🔐 Login credentials:');
     console.log('   All users: password123');
     console.log('   Students: alice@tp.edu.sg, charlie@tp.edu.sg, diana@tp.edu.sg, edward@tp.edu.sg, fiona@tp.edu.sg, george@tp.edu.sg, hannah@tp.edu.sg, ivan@tp.edu.sg');

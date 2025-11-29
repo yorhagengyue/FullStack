@@ -123,31 +123,31 @@ export const RECOMMENDATION_REASONS = {
   TIME_MATCH: {
     key: 'time_match',
     label: 'Time Match',
-    icon: '⏰',
+    icon: '',
     color: 'bg-blue-100 text-blue-700'
   },
   HIGH_RATING: {
     key: 'high_rating',
     label: 'High Rating',
-    icon: '⭐',
+    icon: '',
     color: 'bg-yellow-100 text-yellow-700'
   },
   FAST_RESPONSE: {
     key: 'fast_response',
     label: 'Fast Response',
-    icon: '🚀',
+    icon: '',
     color: 'bg-green-100 text-green-700'
   },
   SAME_SCHOOL: {
     key: 'same_school',
     label: 'Same School',
-    icon: '🏫',
-    color: 'bg-purple-100 text-purple-700'
+    icon: '',
+    color: 'bg-teal-100 text-teal-700'
   },
   ACTIVE_TUTOR: {
     key: 'active_tutor',
     label: 'Active Tutor',
-    icon: '🔥',
+    icon: '',
     color: 'bg-orange-100 text-orange-700'
   }
 };

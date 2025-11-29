@@ -52,9 +52,9 @@ const NotificationsPage = () => {
           title: `Booking ${booking.status}`,
           message: `Your session for ${booking.subject} has been ${booking.status}`,
           icon: booking.status === 'confirmed' ? 'CheckCircle' :
-                booking.status === 'cancelled' ? 'AlertCircle' : 'Calendar',
+            booking.status === 'cancelled' ? 'AlertCircle' : 'Calendar',
           color: booking.status === 'confirmed' ? 'green' :
-                 booking.status === 'cancelled' ? 'red' : 'yellow'
+            booking.status === 'cancelled' ? 'red' : 'yellow'
         });
       }
     });
@@ -81,8 +81,8 @@ const NotificationsPage = () => {
     ...notif,
     time: new Date(notif.timestamp),
     icon: notif.icon === 'CheckCircle' ? CheckCircle :
-          notif.icon === 'AlertCircle' ? AlertCircle :
-          notif.icon === 'Calendar' ? Calendar :
+      notif.icon === 'AlertCircle' ? AlertCircle :
+        notif.icon === 'Calendar' ? Calendar :
           notif.icon === 'Star' ? Star : Bell
   }));
 
@@ -166,16 +166,14 @@ const NotificationsPage = () => {
           <button
             key={f.id}
             onClick={() => setFilter(f.id)}
-            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-              filter === f.id
+            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${filter === f.id
                 ? 'bg-primary-600 text-white'
                 : 'text-gray-600 hover:bg-gray-100'
-            }`}
+              }`}
           >
             {f.label}
-            <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
-              filter === f.id ? 'bg-white/20' : 'bg-gray-200'
-            }`}>
+            <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${filter === f.id ? 'bg-white/20' : 'bg-gray-200'
+              }`}>
               {f.count}
             </span>
           </button>
@@ -205,9 +203,8 @@ const NotificationsPage = () => {
               <div
                 key={notification.id}
                 onClick={() => handleNotificationClick(notification.id)}
-                className={`bg-white rounded-xl border ${
-                  notification.read ? 'border-gray-200' : 'border-primary-300 bg-primary-50/30'
-                } p-5 hover:shadow-md transition-all cursor-pointer`}
+                className={`bg-white rounded-xl border ${notification.read ? 'border-gray-200' : 'border-primary-300 bg-primary-50/30'
+                  } p-5 hover:shadow-md transition-all cursor-pointer`}
               >
                 <div className="flex items-start space-x-4">
                   <div className={`p-3 ${bgColor} rounded-full flex-shrink-0`}>
@@ -253,7 +250,7 @@ const NotificationsPage = () => {
       )}
 
       {/* Notification Settings */}
-      <div className="bg-gradient-to-r from-primary-500 to-purple-600 rounded-xl p-6 text-white">
+      <div className="bg-gradient-to-r from-primary-500 to-primary-700 rounded-xl p-6 text-white">
         <h3 className="text-lg font-bold mb-2">Notification Preferences</h3>
         <p className="text-primary-100 mb-4">
           Customize how you receive updates about your tutoring activities

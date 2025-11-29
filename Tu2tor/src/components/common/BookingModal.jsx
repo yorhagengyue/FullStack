@@ -69,7 +69,7 @@ const BookingModal = ({ isOpen, onClose, tutor, subject, onSubmit }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-fadeIn">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-scaleIn">
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-primary-600 to-purple-600 p-6 text-white">
+        <div className="sticky top-0 bg-gradient-to-r from-primary-600 to-primary-700 p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold mb-1">Book a Session</h2>

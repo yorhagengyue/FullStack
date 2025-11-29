@@ -253,7 +253,7 @@ const BookingPage = () => {
             </div>
 
             {/* Quick Stats */}
-            <div className="mt-6 p-4 bg-gradient-to-br from-primary-50 to-purple-50 rounded-lg border border-primary-100">
+            <div className="mt-6 p-4 bg-gradient-to-br from-primary-50 to-teal-50 rounded-lg border border-primary-100">
               <h3 className="text-sm font-semibold text-gray-900 mb-3">Quick Stats</h3>
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
@@ -300,194 +300,198 @@ const BookingPage = () => {
                   : null;
 
                 return (
-                <div
-                  key={booking.bookingId}
-                  className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col"
-                >
-                  {/* Card Header - Visual Area */}
-                  <div className="relative bg-gradient-to-br from-primary-500 to-purple-600 p-6 h-32">
-                    <div className="absolute top-4 right-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusBadge(booking.status)} backdrop-blur-sm`}>
-                        {booking.status}
-                      </span>
-                    </div>
-                    <div className="absolute bottom-4 left-4">
-                      <div className="flex items-center space-x-2">
-                        {getStatusIcon(booking.status)}
-                        <h3 className="text-xl font-bold text-white">{booking.subject}</h3>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Card Body */}
-                  <div className="p-5 flex-1 flex flex-col">
-                    {/* Tutor/Student Info */}
-                    <div className="flex items-center space-x-3 mb-4 pb-4 border-b border-gray-100">
-                      <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-white font-bold text-sm">
-                          {isStudent
-                            ? otherParty?.username?.charAt(0).toUpperCase()
-                            : booking.studentId?.charAt(0).toUpperCase()}
+                  <div
+                    key={booking.bookingId}
+                    className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col"
+                  >
+                    {/* Card Header - Visual Area */}
+                    <div className="relative bg-gradient-to-br from-primary-500 to-primary-700 p-6 h-32">
+                      <div className="absolute top-4 right-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusBadge(booking.status)} backdrop-blur-sm`}>
+                          {booking.status}
                         </span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs text-gray-500 mb-0.5">
-                          {isStudent ? 'Tutor' : 'Student'}
-                        </p>
-                        <p className="font-semibold text-gray-900 truncate">
-                          {isStudent ? otherParty?.username : booking.studentId}
-                        </p>
+                      <div className="absolute bottom-4 left-4">
+                        <div className="flex items-center space-x-2">
+                          {getStatusIcon(booking.status)}
+                          <h3 className="text-xl font-bold text-white">{booking.subject}</h3>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Session Details */}
-                    <div className="space-y-3 mb-4 flex-1">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Calendar className="w-4 h-4 mr-3 text-primary-600 flex-shrink-0" />
-                        <span className="font-medium">
-                          {new Date(booking.date).toLocaleDateString('en-US', {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric'
-                          })}
-                        </span>
+                    {/* Card Body */}
+                    <div className="p-5 flex-1 flex flex-col">
+                      {/* Tutor/Student Info */}
+                      <div className="flex items-center space-x-3 mb-4 pb-4 border-b border-gray-100">
+                        <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-white font-bold text-sm">
+                            {isStudent
+                              ? otherParty?.username?.charAt(0).toUpperCase()
+                              : booking.studentId?.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-gray-500 mb-0.5">
+                            {isStudent ? 'Tutor' : 'Student'}
+                          </p>
+                          <p className="font-semibold text-gray-900 truncate">
+                            {isStudent ? otherParty?.username : booking.studentId}
+                          </p>
+                        </div>
                       </div>
 
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Clock className="w-4 h-4 mr-3 text-primary-600 flex-shrink-0" />
-                        <span>{booking.timeSlot}</span>
+                      {/* Session Details */}
+                      <div className="space-y-3 mb-4 flex-1">
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Calendar className="w-4 h-4 mr-3 text-primary-600 flex-shrink-0" />
+                          <span className="font-medium">
+                            {new Date(booking.date).toLocaleDateString('en-US', {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Clock className="w-4 h-4 mr-3 text-primary-600 flex-shrink-0" />
+                          <span>{booking.timeSlot}</span>
+                        </div>
+
+                        <div className="flex items-center text-sm text-gray-600">
+                          <MapPin className="w-4 h-4 mr-3 text-primary-600 flex-shrink-0" />
+                          <span className="truncate">{booking.location}</span>
+                        </div>
                       </div>
 
-                      <div className="flex items-center text-sm text-gray-600">
-                        <MapPin className="w-4 h-4 mr-3 text-primary-600 flex-shrink-0" />
-                        <span className="truncate">{booking.location}</span>
-                      </div>
-                    </div>
-
-                    {/* Notes */}
-                    {booking.notes && (
-                      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                        <p className="text-xs text-gray-700 line-clamp-2">{booking.notes}</p>
-                      </div>
-                    )}
-
-                    {/* Actions */}
-                    <div className="space-y-2 mt-auto">
-                      {booking.status === 'pending' && (
-                        <>
-                          {!isStudent && (
-                            <button
-                              onClick={() => updateBooking(booking.bookingId, { status: 'confirmed' })}
-                              className="w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold text-sm transition-colors"
-                            >
-                              Confirm Session
-                            </button>
-                          )}
-                          <button
-                            onClick={() => handleCancelBooking(booking.bookingId)}
-                            className="w-full py-2.5 border-2 border-gray-300 hover:border-red-500 hover:bg-red-50 text-gray-700 hover:text-red-600 rounded-lg font-semibold text-sm transition-colors"
-                          >
-                            Cancel
-                          </button>
-                        </>
+                      {/* Notes */}
+                      {booking.notes && (
+                        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-700 line-clamp-2">{booking.notes}</p>
+                        </div>
                       )}
 
-                      {booking.status === 'confirmed' && (
-                        <>
-                          {booking.sessionType === 'online' && (
-                            <Link
-                              to={`/app/session/${booking._id || booking.bookingId}`}
-                              className="w-full py-2.5 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white rounded-lg font-semibold text-sm transition-colors flex items-center justify-center"
-                            >
-                              <Video className="w-4 h-4 mr-2" />
-                              Join Video Session
-                            </Link>
-                          )}
-                          <button
-                            onClick={() => handleCompleteBooking(booking.bookingId)}
-                            className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm transition-colors"
-                          >
-                            Mark Complete
-                          </button>
-                          <div className={`grid ${isStudent ? 'grid-cols-2' : 'grid-cols-1'} gap-2`}>
-                            <button
-                              key="message-btn"
-                              className="py-2 border border-gray-300 hover:border-primary-500 rounded-lg font-medium text-gray-700 hover:text-primary-600 text-xs transition-colors flex items-center justify-center"
-                            >
-                              <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
-                              Message
-                            </button>
-                            {isStudent && (
-                              <Link
-                                key="profile-link"
-                                to={`/app/tutor/${booking.tutorId}`}
-                                className="py-2 border border-gray-300 hover:border-primary-500 rounded-lg font-medium text-gray-700 hover:text-primary-600 text-xs transition-colors flex items-center justify-center"
+                      {/* Actions */}
+                      <div className="space-y-2 mt-auto">
+                        {booking.status === 'pending' && (
+                          <>
+                            {!isStudent && (
+                              <button
+                                onClick={() => updateBooking(booking.bookingId, { status: 'confirmed' })}
+                                className="w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold text-sm transition-colors"
                               >
-                                <User className="w-3.5 h-3.5 mr-1.5" />
-                                Profile
+                                Confirm Session
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleCancelBooking(booking.bookingId)}
+                              className="w-full py-2.5 border-2 border-gray-300 hover:border-red-500 hover:bg-red-50 text-gray-700 hover:text-red-600 rounded-lg font-semibold text-sm transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        )}
+
+                        {booking.status === 'confirmed' && (
+                          <>
+                            {(booking.sessionType === 'online' || booking.location?.toLowerCase().includes('online') || booking.location?.toLowerCase().includes('zoom')) && (
+                              <Link
+                                to={`/app/session/${booking._id || booking.bookingId}`}
+                                className="w-full py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white rounded-lg font-semibold text-sm transition-colors flex items-center justify-center"
+                              >
+                                <Video className="w-4 h-4 mr-2" />
+                                Join Video Session
                               </Link>
                             )}
-                          </div>
-                        </>
-                      )}
-
-                      {booking.status === 'completed' && (
-                        <div className="space-y-2">
-                          {isStudent && !booking.hasReview && (
-                            <Link
-                              to={`/app/review/${booking.bookingId}`}
-                              className="w-full py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-semibold text-sm transition-colors flex items-center justify-center"
+                            <button
+                              onClick={() => handleCompleteBooking(booking.bookingId)}
+                              className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm transition-colors"
                             >
-                              <Star className="w-4 h-4 mr-2" />
-                              Leave Review
-                            </Link>
-                          )}
-                          {isStudent && booking.hasReview && (
-                            <div className="py-2.5 bg-green-50 text-green-700 rounded-lg font-semibold text-sm text-center border border-green-200">
-                              <CheckCircle className="w-4 h-4 inline mr-2" />
-                              Review Submitted
+                              Mark Complete
+                            </button>
+                            <div className={`grid ${isStudent ? 'grid-cols-2' : 'grid-cols-1'} gap-2`}>
+                              <button
+                                key="message-btn"
+                                onClick={() => navigate('/app/messages', { state: { selectedContactId: isStudent ? booking.tutorId : booking.studentId } })}
+                                className="py-2 border border-gray-300 hover:border-primary-500 rounded-lg font-medium text-gray-700 hover:text-primary-600 text-xs transition-colors flex items-center justify-center"
+                              >
+                                <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
+                                Message
+                              </button>
+                              {isStudent && (
+                                <Link
+                                  key="profile-link"
+                                  to={`/app/tutor/${booking.tutorId}`}
+                                  className="py-2 border border-gray-300 hover:border-primary-500 rounded-lg font-medium text-gray-700 hover:text-primary-600 text-xs transition-colors flex items-center justify-center"
+                                >
+                                  <User className="w-3.5 h-3.5 mr-1.5" />
+                                  Profile
+                                </Link>
+                              )}
                             </div>
-                          )}
-                          <button className="w-full py-2 border border-gray-300 hover:border-primary-500 rounded-lg font-medium text-gray-700 hover:text-primary-600 text-sm transition-colors flex items-center justify-center">
-                            <MessageSquare className="w-4 h-4 mr-2" />
-                            Message
-                          </button>
-                        </div>
-                      )}
+                          </>
+                        )}
 
-                      {booking.status === 'cancelled' && (
-                        <div className="py-2.5 bg-red-50 text-red-700 rounded-lg font-semibold text-sm text-center border border-red-200">
-                          Session Cancelled
-                        </div>
-                      )}
+                        {booking.status === 'completed' && (
+                          <div className="space-y-2">
+                            {isStudent && !booking.hasReview && (
+                              <Link
+                                to={`/app/review/${booking.bookingId}`}
+                                className="w-full py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-semibold text-sm transition-colors flex items-center justify-center"
+                              >
+                                <Star className="w-4 h-4 mr-2" />
+                                Leave Review
+                              </Link>
+                            )}
+                            {isStudent && booking.hasReview && (
+                              <div className="py-2.5 bg-green-50 text-green-700 rounded-lg font-semibold text-sm text-center border border-green-200">
+                                <CheckCircle className="w-4 h-4 inline mr-2" />
+                                Review Submitted
+                              </div>
+                            )}
+                            <button
+                              onClick={() => navigate('/app/messages', { state: { selectedContactId: isStudent ? booking.tutorId : booking.studentId } })}
+                              className="w-full py-2 border border-gray-300 hover:border-primary-500 rounded-lg font-medium text-gray-700 hover:text-primary-600 text-sm transition-colors flex items-center justify-center"
+                            >
+                              <MessageSquare className="w-4 h-4 mr-2" />
+                              Message
+                            </button>
+                          </div>
+                        )}
+
+                        {booking.status === 'cancelled' && (
+                          <div className="py-2.5 bg-red-50 text-red-700 rounded-lg font-semibold text-sm text-center border border-red-200">
+                            Session Cancelled
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-16 bg-white rounded-xl border-2 border-dashed border-gray-300">
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Calendar className="w-10 h-10 text-gray-400" />
+                );
+              })}
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">No bookings found</h3>
-            <p className="text-gray-600 mb-6">
-              {activeTab === 'all'
-                ? "You haven't booked any sessions yet"
-                : `No ${activeTab} bookings`}
-            </p>
-            <Link
-              to="/app/search"
-              className="btn-primary inline-flex items-center"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Find a Tutor
-            </Link>
-          </div>
-        )}
+          ) : (
+            <div className="text-center py-16 bg-white rounded-xl border-2 border-dashed border-gray-300">
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar className="w-10 h-10 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">No bookings found</h3>
+              <p className="text-gray-600 mb-6">
+                {activeTab === 'all'
+                  ? "You haven't booked any sessions yet"
+                  : `No ${activeTab} bookings`}
+              </p>
+              <Link
+                to="/app/search"
+                className="btn-primary inline-flex items-center"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Find a Tutor
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
 
       {/* Custom Confirm Dialog */}
       {confirmDialog.isOpen && (
@@ -521,11 +525,10 @@ const BookingPage = () => {
               </button>
               <button
                 onClick={confirmDialog.onConfirm}
-                className={`px-5 py-2.5 font-semibold rounded-lg transition-colors ${
-                  confirmDialog.confirmStyle === 'danger'
-                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : 'bg-primary-600 hover:bg-primary-700 text-white'
-                }`}
+                className={`px-5 py-2.5 font-semibold rounded-lg transition-colors ${confirmDialog.confirmStyle === 'danger'
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : 'bg-primary-600 hover:bg-primary-700 text-white'
+                  }`}
               >
                 {confirmDialog.confirmText}
               </button>

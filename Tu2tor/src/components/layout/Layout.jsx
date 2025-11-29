@@ -46,10 +46,8 @@ const Layout = () => {
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
         {/* Logo */}
         <div className="p-6 border-b border-gray-200">
-          <Link to="/app/dashboard" className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <GraduationCap className="w-6 h-6 text-white" />
-            </div>
+          <Link to="/app/dashboard" className="flex items-center space-x-3">
+            <img src="/icon.png" alt="Tu2tor" className="w-10 h-10" />
             <div>
               <span className="text-lg font-bold text-gray-900">Tu2tor</span>
               <p className="text-xs text-gray-500">Student Platform</p>
@@ -80,11 +78,10 @@ const Layout = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors relative ${
-                  isActive(item.path)
-                    ? 'bg-primary-50 text-primary-700'
-                    : 'text-gray-700 hover:bg-gray-50'
-                }`}
+                className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors relative ${isActive(item.path)
+                  ? 'bg-primary-50 text-primary-700'
+                  : 'text-gray-700 hover:bg-gray-50'
+                  }`}
               >
                 <item.icon className="w-5 h-5" />
                 <span className="font-medium">{item.label}</span>

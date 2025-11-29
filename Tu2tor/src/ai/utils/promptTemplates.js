@@ -67,11 +67,11 @@ Provide top 3 tutors with:
 2. 2-3 specific reasons explaining WHY this tutor is a good match (complete sentences, 10-15 words each)
    - MUST reference the dimension scores in your explanations
    - MUST align with the stated priority preference
-   - ✅ GOOD (Schedule First): "Excellent time overlap (88/100) with 5 matching slots perfectly fitting your schedule"
-   - ✅ GOOD (Rating First): "Outstanding rating quality (95/100) with consistent 5-star reviews in Database courses"
-   - ✅ GOOD (Balanced): "Strong overall match with high time overlap (85/100) and excellent ratings (90/100)"
-   - ❌ BAD: "Expert in your major" (doesn't reference scores)
-   - ❌ BAD: "High ratings" (too vague, no numbers)
+   - GOOD (Schedule First): "Excellent time overlap (88/100) with 5 matching slots perfectly fitting your schedule"
+   - GOOD (Rating First): "Outstanding rating quality (95/100) with consistent 5-star reviews in Database courses"
+   - GOOD (Balanced): "Strong overall match with high time overlap (85/100) and excellent ratings (90/100)"
+   - BAD: "Expert in your major" (doesn't reference scores)
+   - BAD: "High ratings" (too vague, no numbers)
 3. 1 consideration if applicable (complete sentence, max 12 words)
 
 Format as JSON:

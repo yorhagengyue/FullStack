@@ -14,7 +14,7 @@ const ChatWidget = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: `Hi ${user?.username?.split(' ')[0] || 'there'}! 👋 I'm your Tu2tor AI assistant. I can help you find tutors, book sessions, or answer any questions about the platform. How can I help you today?`,
+      content: `Hi ${user?.username?.split(' ')[0] || 'there'}! I'm your Tu2tor AI assistant. I can help you find tutors, book sessions, or answer any questions about the platform. How can I help you today?`,
       timestamp: new Date(),
     },
   ]);
@@ -120,7 +120,7 @@ const ChatWidget = ({ isOpen, onClose }) => {
   return (
     <div className="fixed bottom-24 right-6 w-96 h-[600px] bg-white rounded-xl shadow-2xl border border-gray-200 flex flex-col z-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary-600 to-purple-600 text-white p-4 rounded-t-xl flex items-center justify-between">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-4 rounded-t-xl flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
             <Bot className="w-6 h-6" />
@@ -155,16 +155,14 @@ const ChatWidget = ({ isOpen, onClose }) => {
         {messages.map((message, index) => (
           <div
             key={index}
-            className={`flex items-start space-x-3 ${
-              message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-            }`}
+            className={`flex items-start space-x-3 ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
+              }`}
           >
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                message.role === 'user'
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-gray-200 text-gray-600'
-              }`}
+              className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${message.role === 'user'
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-200 text-gray-600'
+                }`}
             >
               {message.role === 'user' ? (
                 <User className="w-5 h-5" />
@@ -173,18 +171,16 @@ const ChatWidget = ({ isOpen, onClose }) => {
               )}
             </div>
             <div
-              className={`max-w-[75%] ${
-                message.role === 'user' ? 'text-right' : 'text-left'
-              }`}
+              className={`max-w-[75%] ${message.role === 'user' ? 'text-right' : 'text-left'
+                }`}
             >
               <div
-                className={`inline-block px-4 py-2 rounded-2xl ${
-                  message.role === 'user'
-                    ? 'bg-primary-600 text-white'
-                    : message.isError
+                className={`inline-block px-4 py-2 rounded-2xl ${message.role === 'user'
+                  ? 'bg-primary-600 text-white'
+                  : message.isError
                     ? 'bg-red-50 text-red-800 border border-red-200'
                     : 'bg-gray-100 text-gray-900'
-                }`}
+                  }`}
               >
                 <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
               </div>

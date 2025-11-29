@@ -14,7 +14,6 @@ export const getTutors = async (req, res) => {
       school,
       minRating,
       maxRate,
-      availability,
       location,
       search,
       page = 1,
@@ -67,8 +66,8 @@ export const getTutors = async (req, res) => {
         const bio = tutor.bio?.toLowerCase() || '';
         const subjects = tutor.subjects.map(s => s.name.toLowerCase()).join(' ');
         return username.includes(searchLower) ||
-               bio.includes(searchLower) ||
-               subjects.includes(searchLower);
+          bio.includes(searchLower) ||
+          subjects.includes(searchLower);
       });
     }
 

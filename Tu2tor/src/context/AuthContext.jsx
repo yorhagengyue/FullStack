@@ -16,9 +16,25 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // DB BYPASS START
+  const MOCK_USER = {
+    id: 'mock-user-id-123',
+    userId: 'mock-user-id-123',
+    username: 'Demo Student',
+    email: 'demo@student.com',
+    role: 'student',
+    credits: 100,
+    avatar: 'D'
+  };
+
   // Initialize - check if user is logged in
   useEffect(() => {
     const initAuth = async () => {
+      // DB BYPASS: Always log in as mock user
+      setUser(MOCK_USER);
+      setIsLoading(false);
+
+      /* ORIGINAL CODE
       const token = localStorage.getItem('token');
 
       if (token) {
@@ -35,6 +51,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       setIsLoading(false);
+      */
     };
 
     initAuth();
@@ -44,6 +61,11 @@ export const AuthProvider = ({ children }) => {
    * Login user
    */
   const login = async (email, password) => {
+    // DB BYPASS: Mock login
+    setUser(MOCK_USER);
+    return MOCK_USER;
+
+    /* ORIGINAL CODE
     try {
       setError(null);
       setIsLoading(true);
@@ -63,12 +85,18 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
+    */
   };
 
   /**
    * Register new user
    */
   const register = async (userData) => {
+    // DB BYPASS: Mock register
+    setUser(MOCK_USER);
+    return MOCK_USER;
+
+    /* ORIGINAL CODE
     try {
       setError(null);
       setIsLoading(true);
@@ -88,6 +116,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
+    */
   };
 
   /**
@@ -143,6 +172,10 @@ export const AuthProvider = ({ children }) => {
    * Refresh user data from server
    */
   const refreshUser = async () => {
+    // DB BYPASS: Mock refresh
+    return MOCK_USER;
+
+    /* ORIGINAL CODE
     try {
       const response = await authAPI.getMe();
       setUser(response.user);
@@ -152,6 +185,7 @@ export const AuthProvider = ({ children }) => {
       console.error('Failed to refresh user:', err);
       throw err;
     }
+    */
   };
 
   /**

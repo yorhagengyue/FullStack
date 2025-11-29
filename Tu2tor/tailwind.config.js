@@ -8,16 +8,16 @@ export default {
     extend: {
       colors: {
         primary: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
+          50: '#eff6ff', // Blue 50
+          100: '#dbeafe', // Blue 100
+          200: '#bfdbfe', // Blue 200
+          300: '#93c5fd', // Blue 300
+          400: '#60a5fa', // Blue 400
+          500: '#3b82f6', // Blue 500
+          600: '#2563eb', // Blue 600
+          700: '#1d4ed8', // Blue 700
+          800: '#1e40af', // Blue 800
+          900: '#1e3a8a', // Blue 900
         },
         success: {
           500: '#10b981',

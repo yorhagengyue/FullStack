@@ -77,10 +77,10 @@ const AIRecommendations = ({ tutors, searchQuery, prioritySlider, onClose }) => 
   };
 
   return (
-    <div className="bg-gradient-to-r from-purple-50 to-primary-50 rounded-lg border-2 border-primary-200 p-6">
+    <div className="bg-gradient-to-r from-primary-50 to-teal-50 rounded-lg border-2 border-primary-200 p-6">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-primary-600 to-purple-600 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-gradient-to-r from-primary-600 to-primary-800 rounded-lg flex items-center justify-center">
             <Sparkles className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -133,7 +133,7 @@ const AIRecommendations = ({ tutors, searchQuery, prioritySlider, onClose }) => 
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-primary-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    <div className="w-12 h-12 bg-gradient-to-br from-primary-600 to-primary-800 rounded-full flex items-center justify-center text-white font-bold text-lg">
                       #{index + 1}
                     </div>
                     <div>

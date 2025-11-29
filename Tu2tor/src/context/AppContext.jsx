@@ -4,7 +4,8 @@ import {
   mockTutors,
   mockReviews,
   mockCreditTransactions,
-  mockSubjects
+  mockSubjects,
+  mockBookings
 } from '../utils/mockData';
 
 const AppContext = createContext();
@@ -136,7 +137,9 @@ export const AppProvider = ({ children }) => {
     } catch (err) {
       console.error('Failed to fetch bookings:', err);
       setError(err.message);
-      return [];
+      // Fallback to mock data
+      setBookings(mockBookings);
+      return mockBookings;
     } finally {
       setIsLoadingBookings(false);
     }

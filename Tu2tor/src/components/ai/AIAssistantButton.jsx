@@ -10,11 +10,10 @@ const AIAssistantButton = () => {
       {/* Floating Chat Button */}
       <button
         onClick={() => setIsChatOpen(!isChatOpen)}
-        className={`fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 z-40 ${
-          isChatOpen
+        className={`fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 z-40 ${isChatOpen
             ? 'bg-gray-600 hover:bg-gray-700'
-            : 'bg-gradient-to-r from-primary-600 to-purple-600 hover:shadow-xl hover:scale-110'
-        }`}
+            : 'bg-gradient-to-r from-primary-600 to-primary-800 hover:shadow-xl hover:scale-110'
+          }`}
         aria-label="AI Assistant"
       >
         {isChatOpen ? (
