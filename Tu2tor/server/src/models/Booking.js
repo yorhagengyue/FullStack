@@ -8,7 +8,7 @@ const bookingSchema = new mongoose.Schema({
   },
   tutorId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'Tutor',
     required: true
   },
   subject: {

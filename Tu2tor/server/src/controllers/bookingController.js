@@ -62,6 +62,24 @@ export const getBookings = async (req, res) => {
       success: true,
       count: bookings.length,
       bookings: bookings.map(booking => {
+        // Calculate startTime and endTime from date and timeSlot
+        let startTime = booking.date;
+        let endTime = booking.date;
+        
+        if (booking.timeSlot) {
+          const [startStr, endStr] = booking.timeSlot.split('-');
+          if (startStr && endStr) {
+            const [startHour, startMin] = startStr.trim().split(':').map(Number);
+            const [endHour, endMin] = endStr.trim().split(':').map(Number);
+            
+            startTime = new Date(booking.date);
+            startTime.setHours(startHour, startMin, 0, 0);
+            
+            endTime = new Date(booking.date);
+            endTime.setHours(endHour, endMin, 0, 0);
+          }
+        }
+
         const result = {
           _id: booking._id,
           id: booking._id,
@@ -69,6 +87,8 @@ export const getBookings = async (req, res) => {
           subject: booking.subject,
           date: booking.date,
           timeSlot: booking.timeSlot,
+          startTime: startTime,
+          endTime: endTime,
           duration: booking.duration,
           location: booking.location,
           status: booking.status,

@@ -125,6 +125,7 @@ import tutorRoutes from './routes/tutorRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 
 app.use('/api/test', testRoutes);
 app.use('/api/auth', authRoutes);
@@ -132,6 +133,7 @@ app.use('/api/tutors', tutorRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 import { executeCode } from './services/codeExecution.js';
 

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { tutorsAPI, bookingsAPI, reviewsAPI } from '../services/api';
+import { tutorsAPI, bookingsAPI, reviewsAPI, notificationsAPI } from '../services/api';
 import {
   mockTutors,
   mockReviews,
@@ -599,52 +599,87 @@ export const AppProvider = ({ children }) => {
   };
 
   // ========================================================================
-  // Notification methods
+  // Notification methods (connected to real API)
   // ========================================================================
 
-  const addNotification = (notificationData) => {
+  const fetchNotifications = useCallback(async (params = {}) => {
+    try {
+      const response = await notificationsAPI.getNotifications(params);
+      setNotifications(response.notifications || []);
+      return response;
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+      // Fallback to localStorage
+      const saved = localStorage.getItem('tu2tor_notifications');
+      if (saved) setNotifications(JSON.parse(saved));
+      return { notifications: [] };
+    }
+  }, []);
+
+  const addNotification = async (notificationData) => {
+    // For local/optimistic updates
     const newNotification = {
       ...notificationData,
       id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date().toISOString(),
       read: false
     };
-    const updated = [newNotification, ...notifications];
-    setNotifications(updated);
-    localStorage.setItem('tu2tor_notifications', JSON.stringify(updated));
+    setNotifications(prev => [newNotification, ...prev]);
     return newNotification;
   };
 
-  const markNotificationAsRead = (notificationId) => {
-    const updated = notifications.map(n =>
-      n.id === notificationId ? { ...n, read: true } : n
-    );
-    setNotifications(updated);
-    localStorage.setItem('tu2tor_notifications', JSON.stringify(updated));
+  const markNotificationAsRead = async (notificationId) => {
+    try {
+      await notificationsAPI.markAsRead(notificationId);
+      setNotifications(prev =>
+        prev.map(n => (n._id === notificationId || n.id === notificationId) ? { ...n, read: true } : n)
+      );
+    } catch (err) {
+      console.error('Failed to mark notification as read:', err);
+      // Optimistic update anyway
+      setNotifications(prev =>
+        prev.map(n => (n._id === notificationId || n.id === notificationId) ? { ...n, read: true } : n)
+      );
+    }
   };
 
-  const deleteNotification = (notificationId) => {
-    const updated = notifications.filter(n => n.id !== notificationId);
-    setNotifications(updated);
-    localStorage.setItem('tu2tor_notifications', JSON.stringify(updated));
+  const deleteNotification = async (notificationId) => {
+    try {
+      await notificationsAPI.deleteNotification(notificationId);
+      setNotifications(prev => prev.filter(n => n._id !== notificationId && n.id !== notificationId));
+    } catch (err) {
+      console.error('Failed to delete notification:', err);
+      // Optimistic update anyway
+      setNotifications(prev => prev.filter(n => n._id !== notificationId && n.id !== notificationId));
+    }
   };
 
-  const markAllNotificationsAsRead = (userId) => {
-    const updated = notifications.map(n =>
-      n.userId === userId ? { ...n, read: true } : n
-    );
-    setNotifications(updated);
-    localStorage.setItem('tu2tor_notifications', JSON.stringify(updated));
+  const markAllNotificationsAsRead = async () => {
+    try {
+      await notificationsAPI.markAllAsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (err) {
+      console.error('Failed to mark all as read:', err);
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    }
   };
 
-  const clearAllNotifications = (userId) => {
-    const updated = notifications.filter(n => n.userId !== userId);
-    setNotifications(updated);
-    localStorage.setItem('tu2tor_notifications', JSON.stringify(updated));
+  const clearAllNotifications = async () => {
+    try {
+      await notificationsAPI.deleteAllNotifications();
+      setNotifications([]);
+    } catch (err) {
+      console.error('Failed to clear notifications:', err);
+      setNotifications([]);
+    }
   };
 
-  const getUserNotifications = (userId) => {
-    return notifications.filter(n => n.userId === userId);
+  const getUserNotifications = () => {
+    return notifications;
+  };
+
+  const getUnreadNotificationCount = () => {
+    return notifications.filter(n => !n.read).length;
   };
 
   // ========================================================================
@@ -736,12 +771,14 @@ export const AppProvider = ({ children }) => {
     getLastMessage,
 
     // Notification methods
+    fetchNotifications,
     addNotification,
     markNotificationAsRead,
     deleteNotification,
     markAllNotificationsAsRead,
     clearAllNotifications,
     getUserNotifications,
+    getUnreadNotificationCount,
 
     // Favorite methods
     toggleFavoriteTutor,
