@@ -51,7 +51,11 @@
       "Bash(ping:*)",
       "Bash(nul)",
       "Bash(node -e:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(\"C:\\Users\\gengy\\Desktop\\学习资料\\TP year2.2\\Full stack\\archived_docs\\Part1_PPT内容大纲_temp.md\")",
+      "Bash(mv:*)",
+      "Bash(\"C:\\Users\\gengy\\Desktop\\学习资料\\TP year2.2\\Full stack\\Tu2tor\\.env\")",
+      "WebFetch(domain:reactbits.dev)"
     ],
     "deny": [],
     "ask": []

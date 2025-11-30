@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { tutorsAPI, bookingsAPI, reviewsAPI } from '../services/api';
 import {
   mockTutors,
@@ -335,56 +335,262 @@ export const AppProvider = ({ children }) => {
   };
 
   // ========================================================================
-  // Message methods
+  // Message methods (real-time & API)
   // ========================================================================
 
-  const sendMessage = (messageData) => {
-    const newMessage = {
-      ...messageData,
-      messageId: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: new Date().toISOString(),
-      isRead: false
+  const [ws, setWs] = useState(null);
+  const [wsConnected, setWsConnected] = useState(false);
+
+  useEffect(() => {
+    // Prevent multiple connections
+    if (wsConnected || ws) return;
+
+    // Connect to WebSocket for real-time chat
+    const wsHost = 'ws://localhost:5000';
+
+    let socket = null;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 3;
+
+    const connect = () => {
+      if (reconnectAttempts >= maxReconnectAttempts) {
+        console.log('⚠️ Max WebSocket reconnect attempts reached, falling back to polling');
+        return;
+      }
+
+      socket = new WebSocket(`${wsHost}/chat-system`);
+
+      socket.onopen = () => {
+        console.log('✅ Connected to Chat WebSocket');
+        setWsConnected(true);
+        reconnectAttempts = 0;
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const messageData = JSON.parse(event.data);
+          
+          setMessages(prev => {
+            // Check for duplicates
+            if (prev.some(m => m._id === messageData._id || m.messageId === messageData.messageId)) {
+              return prev;
+            }
+            return [...prev, messageData];
+          });
+        } catch (e) {
+          // Ignore non-JSON messages (like Yjs binary data)
+        }
+      };
+
+      socket.onclose = () => {
+        console.log('❌ Chat WebSocket disconnected');
+        setWsConnected(false);
+        // Don't auto-reconnect to avoid infinite loop
+      };
+
+      socket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+
+      setWs(socket);
     };
-    const updated = [...messages, newMessage];
-    setMessages(updated);
-    localStorage.setItem('tu2tor_messages', JSON.stringify(updated));
-    return newMessage;
+
+    // Delay initial connection slightly to avoid race conditions
+    const timeoutId = setTimeout(connect, 500);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.close();
+      }
+    };
+  }, []); // Empty dependency array - only run once on mount
+
+  const sendMessage = async (messageData) => {
+    try {
+      // Send to API
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(messageData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to send message');
+      }
+
+      const savedMessage = await response.json();
+
+      // Update local state
+      setMessages(prev => [...prev, savedMessage]);
+
+      // Try to send via WebSocket for real-time (optional, don't fail if WS is down)
+      try {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify(savedMessage));
+        }
+      } catch (wsErr) {
+        console.warn('WebSocket send failed (non-critical):', wsErr);
+      }
+
+      return savedMessage;
+    } catch (err) {
+      console.error('SendMessage Error:', err);
+      
+      // Fallback: Save to localStorage if API fails
+      const fallbackMessage = {
+        ...messageData,
+        messageId: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        timestamp: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        isRead: false,
+        _localOnly: true
+      };
+      setMessages(prev => [...prev, fallbackMessage]);
+      localStorage.setItem('tu2tor_messages', JSON.stringify([...messages, fallbackMessage]));
+      
+      return fallbackMessage;
+    }
   };
+
+  const fetchMessages = useCallback(async (contactId) => {
+    try {
+      const response = await fetch(`/api/messages/${contactId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch messages');
+      const data = await response.json();
+      
+      // Merge with existing messages, avoiding duplicates
+      setMessages(prev => {
+        const newIds = new Set(data.map(m => m._id));
+        const filteredPrev = prev.filter(m => !newIds.has(m._id));
+        return [...filteredPrev, ...data];
+      });
+      
+      return data;
+    } catch (err) {
+      console.error('FetchMessages Error:', err);
+    }
+  }, []);
+
+  const fetchContacts = useCallback(async () => {
+    try {
+      const response = await fetch('/api/messages/contacts', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch contacts');
+      return await response.json();
+    } catch (err) {
+      console.error('FetchContacts Error:', err);
+      return [];
+    }
+  }, []);
+
+  const fetchAllUsers = useCallback(async () => {
+    try {
+      const response = await fetch('/api/messages/users', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch users');
+      return await response.json();
+    } catch (err) {
+      console.error('FetchAllUsers Error:', err);
+      return [];
+    }
+  }, []);
 
   const markMessageAsRead = (messageId) => {
-    const updated = messages.map(m =>
-      m.messageId === messageId ? { ...m, isRead: true } : m
+    // Optimistic
+    setMessages(prev =>
+      prev.map(m => m._id === messageId ? { ...m, isRead: true } : m)
     );
-    setMessages(updated);
-    localStorage.setItem('tu2tor_messages', JSON.stringify(updated));
+    // TODO: Call API
   };
 
-  const markConversationAsRead = (userId, contactId) => {
-    const updated = messages.map(m => {
-      const isInConversation =
-        (m.senderId === contactId && m.receiverId === userId) ||
-        (m.senderId === userId && m.receiverId === contactId);
-      return isInConversation && !m.isRead ? { ...m, isRead: true } : m;
-    });
-    setMessages(updated);
-    localStorage.setItem('tu2tor_messages', JSON.stringify(updated));
+  const markConversationAsRead = async (userId, contactId) => {
+    try {
+      await fetch(`/api/messages/read/${contactId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      setMessages(prev =>
+        prev.map(m => {
+          const isInConversation =
+            (m.senderId === contactId && m.receiverId === userId) ||
+            (m.senderId === userId && m.receiverId === contactId) ||
+            (m.senderId?._id === contactId && m.receiverId?._id === userId) || // Handle populated objects
+            (m.senderId?._id === userId && m.receiverId?._id === contactId);
+            
+          return isInConversation && !m.isRead ? { ...m, isRead: true } : m;
+        })
+      );
+    } catch (err) {
+      console.error('MarkRead Error:', err);
+    }
+  };
+
+  const deleteConversation = async (contactId) => {
+    try {
+      await fetch(`/api/messages/${contactId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      // Remove messages locally
+      setMessages(prev => prev.filter(m => {
+        const sId = m.senderId?._id || m.senderId;
+        const rId = m.receiverId?._id || m.receiverId;
+        return !(sId === contactId || rId === contactId);
+      }));
+      
+      return true;
+    } catch (err) {
+      console.error('DeleteConversation Error:', err);
+      return false;
+    }
   };
 
   const getConversation = (userId, contactId) => {
-    return messages
-      .filter(m =>
-        (m.senderId === userId && m.receiverId === contactId) ||
-        (m.senderId === contactId && m.receiverId === userId)
-      )
-      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    const filtered = messages.filter(m => {
+      // Handle both populated objects and raw IDs
+      const sId = m.senderId?._id || m.senderId;
+      const rId = m.receiverId?._id || m.receiverId;
+      
+      // Convert to string for comparison (MongoDB ObjectIds)
+      const sIdStr = String(sId);
+      const rIdStr = String(rId);
+      const userIdStr = String(userId);
+      const contactIdStr = String(contactId);
+      
+      return (sIdStr === userIdStr && rIdStr === contactIdStr) || 
+             (sIdStr === contactIdStr && rIdStr === userIdStr);
+    });
+    
+    return filtered.sort((a, b) => new Date(a.createdAt || a.timestamp) - new Date(b.createdAt || b.timestamp));
   };
 
   const getUnreadCount = (userId, contactId) => {
-    return messages.filter(m =>
-      m.senderId === contactId &&
-      m.receiverId === userId &&
-      !m.isRead
-    ).length;
+    return messages.filter(m => {
+      const sId = m.senderId?._id || m.senderId;
+      const rId = m.receiverId?._id || m.receiverId;
+      return sId === contactId && rId === userId && !m.isRead;
+    }).length;
   };
 
   const getLastMessage = (userId, contactId) => {
@@ -519,6 +725,10 @@ export const AppProvider = ({ children }) => {
 
     // Message methods
     sendMessage,
+    fetchMessages,
+    fetchContacts,
+    fetchAllUsers,
+    deleteConversation,
     markMessageAsRead,
     markConversationAsRead,
     getConversation,

@@ -2,11 +2,29 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import http from 'http';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { WebSocketServer } from 'ws';
 import connectDB from './config/database.js';
 
-// Load environment variables
-dotenv.config();
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env from multiple possible locations
+const envPaths = [
+  path.resolve(__dirname, '../.env'),      // server/.env
+  path.resolve(__dirname, '../../.env'),   // Tu2tor/.env
+  path.resolve(process.cwd(), '.env'),
+];
+
+for (const envPath of envPaths) {
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+    break;
+  }
+}
 
 // Initialize Express app
 const app = express();
@@ -26,14 +44,27 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB (wait for connection before starting server)
+let dbConnected = false;
+const initDB = async () => {
+  try {
+    await connectDB();
+    dbConnected = true;
+    console.log('✅ Database connection established');
+  } catch (error) {
+    console.error('❌ Failed to connect to database:', error.message);
+    dbConnected = false;
+  }
+};
 
-// WebSocket connection handler for collaborative code editing
-// Using simple WebSocket relay for Yjs synchronization
+// Start DB connection
+initDB();
+
+// WebSocket connection handler for collaborative code editing and chat
+// Using simple WebSocket relay
 wss.on('connection', (ws, req) => {
   // Extract room name from URL (e.g., /room-name)
-  // y-websocket typically connects to ws://host:port/room-name
+  // For chat, the room can be 'chat-senderId-receiverId'
   const room = req.url.slice(1) || 'default-room';
   ws.room = room;
 
@@ -41,11 +72,24 @@ wss.on('connection', (ws, req) => {
 
   // Relay messages to all other connected clients IN THE SAME ROOM
   ws.on('message', (message) => {
+    try {
+      // Parse message to check if it's a chat message
+      const parsedMessage = JSON.parse(message);
+      
+      // Relay to all clients in the room
     wss.clients.forEach((client) => {
       if (client !== ws && client.readyState === 1 && client.room === ws.room) { // 1 = OPEN
+          client.send(message); // Send original message (buffer or string)
+        }
+      });
+    } catch (e) {
+      // Not JSON or simple relay
+      wss.clients.forEach((client) => {
+        if (client !== ws && client.readyState === 1 && client.room === ws.room) {
         client.send(message);
       }
     });
+    }
   });
 
   ws.on('close', () => {
@@ -68,8 +112,8 @@ app.get('/', (req, res) => {
 
 app.get('/api/health', (req, res) => {
   res.json({
-    status: 'healthy',
-    mongodb: 'connected',
+    status: dbConnected ? 'healthy' : 'unhealthy',
+    mongodb: dbConnected ? 'connected' : 'disconnected',
     timestamp: new Date().toISOString()
   });
 });
@@ -80,12 +124,14 @@ import authRoutes from './routes/authRoutes.js';
 import tutorRoutes from './routes/tutorRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
+import messageRoutes from './routes/messageRoutes.js';
 
 app.use('/api/test', testRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/tutors', tutorRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/messages', messageRoutes);
 
 import { executeCode } from './services/codeExecution.js';
 

@@ -27,3 +27,6 @@ npm-debug.log*
 # Temporary files
 *.tmp
 ~$*
+
+# SpecStory history (may contain secrets)
+.specstory/history/

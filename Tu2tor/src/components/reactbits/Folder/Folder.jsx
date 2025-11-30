@@ -43,23 +43,24 @@ const Folder = ({
   // Update display items when folder is closed to create cycling effect
   useEffect(() => {
     if (!open && items.length > maxItems) {
-      // Rotate items: Take next slice based on currentItemIndex
-      const nextIndex = (currentItemIndex + 1) % items.length;
-      setCurrentItemIndex(nextIndex);
-      
-      const newItems = [];
-      for (let i = 0; i < maxItems; i++) {
-        newItems.push(items[(nextIndex + i) % items.length]);
-      }
-      
       // Small delay to update content while closed so user doesn't see the jump
       const timeout = setTimeout(() => {
-        setDisplayItems(newItems);
+        setCurrentItemIndex(prevIndex => {
+          const nextIndex = (prevIndex + 1) % items.length;
+          
+          const newItems = [];
+          for (let i = 0; i < maxItems; i++) {
+            newItems.push(items[(nextIndex + i) % items.length]);
+          }
+          setDisplayItems(newItems);
+          
+          return nextIndex;
+        });
       }, 200);
       
       return () => clearTimeout(timeout);
     }
-  }, [open, items, currentItemIndex]);
+  }, [open, items.length]); // Only depend on open state change and items length
 
   const [paperOffsets, setPaperOffsets] = useState(
     Array.from({ length: maxItems }, () => ({ x: 0, y: 0 }))

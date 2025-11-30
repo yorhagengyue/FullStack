@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 import Particles from '../../components/reactbits/Particles/Particles';
+import ScrollVelocity from '../../components/reactbits/ScrollVelocity/ScrollVelocity';
 import GooeyNav from './components/GooeyNav';
 import Hero from './components/Hero';
 import Stats from './components/Stats';
@@ -73,6 +74,18 @@ const LandingPage = () => {
       {/* Merged Features & How It Works Section */}
       <MergedSection />
 
+      {/* Scroll Velocity Section - Trending Subjects */}
+      <section className="py-12 bg-gray-50 border-y border-gray-100 overflow-hidden">
+        <div className="mb-8 text-center">
+           <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Trending on Tu2tor</span>
+        </div>
+        <ScrollVelocity
+          texts={['Python Programming • Calculus II • Machine Learning • Data Structures • Web Development • Digital Marketing • Graphic Design • ']} 
+          velocity={50} 
+          className="text-gray-900 font-bold hover:text-blue-600 transition-colors cursor-default"
+        />
+      </section>
+
       {/* Testimonials Scroll */}
       <Testimonials />
 
@@ -91,7 +104,7 @@ const LandingPage = () => {
             disableRotation={false}
           />
         </div>
-        
+
         <div className="max-w-3xl mx-auto px-6 text-center relative z-10">
           <motion.div
             initial="hidden"

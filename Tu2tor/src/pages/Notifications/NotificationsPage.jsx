@@ -7,11 +7,9 @@ import {
   AlertCircle,
   Calendar,
   Star,
-  MessageSquare,
-  Clock,
-  Filter,
   Check,
-  Trash2
+  Trash2,
+  Settings
 } from 'lucide-react';
 
 const NotificationsPage = () => {
@@ -29,19 +27,13 @@ const NotificationsPage = () => {
   } = useApp();
   const [filter, setFilter] = useState('all');
 
-  // Auto-generate notifications from new bookings and reviews
+  // Auto-generate notifications logic (kept from original)
   useEffect(() => {
     if (!user) return;
-
-    const userBookings = bookings.filter(
-      b => b.studentId === user.userId || b.tutorId === user.userId
-    );
+    const userBookings = bookings.filter(b => b.studentId === user.userId || b.tutorId === user.userId);
     const userReviews = reviews.filter(r => r.tutorId === user.userId);
-
-    // Check if notifications already exist for these items
     const existingNotifIds = savedNotifications.map(n => n.sourceId);
 
-    // Create notifications for new bookings
     userBookings.forEach(booking => {
       const sourceId = `booking-${booking.bookingId}`;
       if (!existingNotifIds.includes(sourceId)) {
@@ -51,15 +43,12 @@ const NotificationsPage = () => {
           type: 'booking',
           title: `Booking ${booking.status}`,
           message: `Your session for ${booking.subject} has been ${booking.status}`,
-          icon: booking.status === 'confirmed' ? 'CheckCircle' :
-            booking.status === 'cancelled' ? 'AlertCircle' : 'Calendar',
-          color: booking.status === 'confirmed' ? 'green' :
-            booking.status === 'cancelled' ? 'red' : 'yellow'
+          icon: booking.status === 'confirmed' ? 'CheckCircle' : booking.status === 'cancelled' ? 'AlertCircle' : 'Calendar',
+          color: booking.status === 'confirmed' ? 'green' : booking.status === 'cancelled' ? 'red' : 'yellow'
         });
       }
     });
 
-    // Create notifications for new reviews
     userReviews.forEach(review => {
       const sourceId = `review-${review.reviewId}`;
       if (!existingNotifIds.includes(sourceId)) {
@@ -76,14 +65,10 @@ const NotificationsPage = () => {
     });
   }, [bookings, reviews, user]);
 
-  // Get user's notifications
   const notifications = getUserNotifications(user?.userId || '').map(notif => ({
     ...notif,
     time: new Date(notif.timestamp),
-    icon: notif.icon === 'CheckCircle' ? CheckCircle :
-      notif.icon === 'AlertCircle' ? AlertCircle :
-        notif.icon === 'Calendar' ? Calendar :
-          notif.icon === 'Star' ? Star : Bell
+    icon: notif.icon === 'CheckCircle' ? CheckCircle : notif.icon === 'AlertCircle' ? AlertCircle : notif.icon === 'Calendar' ? Calendar : notif.icon === 'Star' ? Star : Bell
   }));
 
   const filteredNotifications = notifications.filter(notif => {
@@ -99,165 +84,147 @@ const NotificationsPage = () => {
 
   const formatTime = (time) => {
     const now = new Date();
-    const diff = Math.floor((now - time) / 1000); // seconds
-
+    const diff = Math.floor((now - time) / 1000);
     if (diff < 60) return 'Just now';
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
     return time.toLocaleDateString();
   };
 
-  // Handler functions
-  const handleMarkAllAsRead = () => {
-    if (user) {
-      markAllNotificationsAsRead(user.userId);
-    }
-  };
-
-  const handleClearAll = () => {
-    if (user && confirm('Are you sure you want to clear all notifications?')) {
-      clearAllNotifications(user.userId);
-    }
-  };
-
-  const handleNotificationClick = (notificationId) => {
-    markNotificationAsRead(notificationId);
-  };
-
-  const handleDeleteNotification = (e, notificationId) => {
-    e.stopPropagation();
-    deleteNotification(notificationId);
-  };
-
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-[#F2F5F9] p-4 md:p-8 flex items-center justify-center font-sans">
+      <div className="w-full max-w-[1000px] bg-white rounded-[40px] shadow-xl shadow-gray-200/50 p-6 md:p-10 min-h-[85vh]">
+        
       {/* Header */}
-      <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
-          <p className="text-gray-600 mt-1">
-            {notifications.filter(n => !n.read).length} unread notifications
-          </p>
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Notifications</h1>
+            <p className="text-gray-500 mt-1">Stay updated with your session alerts and messages.</p>
         </div>
-        <div className="flex space-x-3">
+          
+          <div className="flex gap-3">
           <button
-            onClick={handleMarkAllAsRead}
+              onClick={() => user && markAllNotificationsAsRead(user.userId)}
             disabled={notifications.filter(n => !n.read).length === 0}
-            className="btn-secondary flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
           >
-            <Check className="w-4 h-4 mr-2" />
-            Mark all as read
+              <Check className="w-4 h-4" /> Mark all read
           </button>
           <button
-            onClick={handleClearAll}
+              onClick={() => user && confirm('Clear all notifications?') && clearAllNotifications(user.userId)}
             disabled={notifications.length === 0}
-            className="btn-secondary flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-colors disabled:opacity-50"
           >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Clear all
+              <Trash2 className="w-4 h-4" /> Clear all
           </button>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-2 flex space-x-2">
+        <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
         {filters.map((f) => (
           <button
             key={f.id}
             onClick={() => setFilter(f.id)}
-            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${filter === f.id
-                ? 'bg-primary-600 text-white'
-                : 'text-gray-600 hover:bg-gray-100'
+              className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap ${
+                filter === f.id 
+                  ? 'bg-gray-900 text-white shadow-md' 
+                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
               }`}
           >
             {f.label}
-            <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${filter === f.id ? 'bg-white/20' : 'bg-gray-200'
+              {f.count > 0 && (
+                <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                  filter === f.id ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
               }`}>
               {f.count}
             </span>
+              )}
           </button>
         ))}
       </div>
 
       {/* Notifications List */}
+        <div className="space-y-4">
       {filteredNotifications.length > 0 ? (
-        <div className="space-y-3">
-          {filteredNotifications.map((notification) => {
+            filteredNotifications.map((notification) => {
             const Icon = notification.icon;
-            const bgColor = {
-              green: 'bg-green-100',
-              red: 'bg-red-100',
-              yellow: 'bg-yellow-100',
-              blue: 'bg-blue-100'
-            }[notification.color] || 'bg-gray-100';
-
-            const iconColor = {
-              green: 'text-green-600',
-              red: 'text-red-600',
-              yellow: 'text-yellow-600',
-              blue: 'text-blue-600'
-            }[notification.color] || 'text-gray-600';
+              const colorStyles = {
+                green: { bg: 'bg-emerald-100', text: 'text-emerald-600' },
+                red: { bg: 'bg-rose-100', text: 'text-rose-600' },
+                yellow: { bg: 'bg-amber-100', text: 'text-amber-600' },
+                blue: { bg: 'bg-blue-100', text: 'text-blue-600' }
+              }[notification.color] || { bg: 'bg-gray-100', text: 'text-gray-600' };
 
             return (
               <div
                 key={notification.id}
-                onClick={() => handleNotificationClick(notification.id)}
-                className={`bg-white rounded-xl border ${notification.read ? 'border-gray-200' : 'border-primary-300 bg-primary-50/30'
-                  } p-5 hover:shadow-md transition-all cursor-pointer`}
+                  onClick={() => markNotificationAsRead(notification.id)}
+                  className={`group relative p-5 rounded-[24px] transition-all cursor-pointer border ${
+                    notification.read 
+                      ? 'bg-white border-gray-100 hover:border-gray-200' 
+                      : 'bg-blue-50/30 border-blue-100 hover:border-blue-200'
+                  }`}
               >
-                <div className="flex items-start space-x-4">
-                  <div className={`p-3 ${bgColor} rounded-full flex-shrink-0`}>
-                    <Icon className={`w-6 h-6 ${iconColor}`} />
+                  <div className="flex gap-4">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${colorStyles.bg}`}>
+                      <Icon className={`w-6 h-6 ${colorStyles.text}`} />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between mb-1">
-                      <h3 className="font-semibold text-gray-900">
+                    
+                    <div className="flex-1 min-w-0 py-1">
+                      <div className="flex justify-between items-start gap-4 mb-1">
+                        <h3 className={`font-semibold text-base truncate ${notification.read ? 'text-gray-900' : 'text-blue-900'}`}>
                         {notification.title}
-                        {!notification.read && (
-                          <span className="ml-2 inline-block w-2 h-2 bg-primary-600 rounded-full"></span>
-                        )}
                       </h3>
-                      <span className="text-xs text-gray-500 whitespace-nowrap ml-4">
+                        <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0">
                         {formatTime(notification.time)}
                       </span>
+                      </div>
+                      <p className="text-gray-500 text-sm leading-relaxed line-clamp-2">
+                        {notification.message}
+                      </p>
                     </div>
-                    <p className="text-gray-600 text-sm">{notification.message}</p>
-                  </div>
+
                   <button
-                    onClick={(e) => handleDeleteNotification(e, notification.id)}
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteNotification(notification.id);
+                      }}
+                      className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:bg-red-50 hover:text-red-500 rounded-full transition-all"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
+                  
+                  {!notification.read && (
+                    <div className="absolute top-6 right-6 w-2 h-2 bg-blue-500 rounded-full group-hover:opacity-0 transition-opacity"></div>
+                  )}
               </div>
             );
-          })}
-        </div>
+            })
       ) : (
-        <div className="text-center py-16 bg-white rounded-xl border-2 border-dashed border-gray-300">
-          <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Bell className="w-10 h-10 text-gray-400" />
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                <Bell className="w-8 h-8 text-gray-300" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">No notifications</h3>
-          <p className="text-gray-600">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">All caught up!</h3>
+              <p className="text-gray-500 max-w-xs">
             {filter === 'all'
-              ? "You're all caught up!"
-              : `No ${filter} notifications`}
+                  ? "You don't have any notifications at the moment." 
+                  : `No ${filter} notifications found.`}
           </p>
         </div>
       )}
+        </div>
 
-      {/* Notification Settings */}
-      <div className="bg-gradient-to-r from-primary-500 to-primary-700 rounded-xl p-6 text-white">
-        <h3 className="text-lg font-bold mb-2">Notification Preferences</h3>
-        <p className="text-primary-100 mb-4">
-          Customize how you receive updates about your tutoring activities
-        </p>
-        <button className="px-4 py-2 bg-white text-primary-600 rounded-lg font-semibold hover:bg-primary-50 transition-colors">
-          Manage Settings
+        {/* Footer Settings Hint */}
+        <div className="mt-12 pt-8 border-t border-gray-100 flex justify-center">
+           <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors">
+              <Settings className="w-4 h-4" />
+              Manage Notification Preferences
         </button>
+        </div>
+
       </div>
     </div>
   );

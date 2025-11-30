@@ -25,7 +25,7 @@ const JitsiMeetRoom = ({ roomId, displayName, onMeetingEnd }) => {
       .join('&');
 
     const userInfoString = Object.entries(userInfo)
-      .map(([key, value]) => `userInfo.${key}=${encodeURIComponent(value)}`)
+      .map(([key, value]) => `userInfo.${key}=${encodeURIComponent(JSON.stringify(value))}`)
       .join('&');
 
     return `${baseUrl}/${roomId}#${configString}&${userInfoString}`;

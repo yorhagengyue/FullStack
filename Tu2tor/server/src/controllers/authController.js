@@ -5,7 +5,7 @@ import User from '../models/User.js';
  * Generate JWT token
  */
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+  return jwt.sign({ id }, process.env.JWT_SECRET || 'dev_secret_key_123', {
     expiresIn: '30d' // Token expires in 30 days
   });
 };

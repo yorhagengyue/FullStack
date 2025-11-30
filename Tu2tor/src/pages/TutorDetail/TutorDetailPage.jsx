@@ -1,22 +1,26 @@
 import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
 import BookingModal from '../../components/common/BookingModal';
 import {
   Star,
-  MapPin,
   Clock,
   Award,
-  BookOpen,
-  Calendar,
   ArrowLeft,
   MessageSquare,
   CheckCircle,
-  Users
+  Users,
+  Globe,
+  Shield
 } from 'lucide-react';
 import { BADGE_CONFIG } from '../../utils/constants';
+
+// ReactBits
+import TiltedCard from '../../components/reactbits/TiltedCard/TiltedCard';
+import CountUp from '../../components/reactbits/CountUp/CountUp';
+import SplitText from '../../components/reactbits/SplitText/SplitText';
 
 const TutorDetailPage = () => {
   const { tutorId } = useParams();
@@ -28,31 +32,17 @@ const TutorDetailPage = () => {
   const [selectedSubject, setSelectedSubject] = useState('');
   const [showBookingModal, setShowBookingModal] = useState(false);
 
-  // Find the tutor - try multiple ID fields
-  const tutor = tutors.find(t =>
-    t.userId === tutorId ||
-    t._id === tutorId ||
-    t.id === tutorId
-  );
+  const tutor = tutors.find(t => t.userId === tutorId || t._id === tutorId || t.id === tutorId);
 
-  // Get tutor's reviews
   const tutorReviews = reviews.filter(r =>
-    r.tutorId === tutorId ||
-    r.tutorId === tutor?.userId ||
-    r.tutorId === tutor?._id
+    r.tutorId === tutorId || r.tutorId === tutor?.userId || r.tutorId === tutor?._id
   );
 
   if (!tutor) {
     return (
-      <div className="text-center py-12">
-        <div className="mb-4">
-          <p className="text-gray-600 mb-2">Tutor not found</p>
-          <p className="text-sm text-gray-500">Tutor ID: {tutorId}</p>
-          <p className="text-sm text-gray-500">Available tutors: {tutors.length}</p>
-        </div>
-        <Link to="/app/search" className="text-primary-600 hover:text-primary-700 mt-4 inline-block">
-          Back to Search
-        </Link>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F2F5F9]">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Tutor not found</h2>
+        <button onClick={() => navigate('/app/search')} className="text-blue-600 hover:underline">Back to Search</button>
       </div>
     );
   }
@@ -67,175 +57,167 @@ const TutorDetailPage = () => {
 
   const handleBookingSubmit = async (bookingData) => {
     try {
-      // BookingModal already formats the data correctly
-      // Just add sessionType based on location
       const bookingPayload = {
         ...bookingData,
         sessionType: bookingData.location?.toLowerCase().includes('online') ? 'online' : 'offline',
       };
-
       await createBooking(bookingPayload);
-      toast.success('Booking request sent successfully!');
+      toast.success('Request sent!');
       setShowBookingModal(false);
       navigate('/app/bookings');
     } catch (error) {
-      console.error('Booking error:', error);
-      toast.error(error.response?.data?.message || 'Failed to create booking. Please try again.');
+      toast.error(error.response?.data?.message || 'Failed to book.');
     }
   };
 
+  // Avatar background based on random seed or fixed pattern
+  const avatarBgGradient = "bg-gradient-to-br from-blue-500 to-indigo-600";
+
   return (
-    <div className="space-y-6">
-      {/* Back Button */}
+    <div className="min-h-screen bg-[#F2F5F9] p-4 md:p-8 flex justify-center font-sans">
+      <div className="w-full max-w-[1400px]">
+        
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center text-gray-600 hover:text-gray-900"
+          className="flex items-center gap-2 text-gray-500 hover:text-gray-900 mb-6 font-medium transition-colors group"
       >
-        <ArrowLeft className="w-5 h-5 mr-2" />
-        Back to Search
+          <ArrowLeft className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform" /> Back
       </button>
 
       <div className="grid lg:grid-cols-3 gap-8">
-        {/* Left Column - Tutor Info */}
+          
         <div className="lg:col-span-2 space-y-6">
-          {/* Tutor Header Card */}
-          <div className="bg-white rounded-xl border border-gray-200 p-8">
-            <div className="flex flex-col md:flex-row gap-6">
-              {/* Avatar */}
-              <div className="flex-shrink-0">
-                <div className="w-32 h-32 bg-primary-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-4xl">
-                    {tutor.username.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              </div>
-
-              {/* Info */}
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">{tutor.username}</h1>
-                <p className="text-lg text-gray-600 mb-4">{tutor.major}</p>
-
-                {/* Stats Row */}
-                <div className="flex flex-wrap items-center gap-6 mb-4">
-                  <div className="flex items-center">
-                    <Star className="w-5 h-5 text-yellow-400 fill-yellow-400 mr-1" />
-                    <span className="font-bold text-gray-900 mr-1">{tutor.averageRating.toFixed(1)}</span>
-                    <span className="text-sm text-gray-600">({tutor.totalReviews} reviews)</span>
+            
+            {/* Enhanced Profile Header with TiltedCard effect for Avatar */}
+            <div className="bg-white rounded-[40px] p-8 shadow-xl shadow-gray-200/50 relative overflow-hidden">
+               <div className="relative z-10 flex flex-col md:flex-row gap-10 items-start">
+                  
+                  <div className="w-40 h-40 flex-shrink-0">
+                    <TiltedCard
+                      imageSrc={`https://api.dicebear.com/7.x/avataaars/svg?seed=${tutor.username}`}
+                      altText={tutor.username}
+                      containerHeight="160px"
+                      containerWidth="160px"
+                      imageHeight="160px"
+                      imageWidth="160px"
+                      rotateAmplitude={20}
+                      scaleOnHover={1.1}
+                      showTooltip={false}
+                      showMobileWarning={false}
+                      overlayContent={null}
+                    />
                   </div>
 
-                  <div className="flex items-center text-gray-600">
-                    <Clock className="w-5 h-5 mr-1" />
-                    <span className="text-sm">~{tutor.responseTime} mins response</span>
-                  </div>
-
-                  <div className="flex items-center text-gray-600">
-                    <Users className="w-5 h-5 mr-1" />
-                    <span className="text-sm">{tutor.totalSessions || 0} sessions</span>
-                  </div>
-                </div>
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-medium">
-                    {tutor.school}
-                  </span>
-                  <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                  <div className="flex-1 pt-2">
+                     <h1 className="text-4xl font-bold text-gray-900 mb-2 tracking-tight">
+                        <SplitText text={tutor.username} delay={30} />
+                     </h1>
+                     <p className="text-xl text-gray-500 mb-4 font-medium flex items-center gap-2">
+                        {tutor.major}
+                        <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                        <span className="text-gray-400 text-lg">{tutor.school}</span>
+                     </p>
+                     
+                     <div className="flex flex-wrap gap-3 mb-6">
+                        <span className="px-4 py-1.5 bg-gray-100 rounded-full text-sm font-bold text-gray-600">
                     Year {tutor.yearOfStudy}
                   </span>
-                  {tutor.badges && tutor.badges.length > 0 && (
-                    <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium flex items-center">
-                      <Award className="w-4 h-4 mr-1" />
-                      {tutor.badges.length} Badges
+                        {tutor.badges?.length > 0 && (
+                           <span className="px-4 py-1.5 bg-amber-100 text-amber-700 rounded-full text-sm font-bold flex items-center gap-1">
+                              <Award className="w-4 h-4" /> {tutor.badges.length} Badges
                     </span>
                   )}
+                     </div>
+
+                     <div className="flex items-center gap-8 pt-6 border-t border-gray-100">
+                        <div className="flex items-center gap-2">
+                           <Star className="w-6 h-6 text-yellow-400 fill-current" />
+                           <div>
+                              <span className="font-bold text-2xl block leading-none">{tutor.averageRating.toFixed(1)}</span>
+                              <span className="text-gray-400 text-xs font-medium uppercase">Rating</span>
+                           </div>
+                        </div>
+                        <div className="w-px h-10 bg-gray-100"></div>
+                        <div className="flex items-center gap-2 text-gray-600">
+                           <Users className="w-6 h-6 text-blue-500" />
+                           <div>
+                              <span className="font-bold text-2xl block leading-none">
+                                <CountUp to={tutor.totalSessions || 0} />
+                              </span>
+                              <span className="text-gray-400 text-xs font-medium uppercase">Sessions</span>
+                           </div>
+                        </div>
+                        <div className="w-px h-10 bg-gray-100"></div>
+                        <div className="flex items-center gap-2 text-gray-600">
+                           <Clock className="w-6 h-6 text-green-500" />
+                           <div>
+                              <span className="font-bold text-2xl block leading-none">
+                                <CountUp to={tutor.responseTime} />m
+                              </span>
+                              <span className="text-gray-400 text-xs font-medium uppercase">Response</span>
+                           </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* About Section */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">About</h2>
-            <p className="text-gray-600 leading-relaxed">
-              {tutor.bio || `Hi! I'm ${tutor.username.split(' ')[0]}, a ${tutor.major} student at ${tutor.school}. I have successfully completed these courses and I'm passionate about helping fellow students excel in their studies. I believe in making complex topics easy to understand through clear explanations and practical examples.`}
+               <div className="absolute -top-24 -right-24 w-80 h-80 bg-blue-50 rounded-full blur-3xl pointer-events-none"></div>
+               <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+            </div>
+
+            <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
+               <h2 className="text-2xl font-bold text-gray-900 mb-4">About Me</h2>
+               <p className="text-gray-600 leading-relaxed text-lg">
+                  {tutor.bio || `Hi! I'm ${tutor.username.split(' ')[0]}, a passionate ${tutor.major} student at ${tutor.school}. I specialize in making complex concepts simple and engaging. Let's ace those exams together!`}
             </p>
           </div>
 
-          {/* Subjects */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Subjects I Teach</h2>
+            <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
+               <h2 className="text-2xl font-bold text-gray-900 mb-6">I Can Teach</h2>
             <div className="grid md:grid-cols-2 gap-4">
               {tutor.subjects?.map((subject) => (
-                <div
+                     <button
                   key={subject.code}
                   onClick={() => setSelectedSubject(subject.code)}
-                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${selectedSubject === subject.code
-                      ? 'border-primary-500 bg-primary-50'
-                      : 'border-gray-200 hover:border-primary-300'
+                        className={`group relative flex justify-between items-start p-5 rounded-2xl border-2 text-left transition-all overflow-hidden ${
+                           selectedSubject === subject.code 
+                             ? 'border-gray-900 bg-gray-900 text-white shadow-lg transform scale-[1.02]' 
+                             : 'border-gray-100 hover:border-gray-300 hover:bg-gray-50 text-gray-900'
                     }`}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{subject.code}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{subject.name}</p>
+                        <div className="relative z-10">
+                           <div className="font-bold text-lg">{subject.code}</div>
+                           <div className={`text-sm mt-1 font-medium ${selectedSubject === subject.code ? 'text-gray-300' : 'text-gray-500'}`}>
+                              {subject.name}
+                           </div>
                       {subject.grade && (
-                        <span className="inline-block mt-2 px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
+                              <span className={`inline-block mt-2 px-2 py-0.5 rounded text-xs font-bold ${
+                                 selectedSubject === subject.code ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700'
+                              }`}>
                           Grade: {subject.grade}
                         </span>
                       )}
                     </div>
-                    {selectedSubject === subject.code && (
-                      <CheckCircle className="w-5 h-5 text-primary-600" />
-                    )}
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center relative z-10 ${
+                           selectedSubject === subject.code ? 'border-white bg-white' : 'border-gray-300'
+                        }`}>
+                           {selectedSubject === subject.code && <CheckCircle className="w-4 h-4 text-gray-900" />}
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Availability */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Availability</h2>
-
-            {/* Locations */}
-            <div className="mb-6">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Preferred Locations</h3>
-              <div className="flex flex-wrap gap-2">
-                {tutor.preferredLocations?.map((location, index) => (
-                  <span key={index} className="flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg">
-                    <MapPin className="w-4 h-4 mr-2" />
-                    {location}
-                  </span>
+                     </button>
                 ))}
               </div>
             </div>
 
-            {/* Time Slots */}
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Available Time Slots</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {(tutor.availableSlotsDisplay || tutor.availableSlots)?.map((slot, index) => (
-                  <div key={index} className="flex items-center px-3 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm">
-                    <Clock className="w-4 h-4 mr-2" />
-                    {typeof slot === 'string' ? slot : `${slot.day} ${slot.startTime}-${slot.endTime}`}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Achievements */}
-          {tutor.badges && tutor.badges.length > 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Achievements</h2>
+            {tutor.badges?.length > 0 && (
+               <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Achievements</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {tutor.badges.map((badgeType, index) => {
-                  const badge = BADGE_CONFIG[badgeType];
+                     {tutor.badges.map((badgeId, i) => {
+                        const badge = BADGE_CONFIG[badgeId];
                   return (
-                    <div key={index} className="border border-gray-200 rounded-lg p-4 text-center hover:border-primary-300 transition-colors">
-                      <div className="text-4xl mb-2">{badge?.icon}</div>
-                      <p className="font-semibold text-gray-900 text-sm">{badge?.name}</p>
-                      <p className="text-xs text-gray-500 mt-1">{badge?.description}</p>
+                           <div key={i} className="bg-gray-50 rounded-2xl p-4 text-center border border-gray-100 hover:shadow-md transition-shadow">
+                              <div className="text-4xl mb-2 transform hover:scale-110 transition-transform duration-300 cursor-default">{badge?.icon}</div>
+                              <div className="font-bold text-gray-900 text-sm">{badge?.name}</div>
                     </div>
                   );
                 })}
@@ -243,129 +225,95 @@ const TutorDetailPage = () => {
             </div>
           )}
 
-          {/* Reviews */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
-              Reviews ({tutorReviews.length})
-            </h2>
-
+            <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
+               <h2 className="text-2xl font-bold text-gray-900 mb-6">Student Reviews</h2>
             {tutorReviews.length > 0 ? (
-              <div className="space-y-4">
+                  <div className="space-y-6">
                 {tutorReviews.map((review) => (
-                  <div key={review.reviewId} className="border-b border-gray-200 pb-4 last:border-0">
-                    <div className="flex items-start justify-between mb-2">
+                        <div key={review.reviewId} className="border-b border-gray-100 last:border-0 pb-6 last:pb-0">
+                           <div className="flex justify-between items-start mb-3">
+                              <div className="flex items-center gap-3">
+                                 <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center font-bold text-gray-500">
+                                    {(review.studentName || 'S').charAt(0)}
+                                 </div>
                       <div>
-                        <div className="flex items-center mb-1">
+                                    <div className="font-bold text-gray-900">{review.isAnonymous ? 'Student' : review.studentName}</div>
+                                    <div className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString()}</div>
+                                 </div>
+                              </div>
+                              <div className="flex gap-0.5">
                           {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
-                                }`}
-                            />
+                                    <Star key={i} className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-200'}`} />
                           ))}
+                              </div>
+                           </div>
+                           <p className="text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-xl italic">"{review.comment}"</p>
                         </div>
-                        <p className="text-sm text-gray-600">
-                          {review.isAnonymous ? review.studentName || 'Anonymous Student' : review.studentName || review.studentId}
-                        </p>
-                      </div>
-                      <span className="text-xs text-gray-500">
-                        {new Date(review.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <p className="text-gray-700">{review.comment}</p>
-                    {review.tags && review.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {review.tags.map((tag, idx) => (
-                          <span key={idx} className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <Star className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p>No reviews yet</p>
+                  <p className="text-gray-500 text-center py-8">No reviews yet.</p>
+               )}
               </div>
-            )}
-          </div>
+
         </div>
 
-        {/* Right Column - Booking Card */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-24">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Book a Session</h3>
+             <div className="sticky top-8 space-y-6">
+                <div className="bg-white rounded-[32px] p-6 shadow-xl shadow-indigo-100/50 border border-indigo-50">
+                   <h3 className="text-xl font-bold text-gray-900 mb-6">Session Details</h3>
 
-            {/* Price Info */}
-            <div className="mb-6 p-4 bg-primary-50 rounded-lg">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-700">Session Cost</span>
-                <div className="flex items-center">
-                  <Award className="w-5 h-5 text-yellow-600 mr-1" />
-                  <span className="text-2xl font-bold text-gray-900">
-                    {tutor.hourlyRate || 10}
+                   <div className="flex justify-between items-center mb-6 p-4 bg-gray-50 rounded-2xl">
+                      <span className="font-medium text-gray-600">Hourly Rate</span>
+                      <div className="flex items-center gap-1">
+                         <span className="text-3xl font-bold text-gray-900">
+                            <CountUp to={tutor.hourlyRate || 10} />
                   </span>
-                  <span className="text-gray-600 ml-1">credits</span>
-                </div>
+                         <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Credits</span>
               </div>
             </div>
 
-            {/* Selected Subject */}
-            {selectedSubject ? (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm text-gray-600 mb-1">Selected Subject:</p>
-                <p className="font-semibold text-gray-900">{selectedSubject}</p>
-              </div>
-            ) : (
-              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm text-yellow-800">Please select a subject from the list above</p>
-              </div>
-            )}
-
-            {/* Book Button */}
+                   <div className="space-y-3 mb-8">
             <button
               onClick={handleBookSession}
               disabled={!selectedSubject}
-              className={`w-full py-3 rounded-lg font-semibold transition-colors mb-3 ${selectedSubject
-                  ? 'bg-primary-600 hover:bg-primary-700 text-white'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg transition-all transform active:scale-95 ${
+                           selectedSubject 
+                             ? 'bg-gray-900 text-white hover:bg-black shadow-gray-200' 
+                             : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 }`}
             >
-              Book Session
+                         {selectedSubject ? 'Book Session' : 'Select a Subject'}
             </button>
 
-            {/* Message Button */}
             <button
               onClick={() => navigate('/app/messages', { state: { selectedContactId: tutor.userId } })}
-              className="w-full py-3 border-2 border-gray-300 hover:border-primary-500 rounded-lg font-semibold text-gray-700 hover:text-primary-600 transition-colors flex items-center justify-center"
+                        className="w-full py-4 bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 rounded-xl font-bold transition-all flex items-center justify-center gap-2 group"
             >
-              <MessageSquare className="w-5 h-5 mr-2" />
-              Send Message
+                         <MessageSquare className="w-5 h-5 group-hover:scale-110 transition-transform" /> Chat with Tutor
             </button>
+                   </div>
 
-            {/* Info */}
-            <div className="mt-6 pt-6 border-t border-gray-200 space-y-3 text-sm text-gray-600">
-              <div className="flex items-start">
-                <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
-                <span>Instant confirmation after booking</span>
+                   <div className="space-y-3 text-sm font-medium text-gray-500">
+                      <div className="flex items-center gap-3">
+                         <Globe className="w-5 h-5 text-blue-500" />
+                         <span>Online & In-person available</span>
               </div>
-              <div className="flex items-start">
-                <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
-                <span>Free cancellation up to 24 hours before session</span>
+                      <div className="flex items-center gap-3">
+                         <Shield className="w-5 h-5 text-green-500" />
+                         <span>Verified Student Tutor</span>
               </div>
-              <div className="flex items-start">
-                <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
-                <span>Verified campus tutor</span>
+                      <div className="flex items-center gap-3">
+                         <Clock className="w-5 h-5 text-purple-500" />
+                         <span>Free cancellation (24h notice)</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Booking Modal */}
+        </div>
+
       <BookingModal
         isOpen={showBookingModal}
         onClose={() => setShowBookingModal(false)}
@@ -373,6 +321,7 @@ const TutorDetailPage = () => {
         subject={selectedSubject}
         onSubmit={handleBookingSubmit}
       />
+      </div>
     </div>
   );
 };

@@ -75,6 +75,17 @@ const Hero = () => {
 
   const placeholderText = TypewriterPlaceholder({ texts: searchPlaceholders });
 
+  const folderItems = [
+    { title: "Verified Student Tutors" },
+    { title: "Smart Match Algorithm" },
+    { title: "Real-time Code Collab" },
+    { title: "Instant 1-on-1 Chat" },
+    { title: "Progress Tracking" },
+    { title: "Secure Payments" }
+  ];
+
+  const textTypeContent = ["print(boost_grades())"];
+
   return (
     <section className="relative pt-32 pb-24 px-6 min-h-[90vh] flex items-center overflow-hidden">
       {/* Background with Aurora and Grid */}
@@ -146,9 +157,7 @@ const Hero = () => {
               <div className="mt-4 text-blue-300">
                 <span className="text-gray-500">{`>>> `}</span>
                 <TextType
-                  text={[
-                    "print(boost_grades())"
-                  ]}
+                  text={textTypeContent}
                   typingSpeed={80}
                   startOnVisible={true}
                   loop={false}
@@ -242,14 +251,7 @@ const Hero = () => {
                 color="#3B82F6" 
                 autoTrigger={true}
                 triggerInterval={3000}
-                items={[
-                  { title: "Verified Student Tutors" },
-                  { title: "Smart Match Algorithm" },
-                  { title: "Real-time Code Collab" },
-                  { title: "Instant 1-on-1 Chat" },
-                  { title: "Progress Tracking" },
-                  { title: "Secure Payments" }
-                ]}
+                items={folderItems}
               />
             </motion.div>
 

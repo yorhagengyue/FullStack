@@ -22,6 +22,11 @@ import {
   BookOpen
 } from 'lucide-react';
 
+// ReactBits Components
+import TiltedCard from '../../components/reactbits/TiltedCard/TiltedCard';
+import SplitText from '../../components/reactbits/SplitText/SplitText';
+import Particles from '../../components/reactbits/Particles/Particles';
+
 // --- Components ---
 
 const TopBar = ({ user, notifications = [] }) => {
@@ -30,10 +35,10 @@ const TopBar = ({ user, notifications = [] }) => {
   
   const navItems = [
     { icon: Home, label: 'Home', path: '/app/dashboard', active: true },
-    { icon: Calendar, label: 'Calendar', path: '/app/calendar', active: false },
-    { icon: Activity, label: 'Activity', path: '/app/activity', active: false },
+    { icon: Calendar, label: 'Calendar', path: '/app/sessions', active: false },
+    { icon: Activity, label: 'Activity', path: '/app/bookings', active: false },
     { icon: MessageSquare, label: 'Messages', path: '/app/messages', active: false },
-    { icon: Settings, label: 'Settings', path: '/app/settings', active: false },
+    { icon: Settings, label: 'Settings', path: '/app/profile', active: false },
   ];
 
   const handleSearch = (e) => {
@@ -47,22 +52,8 @@ const TopBar = ({ user, notifications = [] }) => {
 
   return (
     <div className="flex flex-col lg:flex-row items-center justify-between mb-8 gap-6">
-      {/* Logo Area - Removed */}
-      {/* 
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 bg-gradient-to-tr from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center text-white font-bold">
-          T
-        </div>
-        <span className="text-xl font-bold text-gray-800 tracking-tight">Tu2tor</span>
-      </div> 
-      */}
-      
-      {/* Replaced with Spacer or simplified brand if needed, or just keep navigation centered */}
-      <div className="hidden lg:block w-32">
-         {/* Placeholder to balance the flex layout if needed, or empty */}
-      </div>
+      <div className="hidden lg:block w-32"></div>
 
-      {/* Center Navigation Pills */}
       <div className="flex items-center bg-gray-50/80 p-1.5 rounded-full border border-gray-100 shadow-sm overflow-x-auto max-w-full">
         {navItems.map((item, index) => (
           <Link
@@ -80,7 +71,6 @@ const TopBar = ({ user, notifications = [] }) => {
         ))}
       </div>
 
-      {/* Right Actions */}
       <div className="flex items-center gap-4">
         <form onSubmit={handleSearch} className="relative hidden md:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -113,92 +103,99 @@ const TopBar = ({ user, notifications = [] }) => {
 const HeroCard = ({ nextSession }) => {
   const navigate = useNavigate();
   
-  // Determine if session is starting soon (within 15 mins)
-  const isStartingSoon = nextSession && 
+  const isStartingSoon = nextSession && nextSession.startTime &&
+    !isNaN(new Date(nextSession.startTime).getTime()) &&
     (new Date(nextSession.startTime) - new Date() < 15 * 60 * 1000) &&
     (new Date() < new Date(nextSession.endTime));
 
-  return (
-    <div className="relative w-full h-[400px] rounded-[40px] overflow-hidden group">
-      {/* Background Image based on subject */}
-      <img 
-        src={nextSession?.subject?.toLowerCase().includes('python') 
-          ? "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&q=80&w=1600"
-          : nextSession?.subject?.toLowerCase().includes('math')
-            ? "https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&q=80&w=1600"
-            : "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=1600"
-        }
-        alt="Subject Background" 
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+  const bgImage = nextSession?.subject?.toLowerCase().includes('python') 
+      ? "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&q=80&w=1600"
+      : nextSession?.subject?.toLowerCase().includes('math')
+        ? "https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&q=80&w=1600"
+        : "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=1600";
 
-      {/* Content Overlay */}
-      <div className="absolute top-8 left-8">
-        <div className="bg-white/90 backdrop-blur-md rounded-[30px] p-6 shadow-lg max-w-sm transform transition-all hover:-translate-y-1 duration-300">
-          <div className="flex justify-between items-start mb-4">
-             <h2 className="text-2xl font-bold text-gray-900">
-               {nextSession ? `Session: ${nextSession.subject}` : 'No Upcoming Session'}
-             </h2>
-             {nextSession && (
-               <div className="flex -space-x-2">
-                  <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 overflow-hidden">
-                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${nextSession.tutor?.username || 'Tutor'}`} alt="Tutor" />
-                  </div>
-                  <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-900 text-white text-xs flex items-center justify-center font-medium">
-                    Tutor
-                  </div>
-               </div>
-             )}
-          </div>
-          
-          <div className="space-y-3">
-             <div className="flex items-center gap-3 text-gray-600 text-sm">
-                <Calendar className="w-4 h-4" />
-                <span>
-                  {nextSession 
-                    ? new Date(nextSession.startTime).toLocaleDateString() 
-                    : 'Check back later'}
-                </span>
-                {nextSession && (
-                  <>
-                    <span className="text-gray-300">|</span>
-                    <Clock className="w-4 h-4" />
-                    <span>
-                      {new Date(nextSession.startTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
-                    </span>
-                  </>
-                )}
+  const overlayContent = (
+    <div className="w-full h-full p-8 flex flex-col justify-between bg-black/30">
+      <div className="bg-white/90 backdrop-blur-md rounded-[30px] p-6 shadow-lg max-w-sm transform transition-all">
+        <div className="flex justify-between items-start mb-4">
+           <h2 className="text-2xl font-bold text-gray-900">
+             {nextSession ? `Session: ${nextSession.subject}` : 'No Upcoming Session'}
+           </h2>
+           {nextSession && (
+             <div className="flex -space-x-2">
+                <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 overflow-hidden">
+                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${nextSession.tutor?.username || 'Tutor'}`} alt="Tutor" />
+                </div>
+                <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-900 text-white text-xs flex items-center justify-center font-medium">
+                  Tutor
+                </div>
              </div>
+           )}
+        </div>
+        
+        <div className="space-y-3">
+           <div className="flex items-center gap-3 text-gray-600 text-sm">
+              <Calendar className="w-4 h-4" />
+              <span>
+                {nextSession && nextSession.startTime && !isNaN(new Date(nextSession.startTime).getTime())
+                  ? new Date(nextSession.startTime).toLocaleDateString() 
+                  : 'Check back later'}
+              </span>
+              {nextSession && nextSession.startTime && !isNaN(new Date(nextSession.startTime).getTime()) && (
+                <>
+                  <span className="text-gray-300">|</span>
+                  <Clock className="w-4 h-4" />
+                  <span>
+                    {new Date(nextSession.startTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                  </span>
+                </>
+              )}
+           </div>
 
-             {/* Action Area */}
-             <div className="mt-4">
-                {nextSession ? (
-                  <button 
-                    onClick={() => navigate(`/app/session/${nextSession.id}`)}
-                    disabled={!isStartingSoon}
-                    className={`w-full flex items-center justify-center gap-2 p-3 rounded-2xl shadow-lg transition-all ${
-                      isStartingSoon 
-                        ? 'bg-green-500 hover:bg-green-600 text-white animate-pulse' 
-                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    }`}
-                  >
-                    <Video className="w-4 h-4" />
-                    {isStartingSoon ? 'Enter Classroom' : 'Classroom Not Open'}
-                  </button>
-                ) : (
-                   <button 
-                    onClick={() => navigate('/app/search')}
-                    className="w-full flex items-center justify-center gap-2 p-3 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl shadow-lg transition-all"
-                  >
-                    <Search className="w-4 h-4" />
-                    Browse Tutors
-                  </button>
-                )}
-             </div>
-          </div>
+           <div className="mt-4">
+              {nextSession ? (
+                <button 
+                  onClick={(e) => { e.stopPropagation(); navigate(`/app/session/${nextSession.id}`); }}
+                  disabled={!isStartingSoon}
+                  className={`w-full flex items-center justify-center gap-2 p-3 rounded-2xl shadow-lg transition-all ${
+                    isStartingSoon 
+                      ? 'bg-green-500 hover:bg-green-600 text-white animate-pulse' 
+                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  <Video className="w-4 h-4" />
+                  {isStartingSoon ? 'Enter Classroom' : 'Classroom Not Open'}
+                </button>
+              ) : (
+                 <button 
+                  onClick={(e) => { e.stopPropagation(); navigate('/app/search'); }}
+                  className="w-full flex items-center justify-center gap-2 p-3 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl shadow-lg transition-all"
+                >
+                  <Search className="w-4 h-4" />
+                  Browse Tutors
+                </button>
+              )}
+           </div>
         </div>
       </div>
+    </div>
+  );
+
+  return (
+    <div className="relative w-full h-[400px] rounded-[40px] overflow-hidden group">
+      <TiltedCard
+        imageSrc={bgImage}
+        altText="Session Background"
+        containerHeight="400px"
+        containerWidth="100%"
+        imageHeight="100%"
+        imageWidth="100%"
+        scaleOnHover={1.05}
+        rotateAmplitude={8}
+        showTooltip={false}
+        displayOverlayContent={true}
+        overlayContent={overlayContent}
+      />
     </div>
   );
 };
@@ -208,7 +205,7 @@ const ScheduleItem = ({ time, title, duration, color, icon: Icon, onClick }) => 
      <div className="text-right pt-3">
         <span className="text-sm font-medium text-gray-500">{time}</span>
      </div>
-     <div className={`relative p-5 rounded-[24px] transition-all duration-300 hover:shadow-md ${color}`}>
+     <div className={`relative p-5 rounded-[24px] transition-all duration-300 hover:shadow-md hover:scale-[1.02] ${color}`}>
         <div className="flex justify-between items-start">
            <div>
               <h4 className="font-bold text-gray-900 mb-1">{title}</h4>
@@ -218,12 +215,11 @@ const ScheduleItem = ({ time, title, duration, color, icon: Icon, onClick }) => 
               </div>
            </div>
            {Icon && (
-             <div className="w-10 h-10 bg-white/60 rounded-full flex items-center justify-center">
+             <div className="w-10 h-10 bg-white/60 rounded-full flex items-center justify-center shadow-sm">
                 <Icon className="w-5 h-5 text-gray-700" />
              </div>
            )}
         </div>
-        {/* Connect line */}
         <div className="absolute left-[-26px] top-5 w-3 h-3 bg-gray-200 rounded-full border-2 border-white ring-1 ring-gray-100 z-10 group-hover:bg-blue-500 group-hover:scale-125 transition-all"></div>
         <div className="absolute left-[-21px] top-8 bottom-[-20px] w-[2px] bg-gray-100"></div>
      </div>
@@ -241,44 +237,65 @@ const GreetingCard = ({ user }) => {
   };
 
   return (
-    <div className="bg-white rounded-[36px] p-8 shadow-sm border border-gray-100">
-      <h2 className="text-3xl font-bold text-gray-900 mb-2">
-        Have a Good day, <br />
-        <span className="text-orange-500">{user?.username?.split(' ')[0] || 'Student'}</span> 👋
-      </h2>
-      <p className="text-gray-500 text-sm mb-8 leading-relaxed">
-        Fuel your days with the boundless enthusiasm of a lifelong explorer.
-      </p>
-      
-      <div className="bg-gray-50 rounded-3xl p-2 flex items-center gap-2 mb-6 border border-gray-100 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
-         <input 
-           type="text" 
-           value={query}
-           onChange={(e) => setQuery(e.target.value)}
-           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-           placeholder="I want to learn..." 
-           className="flex-1 bg-transparent border-none px-4 text-gray-700 placeholder-gray-400 focus:outline-none"
-         />
-         <button 
-           onClick={handleSearch}
-           className="p-3 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl shadow-lg shadow-orange-200 transition-all"
-         >
-            <Send className="w-4 h-4" />
-         </button>
+    <div className="relative bg-white rounded-[36px] p-8 shadow-sm border border-gray-100 overflow-hidden">
+      {/* Subtle Particles Background */}
+      <div className="absolute inset-0 z-0">
+        <Particles
+          particleCount={50}
+          particleColors={['#FFA500', '#3B82F6', '#E5E7EB']}
+          particleSpread={10}
+          speed={0.2}
+          moveParticlesOnHover={true}
+          particleHoverFactor={1.5}
+          alphaParticles={true}
+          particleBaseSize={60}
+          sizeRandomness={0.8}
+        />
       </div>
 
-      <div className="flex flex-wrap gap-2">
-         {['Python', 'Calculus', 'History', 'Biology'].map((tag, i) => (
-           <span 
-             key={i} 
-             onClick={() => navigate(`/app/search?q=${tag}`)}
-             className={`px-4 py-2 rounded-full text-xs font-medium cursor-pointer transition-colors ${
-               i === 0 ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'
-             }`}
+      <div className="relative z-10">
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">
+          <SplitText 
+             text="Have a Good day," 
+             className="block"
+             delay={50}
+          />
+          <span className="text-orange-500">{user?.username?.split(' ')[0] || 'Student'}</span> 👋
+        </h2>
+        <p className="text-gray-500 text-sm mb-8 leading-relaxed">
+          Fuel your days with the boundless enthusiasm of a lifelong explorer.
+        </p>
+        
+        <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-2 flex items-center gap-2 mb-6 border border-gray-100 focus-within:ring-2 focus-within:ring-blue-100 transition-all shadow-sm">
+           <input 
+             type="text" 
+             value={query}
+             onChange={(e) => setQuery(e.target.value)}
+             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+             placeholder="I want to learn..." 
+             className="flex-1 bg-transparent border-none px-4 text-gray-700 placeholder-gray-400 focus:outline-none"
+           />
+           <button 
+             onClick={handleSearch}
+             className="p-3 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl shadow-lg shadow-orange-200 transition-all"
            >
-             {tag}
-           </span>
-         ))}
+              <Send className="w-4 h-4" />
+           </button>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+           {['Python', 'Calculus', 'History', 'Biology'].map((tag, i) => (
+             <span 
+               key={i} 
+               onClick={() => navigate(`/app/search?q=${tag}`)}
+               className={`px-4 py-2 rounded-full text-xs font-medium cursor-pointer transition-colors z-10 ${
+                 i === 0 ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'
+               }`}
+             >
+               {tag}
+             </span>
+           ))}
+        </div>
       </div>
     </div>
   );
@@ -320,16 +337,12 @@ const Dashboard = () => {
     }
   }, [user?.userId]);
 
-  // Filter bookings
   const upcomingBookings = bookings
     .filter(b => b.status === 'confirmed' || b.status === 'pending')
     .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
 
   const nextSession = upcomingBookings[0];
 
-  // Process messages to show last message per conversation
-  // In a real app, this grouping happens on backend or logic
-  // For now, we take the last 5 messages from props
   const recentMessages = messages.slice(0, 5); 
 
   return (
@@ -343,16 +356,14 @@ const Dashboard = () => {
           {/* LEFT COLUMN (Main) */}
           <div className="lg:col-span-8 space-y-10">
             
-            {/* Hero Section */}
             <section>
                <HeroCard nextSession={nextSession} />
             </section>
 
-            {/* Schedule Section */}
             <section>
               <div className="flex justify-between items-center mb-6">
                  <h3 className="text-xl font-bold text-gray-900">Upcoming Schedule</h3>
-                 <Link to="/app/calendar" className="flex gap-2 group">
+                 <Link to="/app/sessions" className="flex gap-2 group">
                     <button className="p-2 group-hover:bg-gray-100 rounded-full transition-colors text-gray-400">
                        <Clock className="w-4 h-4" />
                     </button>
@@ -361,13 +372,11 @@ const Dashboard = () => {
                        <span className="text-sm font-medium text-gray-700">
                          {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
                        </span>
-                    </div>
+            </div>
                  </Link>
               </div>
 
-              {/* Timeline */}
               <div className="bg-white rounded-[32px] border border-gray-100 p-6">
-                 {/* Day Headers */}
                  <div className="grid grid-cols-5 gap-4 mb-8 text-center pb-4 border-b border-gray-100">
                     {Array.from({ length: 5 }).map((_, i) => {
                       const date = new Date();
@@ -381,12 +390,11 @@ const Dashboard = () => {
                            <span className="text-xs uppercase tracking-wide opacity-70">{dayName}</span>
                            <span className="text-lg">{dayNum}</span>
                            {isToday && <div className="w-1.5 h-1.5 bg-orange-500 rounded-full mt-1"></div>}
-                        </div>
+            </div>
                       );
                     })}
-                 </div>
+          </div>
 
-                 {/* Events */}
                  <div className="space-y-2">
                     {upcomingBookings.length > 0 ? (
                       upcomingBookings.slice(0, 3).map((booking, i) => (
@@ -415,15 +423,13 @@ const Dashboard = () => {
                         </button>
                       </div>
                     )}
-                 </div>
+              </div>
               </div>
             </section>
-
-          </div>
+        </div>
 
           {/* RIGHT COLUMN (Sidebar) */}
           <div className="lg:col-span-4 space-y-8">
-             
              <GreetingCard user={user} />
 
              <div className="bg-white p-2">
@@ -432,7 +438,7 @@ const Dashboard = () => {
                    <Link to="/app/messages" className="text-gray-400 hover:text-gray-600">
                       <MoreHorizontal className="w-5 h-5" />
                    </Link>
-                </div>
+              </div>
 
                 <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                    {recentMessages.length > 0 ? (
@@ -450,11 +456,10 @@ const Dashboard = () => {
                    ) : (
                      <div className="text-center py-8 text-gray-400 text-sm">
                        No messages yet.
-                     </div>
+                  </div>
                    )}
-                </div>
-                
-                {/* Mini Chat Preview (Bottom) - Only show if messages exist */}
+              </div>
+
                 {recentMessages.length > 0 && (
                   <div className="mt-8 bg-gray-50 rounded-[24px] p-4 border border-gray-100 relative overflow-hidden">
                      <div className="flex justify-between items-start mb-4">
@@ -462,9 +467,9 @@ const Dashboard = () => {
                            <div className="text-xs text-gray-400 mb-1">Recent</div>
                            <div className="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-gray-700 max-w-[80%] truncate">
                               {recentMessages[0]?.content || recentMessages[0]?.message}
-                           </div>
-                        </div>
-                     </div>
+              </div>
+            </div>
+          </div>
 
                      <div className="relative mt-4">
                         <button 
@@ -475,14 +480,12 @@ const Dashboard = () => {
                         </button>
                         <div className="absolute right-1 top-1 p-2 bg-orange-500 rounded-full text-white shadow-md pointer-events-none">
                            <Send className="w-3 h-3" />
-                        </div>
-                     </div>
-                  </div>
+              </div>
+                </div>
+              </div>
                 )}
-             </div>
-
+            </div>
           </div>
-
         </div>
       </div>
     </div>

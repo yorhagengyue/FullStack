@@ -7,11 +7,11 @@ import {
   Clock,
   Video,
   MapPin,
-  User,
   BookOpen,
   CheckCircle,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  ArrowRight
 } from 'lucide-react';
 
 const SessionsPage = () => {
@@ -33,20 +33,16 @@ const SessionsPage = () => {
   // Filter sessions based on status and time
   const activeSessions = bookings.filter(booking => {
     if (booking.status !== 'confirmed') return false;
-
     const sessionDate = new Date(booking.date);
     const fifteenMinutes = 15 * 60 * 1000;
-
     // Active if within ±15 minutes
     return Math.abs(now.getTime() - sessionDate.getTime()) <= fifteenMinutes;
   });
 
   const upcomingSessions = bookings.filter(booking => {
     if (booking.status !== 'confirmed') return false;
-
     const sessionDate = new Date(booking.date);
     const fifteenMinutes = 15 * 60 * 1000;
-
     // Upcoming if more than 15 minutes in the future
     return sessionDate.getTime() - now.getTime() > fifteenMinutes;
   });
@@ -56,21 +52,17 @@ const SessionsPage = () => {
   );
 
   const tabs = [
-    { id: 'active', label: 'Active Now', count: activeSessions.length, color: 'text-green-600' },
-    { id: 'upcoming', label: 'Upcoming', count: upcomingSessions.length, color: 'text-blue-600' },
-    { id: 'completed', label: 'Completed', count: completedSessions.length, color: 'text-gray-600' },
+    { id: 'active', label: 'Active Now', count: activeSessions.length },
+    { id: 'upcoming', label: 'Upcoming', count: upcomingSessions.length },
+    { id: 'completed', label: 'Completed', count: completedSessions.length },
   ];
 
   const getCurrentSessions = () => {
     switch (activeTab) {
-      case 'active':
-        return activeSessions;
-      case 'upcoming':
-        return upcomingSessions;
-      case 'completed':
-        return completedSessions;
-      default:
-        return [];
+      case 'active': return activeSessions;
+      case 'upcoming': return upcomingSessions;
+      case 'completed': return completedSessions;
+      default: return [];
     }
   };
 
@@ -82,7 +74,7 @@ const SessionsPage = () => {
     const timeDiff = sessionDate.getTime() - now.getTime();
 
     if (Math.abs(timeDiff) <= fifteenMinutes) {
-      return { label: 'Active Now', color: 'bg-green-100 text-green-700', canJoin: true };
+      return { label: 'Live Now', color: 'bg-rose-500 text-white animate-pulse', canJoin: true };
     } else if (timeDiff > 0) {
       const hoursUntil = Math.floor(timeDiff / (1000 * 60 * 60));
       const minutesUntil = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
@@ -92,55 +84,54 @@ const SessionsPage = () => {
         canJoin: false
       };
     } else {
-      return { label: 'Completed', color: 'bg-gray-100 text-gray-700', canJoin: false };
+      return { label: 'Completed', color: 'bg-gray-100 text-gray-600', canJoin: false };
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-[#F2F5F9] p-4 md:p-8 flex items-center justify-center font-sans">
+      <div className="w-full max-w-[1600px] bg-white rounded-[40px] shadow-xl shadow-gray-200/50 p-6 md:p-10 min-h-[90vh]">
+        
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Sessions</h1>
-        <p className="text-gray-600 mt-2">View and manage your tutoring sessions</p>
-      </div>
-
-      {/* Loading State */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
-          <span className="ml-3 text-gray-600">Loading sessions...</span>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Sessions</h1>
+          <p className="text-gray-500 mt-1">Your virtual classroom and session history.</p>
         </div>
-      ) : (
-        <>
+
           {/* Tabs */}
-          <div className="bg-white rounded-lg border border-gray-200 p-2">
-            <div className="flex space-x-2">
+        <div className="flex mb-8 p-1.5 bg-gray-50 rounded-full border border-gray-100 w-fit">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${
+              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
                     activeTab === tab.id
-                      ? 'bg-primary-600 text-white'
-                      : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
                   {tab.label}
-                  <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
-                    activeTab === tab.id
-                      ? 'bg-white/20'
-                      : 'bg-gray-200'
+              {tab.count > 0 && (
+                <span className={`px-2 py-0.5 rounded-full text-xs ${
+                  activeTab === tab.id ? 'bg-gray-100 text-gray-900' : 'bg-gray-200 text-gray-600'
                   }`}>
                     {tab.count}
                   </span>
+              )}
                 </button>
               ))}
             </div>
-          </div>
 
-          {/* Sessions List */}
+        {/* Content */}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="w-10 h-10 text-gray-300 animate-spin mb-4" />
+            <p className="text-gray-500">Loading sessions...</p>
+          </div>
+        ) : (
+          <>
           {currentSessions.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {currentSessions.map((booking) => {
                 const tutorId = booking.tutor?.userId || booking.tutorId;
                 const tutor = tutors.find(t => t.userId === tutorId);
@@ -149,91 +140,69 @@ const SessionsPage = () => {
                 return (
                   <div
                     key={booking._id || booking.bookingId}
-                    className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all"
+                      className="group bg-white rounded-[32px] p-6 border border-gray-100 hover:border-gray-200 hover:shadow-xl hover:shadow-gray-100/50 transition-all duration-300 flex flex-col"
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-start space-x-4 flex-1">
-                        {/* Avatar */}
-                        <div className="w-14 h-14 bg-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
-                          <span className="text-white font-bold text-lg">
-                            {tutor?.username?.charAt(0).toUpperCase() || 'T'}
-                          </span>
-                        </div>
+                      <div className="flex justify-between items-start mb-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${status.color}`}>
+                          {status.label}
+                        </span>
+                        {booking.sessionType === 'online' && (
+                          <div className="p-2 bg-blue-50 text-blue-600 rounded-full">
+                            <Video className="w-4 h-4" />
+                          </div>
+                        )}
+                      </div>
 
-                        {/* Info */}
-                        <div className="flex-1">
-                          <h3 className="font-bold text-gray-900 text-lg mb-1">
-                            {booking.subject}
-                          </h3>
-                          <p className="text-gray-600 mb-2">
-                            {user?.role === 'tutor'
-                              ? `Student: ${booking.student?.username || 'Student'}`
-                              : `Tutor: ${tutor?.username || 'Tutor'}`
-                            }
-                          </p>
-                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${status.color}`}>
-                            {status.label}
-                          </span>
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">{booking.subject}</h3>
+                      
+                      <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-100">
+                        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 font-bold">
+                            {tutor?.username?.charAt(0).toUpperCase() || 'T'}
                         </div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">{tutor?.username || 'Tutor'}</p>
+                          <p className="text-xs text-gray-500">Instructor</p>
                       </div>
                     </div>
 
-                    {/* Session Details */}
-                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="space-y-3 mb-6">
                       <div className="flex items-center text-sm text-gray-600">
-                        <Calendar className="w-4 h-4 mr-2" />
-                        {new Date(booking.date).toLocaleDateString()}
+                          <Calendar className="w-4 h-4 mr-3 text-gray-400" />
+                          {new Date(booking.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
                       </div>
                       <div className="flex items-center text-sm text-gray-600">
-                        <Clock className="w-4 h-4 mr-2" />
-                        {booking.timeSlot}
+                          <Clock className="w-4 h-4 mr-3 text-gray-400" />
+                          {booking.timeSlot} • {booking.duration} min
                       </div>
                       <div className="flex items-center text-sm text-gray-600">
-                        <MapPin className="w-4 h-4 mr-2" />
+                          <MapPin className="w-4 h-4 mr-3 text-gray-400" />
                         {booking.location}
                       </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <BookOpen className="w-4 h-4 mr-2" />
-                        {booking.duration} min
-                      </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex space-x-3">
-                      {status.canJoin && booking.sessionType === 'online' && (
+                      <div className="mt-auto">
+                        {status.canJoin && booking.sessionType === 'online' ? (
                         <Link
                           to={`/app/session/${booking._id || booking.bookingId}`}
-                          className="flex-1 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-semibold text-sm transition-colors flex items-center justify-center"
+                            className="w-full py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-lg shadow-rose-200"
                         >
-                          <Video className="w-4 h-4 mr-2" />
-                          Join Now
+                            Enter Classroom
+                            <ArrowRight className="w-4 h-4" />
                         </Link>
-                      )}
-
-                      {!status.canJoin && activeTab === 'upcoming' && booking.sessionType === 'online' && (
-                        <button
-                          disabled
-                          className="flex-1 py-2.5 bg-gray-100 text-gray-400 rounded-lg font-semibold text-sm cursor-not-allowed flex items-center justify-center"
-                        >
-                          <Video className="w-4 h-4 mr-2" />
-                          Not Yet Available
+                        ) : activeTab === 'upcoming' ? (
+                          <button disabled className="w-full py-3 bg-gray-100 text-gray-400 rounded-xl font-semibold text-sm cursor-not-allowed flex items-center justify-center gap-2">
+                            Not Started Yet
                         </button>
-                      )}
-
-                      {activeTab === 'completed' && !booking.hasReview && user?.role === 'student' && (
+                        ) : activeTab === 'completed' && !booking.hasReview ? (
                         <Link
                           to={`/app/review/${booking._id || booking.bookingId}`}
-                          className="flex-1 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold text-sm transition-colors flex items-center justify-center"
+                            className="w-full py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2"
                         >
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Leave Review
+                            Rate Session
                         </Link>
-                      )}
-
-                      {activeTab === 'completed' && booking.hasReview && (
-                        <div className="flex-1 py-2.5 bg-green-50 text-green-700 rounded-lg font-semibold text-sm flex items-center justify-center">
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Reviewed
+                        ) : (
+                          <div className="w-full py-3 bg-gray-50 text-gray-500 rounded-xl font-semibold text-sm text-center">
+                            Session Closed
                         </div>
                       )}
                     </div>
@@ -242,18 +211,29 @@ const SessionsPage = () => {
               })}
             </div>
           ) : (
-            <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-              <AlertCircle className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No {activeTab} sessions</h3>
-              <p className="text-gray-600">
-                {activeTab === 'active' && 'No sessions are currently active'}
-                {activeTab === 'upcoming' && 'You have no upcoming sessions scheduled'}
-                {activeTab === 'completed' && 'You have no completed sessions yet'}
-              </p>
+              <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-gray-100 rounded-[32px]">
+                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                  <BookOpen className="w-8 h-8 text-gray-300" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">No {activeTab} sessions</h3>
+                <p className="text-gray-500 mb-8 max-w-sm">
+                  {activeTab === 'active' && "You don't have any sessions scheduled for right now."}
+                  {activeTab === 'upcoming' && "No upcoming sessions. Book a tutor to get started!"}
+                  {activeTab === 'completed' && "Your completed sessions history will appear here."}
+                </p>
+                {activeTab === 'upcoming' && (
+                  <Link
+                    to="/app/search"
+                    className="px-8 py-3 bg-gray-900 text-white rounded-full font-medium hover:bg-gray-800 transition-all"
+                  >
+                    Find a Tutor
+                  </Link>
+                )}
             </div>
           )}
         </>
       )}
+      </div>
     </div>
   );
 };

@@ -1,0 +1,306 @@
+---
+description: AI rules derived by SpecStory from the project AI interaction history
+globs: *
+---
+
+## Headers
+
+## PROJECT DOCUMENTATION & CONTEXT SYSTEM
+
+This section contains the project's documentation, requirements, status, and any relevant context needed for development.
+
+The "Tu2tor" project is a full-stack web application designed as a peer-to-peer tutor finder system for students. It uses the MERN stack (MongoDB, Express.js, React.js, Node.js) and includes advanced features like AI integration and real-time collaboration.
+
+### **Project Structure & Tech Stack**
+
+*   **Frontend (`Tu2tor/src`):**
+    *   **Framework:** React with Vite.
+    *   **Styling:** Tailwind CSS.
+    *   **Key Pages:**
+        *   Auth: Login/Register (`src/pages/Auth`).
+        *   Dashboard: User overview (`src/pages/Dashboard`).
+        *   Search: "Smart Matching" for tutors (`src/pages/Search`).
+        *   Sessions: Real-time tutoring rooms with video and code collaboration (`src/pages/Sessions`).
+        *   AI Chat: AI assistant interface (`src/pages/AIChat`).
+        *   Landing: Public homepage (`src/pages/Landing/components/LandingPage.jsx`).
+    *   **Components (Landing Page):**
+        *   Hero: (`src/pages/Landing/components/Hero.jsx`)
+        *   Features: (`src/pages/Landing/components/Features.jsx`)
+        *   HowItWorks: (`src/pages/Landing/components/HowItWorks.jsx`)
+        *   FeaturesGrid: (`src/pages/Landing/components/FeaturesGrid.jsx`)
+        *   Testimonials: (`src/pages/Landing/components/Testimonials.jsx`)
+        *   CTA: (`src/pages/Landing/components/CTA.jsx`)
+        *   Stats: (`src/pages/Landing/components/Stats.jsx`)
+        *   GooeyNav: (`src/pages/Landing/components/GooeyNav.jsx`)
+    *   ReactBits Components: Reusable UI components located in `src/components/reactbits/`.
+        *   Aurora: (`src/components/reactbits/Aurora/Aurora.jsx`)
+        *   SplitText: (`src/components/reactbits/SplitText/SplitText.jsx`)
+        *   SpotlightCard: (`src/components/reactbits/SpotlightCard/SpotlightCard.jsx`)
+		*   CountUp: (`src/components/reactbits/CountUp/CountUp.jsx`)
+        *   ScrollVelocity: (`src/components/reactbits/ScrollVelocity/ScrollVelocity.jsx`)
+        *   TiltedCard: (`src/components/reactbits/TiltedCard/TiltedCard.jsx`)
+        *   Particles: (`src/components/reactbits/Particles/Particles.jsx`)
+        *   Folder: (`src/components/reactbits/Folder/Folder.jsx`)
+		*   TextType:  (`src/components/reactbits/TextType/TextType.jsx`)
+		*   Squares: (`src/components/reactbits/Squares/Squares.jsx`)
+		*   ScrollStack: (`src/components/reactbits/ScrollStack/ScrollStack.jsx`)
+		*   StaggeredMenu: (`src/components/reactbits/StaggeredMenu/StaggeredMenu.jsx`)
+        *   ChromaGrid: (`src/components/ChromaGrid/ChromaGrid.jsx`)
+    *   AI Service: A unified `AIService` (`src/ai/services/AIService.js`) that orchestrates multiple providers (Gemini, OpenAI, Ollama).
+
+*   **Backend (`Tu2tor/server/src`):**
+    *   **Framework:** Node.js with Express.
+    *   **Database:** MongoDB (using Mongoose).
+    *   **API Routes:**
+        *   `/api/auth`: User authentication.
+        *   `/api/tutors`: Tutor management and search.
+        *   `/api/bookings`: Session scheduling.
+        *   `/api/reviews`: Rating system.
+        *   `/api/messages`: Messaging functionality
+        *   `/api/code/execute`: Sandbox for executing code (currently supports JavaScript).
+    *   **Real-time:** WebSocket server (`ws`) for collaborative code editing.
+
+### **Key Features Implementation Status**
+
+1.  **Smart Matching:** The project implements a ranking algorithm (`rankingAlgorithm.js`) allowing users to weight preferences (Time vs. Rating) dynamically.
+2.  **AI Integration:** Robust support for Gemini, OpenAI, and Ollama. It includes capabilities for chat, content generation, and embeddings.
+3.  **Code Execution:** A backend service (`codeExecution.js`) allows safe execution of JavaScript code, likely for the live coding interview/tutoring feature. Python support is currently a placeholder.
+4.  **Project Status:** While the documentation (`PROJECT_STATUS.md`) mentions "Part 2 MVP", the codebase shows significant progress on "Part 3" features, including a fully structured backend and database integration.
+
+## TECH STACK
+
+*   **Frontend:** React, Vite, Tailwind CSS, `framer-motion`, `ogl`, `lenis`
+*   **Backend:** Node.js, Express.js
+*   **Database:** MongoDB (using Mongoose)
+*   **AI Integration:** `@google/generative-ai`, `ollama`, OpenAI
+*   **Real-time Collaboration:** `yjs`, `monaco-editor`, WebSockets
+*   **UI Libraries:** ReactBits, `gsap`
+
+## PROJECT STRUCTURE
+
+*   **Frontend (`Tu2tor/src`):**
+    *   Key Pages:
+        *   Auth: Login/Register (`src/pages/Auth`).
+        *   Dashboard: User overview (`src/pages/Dashboard`).
+        *   Search: "Smart Matching" for tutors (`src/pages/Search`).
+        *   Sessions: Real-time tutoring rooms with video and code collaboration (`src/pages/Sessions`).
+        *   AI Chat: AI assistant interface (`src/pages/AIChat`).
+        *   Landing: Public homepage (`src/pages/Landing/components/LandingPage.jsx`).
+    *   ReactBits Components: Reusable UI components located in `src/components/reactbits/`.
+        *   Aurora: (`src/components/reactbits/Aurora/Aurora.jsx`)
+        *   SplitText: (`src/components/reactbits/SplitText/SplitText.jsx`)
+        *   SpotlightCard: (`src/components/reactbits/SpotlightCard/SpotlightCard.jsx`)
+		*   CountUp: (`src/components/reactbits/CountUp/CountUp.jsx`)
+        *   ScrollVelocity: (`src/components/reactbits/ScrollVelocity/ScrollVelocity.jsx`)
+        *   TiltedCard: (`src/components/reactbits/TiltedCard/TiltedCard.jsx`)
+        *   Particles: (`src/components/reactbits/Particles/Particles.jsx`)
+        *   Folder: (`src/components/reactbits/Folder/Folder.jsx`)
+		*   TextType:  (`src/components/reactbits/TextType/TextType.jsx`)
+		*   Squares: (`src/components/reactbits/Squares/Squares.jsx`)
+		*   ScrollStack: (`src/components/reactbits/ScrollStack/ScrollStack.jsx`)
+		*   StaggeredMenu: (`src/components/reactbits/StaggeredMenu/StaggeredMenu.jsx`)
+        *   ChromaGrid: (`src/components/ChromaGrid/ChromaGrid.jsx`)
+    *   AI Service: A unified `AIService` (`src/ai/services/AIService.js`) that orchestrates multiple providers (Gemini, OpenAI, Ollama).
+*   **Backend (`Tu2tor/server/src`):**
+    *   API Routes:
+        *   `/api/auth`: User authentication.
+        *   `/api/tutors`: Tutor management and search.
+        *   `/api/bookings`: Session scheduling.
+        *   `/api/reviews`: Rating system.
+        *   `/api/code/execute`: Sandbox for executing code (currently supports JavaScript).
+        *   `/api/messages`: Messaging functionality
+    *   Real-time: WebSocket server (`ws`) for collaborative code editing.
+
+## CODING STANDARDS
+
+## WORKFLOW & RELEASE RULES
+
+*   After completing UI changes, use browser automation for testing.
+*   When pushing to git, run the following commands in sequence:
+```bash
+git add .
+git commit -m "Commit message"
+git push
+```
+
+## DEBUGGING
+
+*   If encountering Mongoose timeout errors, check the MongoDB URI in `Tu2tor/server/src/.env` and ensure the MongoDB service is running.
+*   If using MongoDB Atlas, check your Network Access (IP Whitelist) to ensure your current IP is allowed.
+*   If experiencing timeout issues during user login and the server continues running, verify the MongoDB URI in `Tu2tor/server/.env` and that the MongoDB service is running.
+
+    *   If using MongoDB Atlas, check your Network Access (IP Whitelist) to ensure your current IP is allowed.
+*   If you encounter a `querySrv ETIMEOUT` error, it indicates a DNS or firewall issue. To resolve this:
+    1.  Change your computer's DNS server to Google (`8.8.8.8`) or Cloudflare (`1.1.1.1`).
+    2.  Check your network environment, especially if you are on a school/company network. Try switching to a mobile hotspot, or turning off any proxy software or VPNs (or enabling VPN global mode).
+    3.  Ensure your MongoDB Atlas IP whitelist includes your current IP (for development, setting it to `0.0.0.0/0` temporarily is an option).
+*   When debugging, remember that the tool's execution directory is not the workspace root.
+*   If encountering issues with relative paths or running commands, try using absolute paths or setting the correct working directory first.
+*   Be aware of the file system structure, especially when dealing with nested directories.
+*   If encountering the "Maximum update depth exceeded" error:
+
+    1.  **Review `useEffect` Hooks:**
+        *   Carefully examine all `useEffect` hooks in the component mentioned in the error stack (e.g., `Folder.jsx`, `Hero.jsx`, `TextType.jsx`).
+        *   Ensure that the dependency array is correctly specified and includes all necessary dependencies.
+        *   Avoid including state variables in the dependency array if their updates are triggered by the effect itself, as this can lead to infinite loops.
+
+    2.  **Inspect `setState` Calls:**
+        *   Verify that `setState` calls are not being made synchronously or within tight loops during the rendering process.
+        *   Use functional updates (e.g., `setState(prev => prev + 1)`) to ensure that state updates are based on the most recent state.
+
+    3.  **Optimize Component Rendering:**
+        *   Use `React.memo` to prevent unnecessary re-renders of components.
+        *   Ensure that props passed to components are stable references (e.g., using `useCallback` or `useMemo`).
+
+    4.  **Throttle or Debounce Updates:**
+        *   If necessary, use techniques like throttling or debouncing to limit the rate at which state updates are triggered.
+
+    5.  **Verify Lifecycle Methods:**
+        *   Ensure that any custom component logic is not causing unintended side effects or infinite loops during component mounting, updating, or unmounting.
+
+    6.  **Break Cyclic Dependencies:**
+        *   If components have dependencies on each other's state, carefully analyze the data flow to identify and break any cyclic dependencies that may be causing infinite update loops.
+
+    7.  **Root Cause Analysis:**
+        *   The error message provides a stack trace, which indicates the specific component(s) where the issue originates. Use the stack trace to guide your investigation and focus on the most likely sources of the error.
+
+## AI SERVICE PROVIDERS
+
+The project uses a provider pattern for AI services. The following providers are available:
+
+*   Gemini (`GeminiProvider.js`)
+*   OpenAI
+*   Ollama
+
+## KEY FEATURES IMPLEMENTATION STATUS
+
+1.  **Smart Matching:** The project implements a ranking algorithm (`rankingAlgorithm.js`) allowing users to weight preferences (Time vs. Rating) dynamically.
+2.  **AI Integration:** Robust support for Gemini, OpenAI, and Ollama. It includes capabilities for chat, content generation, and embeddings.
+3.  **Code Execution:** A backend service (`codeExecution.js`) allows safe execution of JavaScript code, likely for the live coding interview/tutoring feature. Python support is currently a placeholder.
+
+## UI/UX Design Guidelines
+
+### Dashboard Page (`Dashboard.jsx`) Improvement Plan
+
+The Dashboard page should adopt the "Magic Bento" design.
+* The new dashboard layout should have:
+    * A clean header
+    * Minimalist stats displayed in a row
+    * A combined "Upcoming Schedule" and "Recent Activity" section.
+
+The dashboard should discard the card design and follow a modern clean list approach.
+
+The design concept is that the Dashboard page should allow previewing several important functions. A smooth animation will transition the user to detailed pages as they are clicked.
+
+### Outstanding UI Tasks
+The following pages still require UI unification:
+
+*   Redesign Tutor Detail Page
+*   Tutor page should use ChromaGrid from ReactBits
+
+When asked to push to git, run the following commands in sequence:
+
+```bash
+git add .
+git commit -m "Commit message"
+git push
+```
+
+You are not able to directly test code. Instead, you should use your memory and reasoning to describe the expected behaviour of the changes. You should also ask clarifying questions if you are unsure about the desired behaviour.
+
+If the user asks to use a design or code from a link to a file, you must first use your tools to read the file. Only then can you apply the design or code.
+
+Here are some of the existing components that are available to you to use:
+
+*   Aurora
+*   SplitText
+*   SpotlightCard
+*   CountUp
+*   ScrollVelocity
+*   TiltedCard
+*   Particles
+*   Folder
+*   TextType
+*   Squares
+*   GooeyNav
+*   StaggeredMenu
+*   ChromaGrid
+
+## EMERGENCY ACCESS RULES
+
+When database connection is unavailable, follow the instructions in the root directory's `BYPASS_DB_INSTRUCTIONS.md` file to bypass authentication and access the system using a mock user. Remember to revert these changes once the database is restored.
+
+### AuthContext.jsx Emergency Access
+1. Open `src/context/AuthContext.jsx`.
+2. Search for "DB BYPASS START" and "DB BYPASS END" comments.
+3. Uncomment the original API calls and logic.
+4. Remove the mock user assignment.
+5. Delete the file `BYPASS_DB_INSTRUCTIONS.md` in the project root.
+
+### Layout.jsx Post-Login Header Removal
+After login, the header should be removed, and a "Back to Home Page" option should be added to the sidebar.
+
+## Handling "Maximum update depth exceeded" Error
+
+If encountering the "Maximum update depth exceeded" error:
+
+1.  **Review `useEffect` Hooks:**
+    *   Carefully examine all `useEffect` hooks in the component mentioned in the error stack (e.g., `Folder.jsx`, `Hero.jsx`, `TextType.jsx`).
+    *   Ensure that the dependency array is correctly specified and includes all necessary dependencies.
+    *   Avoid including state variables in the dependency array if their updates are triggered by the effect itself, as this can lead to infinite loops.
+
+2.  **Inspect `setState` Calls:**
+    *   Verify that `setState` calls are not being made synchronously or within tight loops during the rendering process.
+    *   Use functional updates (e.g., `setState(prev => prev + 1)`) to ensure that state updates are based on the most recent state.
+
+3.  **Optimize Component Rendering:**
+    *   Use `React.memo` to prevent unnecessary re-renders of components.
+    *   Ensure that props passed to components are stable references (e.g., using `useCallback` or `useMemo`).
+
+4.  **Throttle or Debounce Updates:**
+    *   If necessary, use techniques like throttling or debouncing to limit the rate at which state updates are triggered.
+
+5.  **Verify Lifecycle Methods:**
+    *   Ensure that any custom component logic is not causing unintended side effects or infinite loops during component mounting, updating, or unmounting.
+
+6.  **Break Cyclic Dependencies:**
+    *   If components have dependencies on each other's state, carefully analyze the data flow to identify and break any cyclic dependencies that may be causing infinite update loops.
+
+7.  **Root Cause Analysis:**
+    *   The error message provides a stack trace, which indicates the specific component(s) where the issue originates. Use the stack trace to guide your investigation and focus on the most likely sources of the error.
+
+## Troubleshooting Backend Connectivity Issues
+
+*   If experiencing issues where the frontend cannot connect to the backend, resulting in an &#x60;ECONNREFUSED&#x60; error or similar:
+
+    1.  **Verify Backend Startup**: Ensure the backend server is running without crashing. Check the terminal output for any error messages related to database connection or missing environment variables.
+    2.  **Check .env Configuration**: Verify the presence and contents of the `.env` file in the correct directories. Specifically check the MongoDB URI.
+    3.  **Clear Cache**: For frontend updates to take effect, clear the Vite cache and restart the development server.
+    4.  **Check MONGODB_URI and JWT_SECRET**: Verify that your MongoDB connection string (&#x60;MONGODB_URI&#60;) and JWT secret key (&#x60;JWT_SECRET&#60;) are correctly set in your environment variables.
+## Handling Component Update Errors
+* When encountering the error message "Maximum update depth exceeded", review the following items:
+  1.  **Review useEffect Hooks**: Carefully examine all `useEffect` hooks in the component mentioned in the error stack (e.g., `Folder.jsx`, `Hero.jsx`, `TextType.jsx`). Ensure that the dependency array is correctly specified and includes all necessary dependencies. Avoid including state variables in the dependency array if their updates are triggered by the effect itself, as this can lead to infinite loops.
+  2.  **Inspect setState Calls**: Verify that &#x60;setState&#x60; calls are not being made synchronously or within tight loops during the rendering process. Use functional updates (e.g., &#x60;setState(prev => prev + 1)&#x60;) to ensure that state updates are based on the most recent state.
+  3.  **Optimize Component Rendering**: Use &#x60;React.memo&#x60; to prevent unnecessary re-renders of components. Ensure that props passed to components are stable references (e.g., using &#x60;useCallback&#x60; or &#x60;useMemo&#x60;).
+  4.  **Throttle or Debounce Updates**: If necessary, use techniques like throttling or debouncing to limit the rate at which state updates are triggered.
+  5.  **Verify Lifecycle Methods**: Ensure that any custom component logic is not causing unintended side effects or infinite loops during component mounting, updating, or unmounting.
+  6.  **Break Cyclic Dependencies**: If components have dependencies on each other's state, carefully analyze the data flow to identify and break any cyclic dependencies that may be causing infinite update loops.
+  7.  **Root Cause Analysis**: The error message provides a stack trace, which indicates the specific component(s) where the issue originates. Use the stack trace to guide your investigation and focus on the most likely sources of the error.
+
+## Backend Configuration
+If encountering Mongoose timeout errors, check the MongoDB URI in `Tu2tor/server/src/.env` and ensure the MongoDB service is running.
+
+If using MongoDB Atlas, check your Network Access (IP Whitelist) to ensure your current IP is allowed.
+
+## EMERGENCY ACCESS RULES
+When database connection is unavailable, follow the instructions in the root directory's `BYPASS_DB_INSTRUCTIONS.md` file to bypass authentication and access the system using a mock user. Remember to revert these changes once the database is restored.
+
+### AuthContext.jsx Emergency Access
+1. Open `src/context/AuthContext.jsx`.
+2. Search for "DB BYPASS START" and "DB BYPASS END" comments.
+3. Uncomment the original API calls and logic.
+4. Remove the mock user assignment.
+5. Delete the file `BYPASS_DB_INSTRUCTIONS.md` in the project root.
+
+### Layout.jsx Post-Login Header Removal
+After login, the header should be removed, and a "Back to Home Page" option should be added to the sidebar.
