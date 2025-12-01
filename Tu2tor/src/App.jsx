@@ -22,7 +22,7 @@ import ReviewsPage from './pages/Reviews/ReviewsPage';
 import ReviewSubmitPage from './pages/Reviews/ReviewSubmitPage';
 import SessionsPage from './pages/Sessions/SessionsPage';
 import SessionRoomPage from './pages/Sessions/SessionRoomPage';
-import NotificationsPage from './pages/Notifications/NotificationsPage';
+// NotificationsPage removed - merged into MessagesPage
 import MessagesPage from './pages/Messages/MessagesPage';
 import AIChat from './pages/AIChat/AIChat';
 
@@ -101,7 +101,7 @@ function AppRoutes() {
         <Route path="review/:bookingId" element={<ReviewSubmitPage />} />
         <Route path="sessions" element={<SessionsPage />} />
         <Route path="session/:bookingId" element={<SessionRoomPage />} />
-        <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="notifications" element={<Navigate to="/app/messages" state={{ selectedContactId: 'system' }} />} />
         <Route path="messages" element={<MessagesPage />} />
         <Route path="ai-chat" element={<AIChat />} />
       </Route>

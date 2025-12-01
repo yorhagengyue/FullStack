@@ -71,8 +71,8 @@ const ReviewsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F2F5F9] p-4 md:p-8 flex items-center justify-center font-sans">
-      <div className="w-full max-w-[1400px] bg-white rounded-[40px] shadow-xl shadow-gray-200/50 p-6 md:p-10 min-h-[85vh]">
+    <div className="min-h-full bg-[#F2F5F9] font-sans">
+      <div className="w-full bg-white rounded-[28px] shadow-xl shadow-gray-200/50 p-6 md:p-8">
         
       {/* Header */}
         <div className="flex justify-between items-center mb-8">

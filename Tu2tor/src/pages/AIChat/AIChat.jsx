@@ -226,8 +226,8 @@ const AIChat = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F2F5F9] p-4 md:p-8 flex items-center justify-center font-sans">
-      <div className="w-full max-w-[1600px] bg-white rounded-[40px] shadow-xl shadow-gray-200/50 overflow-hidden flex h-[85vh]">
+    <div className="h-full bg-[#F2F5F9] font-sans">
+      <div className="w-full bg-white rounded-[28px] shadow-xl shadow-gray-200/50 overflow-hidden flex h-[calc(100vh-80px)]">
         
       {/* Main Chat Area */}
         <div className="flex-1 flex flex-col relative">

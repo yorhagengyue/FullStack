@@ -107,8 +107,8 @@ The "Tu2tor" project is a full-stack web application designed as a peer-to-peer 
         *   `/api/tutors`: Tutor management and search.
         *   `/api/bookings`: Session scheduling.
         *   `/api/reviews`: Rating system.
-        *   `/api/code/execute`: Sandbox for executing code (currently supports JavaScript).
         *   `/api/messages`: Messaging functionality
+        *   `/api/code/execute`: Sandbox for executing code (currently supports JavaScript).
     *   Real-time: WebSocket server (`ws`) for collaborative code editing.
 
 ## CODING STANDARDS
@@ -137,7 +137,7 @@ git push
 *   When debugging, remember that the tool's execution directory is not the workspace root.
 *   If encountering issues with relative paths or running commands, try using absolute paths or setting the correct working directory first.
 *   Be aware of the file system structure, especially when dealing with nested directories.
-*   If encountering the "Maximum update depth exceeded" error:
+*   When encountering the "Maximum update depth exceeded" error:
 
     1.  **Review `useEffect` Hooks:**
         *   Carefully examine all `useEffect` hooks in the component mentioned in the error stack (e.g., `Folder.jsx`, `Hero.jsx`, `TextType.jsx`).
@@ -145,12 +145,12 @@ git push
         *   Avoid including state variables in the dependency array if their updates are triggered by the effect itself, as this can lead to infinite loops.
 
     2.  **Inspect `setState` Calls:**
-        *   Verify that `setState` calls are not being made synchronously or within tight loops during the rendering process.
-        *   Use functional updates (e.g., `setState(prev => prev + 1)`) to ensure that state updates are based on the most recent state.
+        *   Verify that &#x60;setState&#x60; calls are not being made synchronously or within tight loops during the rendering process.
+        *   Use functional updates (e.g., &#x60;setState(prev => prev + 1)&#x60;) to ensure that state updates are based on the most recent state.
 
     3.  **Optimize Component Rendering:**
-        *   Use `React.memo` to prevent unnecessary re-renders of components.
-        *   Ensure that props passed to components are stable references (e.g., using `useCallback` or `useMemo`).
+        *   Use &#x60;React.memo&#x60; to prevent unnecessary re-renders of components.
+        *   Ensure that props passed to components are stable references (e.g., using &#x60;useCallback&#x60; or &#x60;useMemo&#60;).
 
     4.  **Throttle or Debounce Updates:**
         *   If necessary, use techniques like throttling or debouncing to limit the rate at which state updates are triggered.
@@ -163,6 +163,16 @@ git push
 
     7.  **Root Cause Analysis:**
         *   The error message provides a stack trace, which indicates the specific component(s) where the issue originates. Use the stack trace to guide your investigation and focus on the most likely sources of the error.
+
+*   If experiencing issues where the frontend cannot connect to the backend, resulting in an &#x60;ECONNREFUSED&#x60; error or similar:
+
+    1.  **Verify Backend Startup**: Ensure the backend server is running without crashing. Check the terminal output for any error messages related to database connection or missing environment variables.
+    2.  **Check .env Configuration**: Check &#x60;Tu2tor/server/src/.env&#x60;. Specifically check the MongoDB URI.
+    3.  **Clear Cache**: For frontend updates to take effect, clear the Vite cache and restart the development server.
+    4.  **Check MONGODB_URI and JWT_SECRET**: Verify that your MongoDB connection string (&#x60;MONGODB_URI&#x60;) and JWT secret key (&#x60;JWT_SECRET&#x60;) are correctly set in your environment variables.
+    5.  Check that the environment variables are correctly loaded using  `console.log(&#96;   MONGODB_URI loaded: ${process.env.MONGODB_URI ? &#39;YES&#39; : &#39;NO&#39;}&#96;);`.
+    6.  You may need to restart the backend server to apply the environmental variables.
+*   When the error "Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received" appears, it is likely due to a browser extension mishandling asynchronous responses and does not directly affect the application's core functionality.
 
 ## AI SERVICE PROVIDERS
 
@@ -246,18 +256,18 @@ After login, the header should be removed, and a "Back to Home Page" option shou
 
 If encountering the "Maximum update depth exceeded" error:
 
-1.  **Review `useEffect` Hooks:**
+1.  **Review useEffect Hooks:**
     *   Carefully examine all `useEffect` hooks in the component mentioned in the error stack (e.g., `Folder.jsx`, `Hero.jsx`, `TextType.jsx`).
     *   Ensure that the dependency array is correctly specified and includes all necessary dependencies.
     *   Avoid including state variables in the dependency array if their updates are triggered by the effect itself, as this can lead to infinite loops.
 
-2.  **Inspect `setState` Calls:**
-    *   Verify that `setState` calls are not being made synchronously or within tight loops during the rendering process.
-    *   Use functional updates (e.g., `setState(prev => prev + 1)`) to ensure that state updates are based on the most recent state.
+2.  **Inspect setState Calls:**
+    *   Verify that &#x60;setState&#x60; calls are not being made synchronously or within tight loops during the rendering process.
+    *   Use functional updates (e.g., &#x60;setState(prev => prev + 1)&#x60;) to ensure that state updates are based on the most recent state.
 
 3.  **Optimize Component Rendering:**
-    *   Use `React.memo` to prevent unnecessary re-renders of components.
-    *   Ensure that props passed to components are stable references (e.g., using `useCallback` or `useMemo`).
+    *   Use &#x60;React.memo&#x60; to prevent unnecessary re-renders of components.
+    *   Ensure that props passed to components are stable references (e.g., using &#x60;useCallback&#x60; or &#x60;useMemo&#60;).
 
 4.  **Throttle or Debounce Updates:**
     *   If necessary, use techniques like throttling or debouncing to limit the rate at which state updates are triggered.
@@ -276,51 +286,17 @@ If encountering the "Maximum update depth exceeded" error:
 *   If experiencing issues where the frontend cannot connect to the backend, resulting in an &#x60;ECONNREFUSED&#x60; error or similar:
 
     1.  **Verify Backend Startup**: Ensure the backend server is running without crashing. Check the terminal output for any error messages related to database connection or missing environment variables.
-    2.  **Check .env Configuration**: Verify the presence and contents of the `.env` file in the correct directories. Specifically check the MongoDB URI.
+    2.  **Check .env Configuration**: Check &#x60;Tu2tor/server/src/.env&#x60;. Specifically check the MongoDB URI.
     3.  **Clear Cache**: For frontend updates to take effect, clear the Vite cache and restart the development server.
     4.  **Check MONGODB_URI and JWT_SECRET**: Verify that your MongoDB connection string (&#x60;MONGODB_URI&#x60;) and JWT secret key (&#x60;JWT_SECRET&#x60;) are correctly set in your environment variables.
-## Handling Component Update Errors
-* When encountering the error message "Maximum update depth exceeded", review the following items:
-  1.  **Review useEffect Hooks**: Carefully examine all `useEffect` hooks in the component mentioned in the error stack (e.g., `Folder.jsx`, `Hero.jsx`, `TextType.jsx`). Ensure that the dependency array is correctly specified and includes all necessary dependencies. Avoid including state variables in the dependency array if their updates are triggered by the effect itself, as this can lead to infinite loops.
-  2.  **Inspect setState Calls**: Verify that &#x60;setState&#x60; calls are not being made synchronously or within tight loops during the rendering process. Use functional updates (e.g., &#x60;setState(prev => prev + 1)&#x60;) to ensure that state updates are based on the most recent state.
-  3.  **Optimize Component Rendering**: Use &#x60;React.memo&#x60; to prevent unnecessary re-renders of components. Ensure that props passed to components are stable references (e.g., using &#x60;useCallback&#x60; or &#x60;useMemo&#x60;).
-  4.  **Throttle or Debounce Updates**: If necessary, use techniques like throttling or debouncing to limit the rate at which state updates are triggered.
-  5.  **Verify Lifecycle Methods**: Ensure that any custom component logic is not causing unintended side effects or infinite loops during component mounting, updating, or unmounting.
-  6.  **Break Cyclic Dependencies**: If components have dependencies on each other's state, carefully analyze the data flow to identify and break any cyclic dependencies that may be causing infinite update loops.
-  7.  **Root Cause Analysis**: The error message provides a stack trace, which indicates the specific component(s) where the issue originates. Use the stack trace to guide your investigation and focus on the most likely sources of the error.
-
-## Backend Configuration
-If encountering Mongoose timeout errors, check the MongoDB URI in `Tu2tor/server/src/.env` and ensure the MongoDB service is running.
-
-If using MongoDB Atlas, check your Network Access (IP Whitelist) to ensure your current IP is allowed.
-
-## EMERGENCY ACCESS RULES
-When database connection is unavailable, follow the instructions in the root directory's `BYPASS_DB_INSTRUCTIONS.md` file to bypass authentication and access the system using a mock user. Remember to revert these changes once the database is restored.
-
-### AuthContext.jsx Emergency Access
-1. Open `src/context/AuthContext.jsx`.
-2. Search for "DB BYPASS START" and "DB BYPASS END" comments.
-3. Uncomment the original API calls and logic.
-4. Remove the mock user assignment.
-5. Delete the file `BYPASS_DB_INSTRUCTIONS.md` in the project root.
-
-### Layout.jsx Post-Login Header Removal
-After login, the header should be removed, and a "Back to Home Page" option should be added to the sidebar.
-
-## Troubleshooting External API issues
-If the frontend cannot connect to the backend, resulting in an &#x60;ECONNREFUSED&#x60; error:
-1. **Verify Backend Startup**: Ensure the backend server is running without crashing. Check the terminal output for any error messages related to database connection or missing environment variables.
-2. **Check .env Configuration**: Check `Tu2tor/server/src/.env`. Specifically check the MongoDB URI.
-3. **Clear Cache**: For frontend updates to take effect, clear the Vite cache and restart the development server.
-4.  **Check MONGODB_URI and JWT_SECRET**: Verify that your MongoDB connection string (&#x60;MONGODB_URI&#60;) and JWT secret key (&#x60;JWT_SECRET&#60;) are correctly set in your environment variables.
-5.  Check that the environment variables are correctly loaded using  `console.log(&#96;   MONGODB_URI loaded: ${process.env.MONGODB_URI ? &#39;YES&#39; : &#39;NO&#39;}&#96;);`.
-6.  You may need to restart the backend server to apply the environmental variables.
+    5.  Check that the environment variables are correctly loaded using  `console.log(&#96;   MONGODB_URI loaded: ${process.env.MONGODB_URI ? &#39;YES&#39; : &#39;NO&#39;}&#96;);`.
+    6.  You may need to restart the backend server to apply the environmental variables.
 
 ## Component Update Errors
 * When encountering the error message "Maximum update depth exceeded", review the following items:
   1.  **Review useEffect Hooks**: Carefully examine all `useEffect` hooks in the component mentioned in the error stack (e.g., `Folder.jsx`, `Hero.jsx`, `TextType.jsx`). Ensure that the dependency array is correctly specified and includes all necessary dependencies. Avoid including state variables in the dependency array if their updates are triggered by the effect itself, as this can lead to infinite loops.
   2.  **Inspect setState Calls**: Verify that &#x60;setState&#x60; calls are not being made synchronously or within tight loops during the rendering process. Use functional updates (e.g., &#x60;setState(prev => prev + 1)&#x60;) to ensure that state updates are based on the most recent state.
-  3.  **Optimize Component Rendering**: Use &#x60;React.memo&#x60; to prevent unnecessary re-renders of components. Ensure that props passed to components are stable references (e.g., using &#x60;useCallback&#x60; or &#x60;useMemo&#x60;).
+  3.  **Optimize Component Rendering**: Use &#x60;React.memo&#x60; to prevent unnecessary re-renders of components. Ensure that props passed to components are stable references (e.g., using &#x60;useCallback&#x60; or &#x60;useMemo&#60;).
   4.  **Throttle or Debounce Updates**: If necessary, use techniques like throttling or debouncing to limit the rate at which state updates are triggered.
   5.  **Verify Lifecycle Methods**: Ensure that any custom component logic is not causing unintended side effects or infinite loops during component mounting, updating, or unmounting.
   6.  **Break Cyclic Dependencies**: If components have dependencies on each other's state, carefully analyze the data flow to identify and break any cyclic dependencies that may be causing infinite update loops.
@@ -343,3 +319,11 @@ When database connection is unavailable, follow the instructions in the root dir
 
 ### Layout.jsx Post-Login Header Removal
 After login, the header should be removed, and a "Back to Home Page" option should be added to the sidebar.
+
+It is very important to remember the following steps in sequence when pushing to git:
+
+```bash
+git add .
+git commit -m "Commit message"
+git push
+```

@@ -95,8 +95,8 @@ const SearchPage = () => {
   }, [tutors, useSmartMatching, prioritySlider, user, priceRange, selectedDay, maxResponseTime, minExperience]);
 
   return (
-    <div className="min-h-screen bg-[#F2F5F9] p-4 md:p-8 flex items-center justify-center font-sans">
-      <div className="w-full max-w-[1600px] bg-white rounded-[40px] shadow-xl shadow-gray-200/50 p-6 md:p-10 min-h-[90vh]">
+    <div className="min-h-full bg-[#F2F5F9] font-sans">
+      <div className="w-full bg-white rounded-[28px] shadow-xl shadow-gray-200/50 p-6 md:p-8">
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">

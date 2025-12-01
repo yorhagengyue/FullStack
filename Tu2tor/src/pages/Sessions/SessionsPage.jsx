@@ -30,21 +30,30 @@ const SessionsPage = () => {
   // Get current time
   const now = new Date();
 
+  // Helper to get session start time (prefer startTime, fallback to date)
+  const getSessionTime = (booking) => {
+    if (booking.startTime) return new Date(booking.startTime);
+    if (booking.date) return new Date(booking.date);
+    return null;
+  };
+
   // Filter sessions based on status and time
   const activeSessions = bookings.filter(booking => {
     if (booking.status !== 'confirmed') return false;
-    const sessionDate = new Date(booking.date);
+    const sessionTime = getSessionTime(booking);
+    if (!sessionTime) return false;
     const fifteenMinutes = 15 * 60 * 1000;
     // Active if within ±15 minutes
-    return Math.abs(now.getTime() - sessionDate.getTime()) <= fifteenMinutes;
+    return Math.abs(now.getTime() - sessionTime.getTime()) <= fifteenMinutes;
   });
 
   const upcomingSessions = bookings.filter(booking => {
     if (booking.status !== 'confirmed') return false;
-    const sessionDate = new Date(booking.date);
+    const sessionTime = getSessionTime(booking);
+    if (!sessionTime) return false;
     const fifteenMinutes = 15 * 60 * 1000;
     // Upcoming if more than 15 minutes in the future
-    return sessionDate.getTime() - now.getTime() > fifteenMinutes;
+    return sessionTime.getTime() - now.getTime() > fifteenMinutes;
   });
 
   const completedSessions = bookings.filter(booking =>
@@ -69,9 +78,13 @@ const SessionsPage = () => {
   const currentSessions = getCurrentSessions();
 
   const getSessionStatus = (booking) => {
-    const sessionDate = new Date(booking.date);
+    const sessionTime = getSessionTime(booking);
+    if (!sessionTime) {
+      return { label: 'Unknown', color: 'bg-gray-100 text-gray-600', canJoin: false };
+    }
+    
     const fifteenMinutes = 15 * 60 * 1000;
-    const timeDiff = sessionDate.getTime() - now.getTime();
+    const timeDiff = sessionTime.getTime() - now.getTime();
 
     if (Math.abs(timeDiff) <= fifteenMinutes) {
       return { label: 'Live Now', color: 'bg-rose-500 text-white animate-pulse', canJoin: true };
@@ -87,10 +100,13 @@ const SessionsPage = () => {
       return { label: 'Completed', color: 'bg-gray-100 text-gray-600', canJoin: false };
     }
   };
+  
+  // Helper to get booking ID consistently
+  const getBookingId = (booking) => booking._id || booking.id || booking.bookingId;
 
   return (
-    <div className="min-h-screen bg-[#F2F5F9] p-4 md:p-8 flex items-center justify-center font-sans">
-      <div className="w-full max-w-[1600px] bg-white rounded-[40px] shadow-xl shadow-gray-200/50 p-6 md:p-10 min-h-[90vh]">
+    <div className="min-h-full bg-[#F2F5F9] font-sans">
+      <div className="w-full bg-white rounded-[28px] shadow-xl shadow-gray-200/50 p-6 md:p-8">
         
       {/* Header */}
         <div className="mb-8">
@@ -134,12 +150,14 @@ const SessionsPage = () => {
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {currentSessions.map((booking) => {
                 const tutorId = booking.tutor?.userId || booking.tutorId;
-                const tutor = tutors.find(t => t.userId === tutorId);
+                const tutor = tutors.find(t => t.userId === tutorId || t._id === tutorId || t.id === tutorId);
                 const status = getSessionStatus(booking);
+                const bookingId = getBookingId(booking);
+                const sessionTime = getSessionTime(booking);
 
                 return (
                   <div
-                    key={booking._id || booking.bookingId}
+                    key={bookingId}
                       className="group bg-white rounded-[32px] p-6 border border-gray-100 hover:border-gray-200 hover:shadow-xl hover:shadow-gray-100/50 transition-all duration-300 flex flex-col"
                   >
                       <div className="flex justify-between items-start mb-4">
@@ -156,11 +174,15 @@ const SessionsPage = () => {
                       <h3 className="text-xl font-bold text-gray-900 mb-2">{booking.subject}</h3>
                       
                       <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-100">
-                        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 font-bold">
-                            {tutor?.username?.charAt(0).toUpperCase() || 'T'}
+                        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 font-bold overflow-hidden">
+                          {tutor?.profilePicture ? (
+                            <img src={tutor.profilePicture} alt={tutor.username} className="w-full h-full object-cover" />
+                          ) : (
+                            tutor?.username?.charAt(0).toUpperCase() || booking.tutor?.username?.charAt(0).toUpperCase() || 'T'
+                          )}
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-gray-900">{tutor?.username || 'Tutor'}</p>
+                          <p className="text-sm font-semibold text-gray-900">{tutor?.username || booking.tutor?.username || 'Tutor'}</p>
                           <p className="text-xs text-gray-500">Instructor</p>
                       </div>
                     </div>
@@ -168,34 +190,37 @@ const SessionsPage = () => {
                       <div className="space-y-3 mb-6">
                       <div className="flex items-center text-sm text-gray-600">
                           <Calendar className="w-4 h-4 mr-3 text-gray-400" />
-                          {new Date(booking.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                          {sessionTime ? sessionTime.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) : 'TBD'}
                       </div>
                       <div className="flex items-center text-sm text-gray-600">
                           <Clock className="w-4 h-4 mr-3 text-gray-400" />
-                          {booking.timeSlot} • {booking.duration} min
+                          {booking.timeSlot || (sessionTime ? sessionTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'TBD')} • {booking.duration || 60} min
                       </div>
                       <div className="flex items-center text-sm text-gray-600">
                           <MapPin className="w-4 h-4 mr-3 text-gray-400" />
-                        {booking.location}
+                        {booking.location || 'Online'}
                       </div>
                     </div>
 
                       <div className="mt-auto">
-                        {status.canJoin && booking.sessionType === 'online' ? (
+                        {status.canJoin && (booking.sessionType === 'online' || !booking.sessionType) ? (
                         <Link
-                          to={`/app/session/${booking._id || booking.bookingId}`}
+                          to={`/app/session/${bookingId}`}
                             className="w-full py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-lg shadow-rose-200"
                         >
                             Enter Classroom
                             <ArrowRight className="w-4 h-4" />
                         </Link>
                         ) : activeTab === 'upcoming' ? (
-                          <button disabled className="w-full py-3 bg-gray-100 text-gray-400 rounded-xl font-semibold text-sm cursor-not-allowed flex items-center justify-center gap-2">
-                            Not Started Yet
-                        </button>
+                          <Link
+                            to={`/app/session/${bookingId}`}
+                            className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2"
+                          >
+                            View Details
+                        </Link>
                         ) : activeTab === 'completed' && !booking.hasReview ? (
                         <Link
-                          to={`/app/review/${booking._id || booking.bookingId}`}
+                          to={`/app/review/${bookingId}`}
                             className="w-full py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2"
                         >
                             Rate Session

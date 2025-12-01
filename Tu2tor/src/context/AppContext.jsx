@@ -443,9 +443,9 @@ export const AppProvider = ({ children }) => {
       
       // Fallback: Save to localStorage if API fails
       const fallbackMessage = {
-        ...messageData,
+      ...messageData,
         messageId: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString(),
         createdAt: new Date().toISOString(),
         isRead: false,
         _localOnly: true
@@ -529,13 +529,13 @@ export const AppProvider = ({ children }) => {
       
       setMessages(prev =>
         prev.map(m => {
-          const isInConversation =
-            (m.senderId === contactId && m.receiverId === userId) ||
+      const isInConversation =
+        (m.senderId === contactId && m.receiverId === userId) ||
             (m.senderId === userId && m.receiverId === contactId) ||
             (m.senderId?._id === contactId && m.receiverId?._id === userId) || // Handle populated objects
             (m.senderId?._id === userId && m.receiverId?._id === contactId);
             
-          return isInConversation && !m.isRead ? { ...m, isRead: true } : m;
+      return isInConversation && !m.isRead ? { ...m, isRead: true } : m;
         })
       );
     } catch (err) {

@@ -130,7 +130,8 @@ const ReviewSubmitPage = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-full bg-[#F2F5F9] font-sans">
+      <div className="w-full bg-white rounded-[28px] shadow-xl shadow-gray-200/50 p-6 md:p-8 space-y-6">
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
@@ -342,6 +343,7 @@ const ReviewSubmitPage = () => {
           <li>• Be respectful and professional in your language</li>
           <li>• Provide specific examples when possible</li>
         </ul>
+      </div>
       </div>
     </div>
   );

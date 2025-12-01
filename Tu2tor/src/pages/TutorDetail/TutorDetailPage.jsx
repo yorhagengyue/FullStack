@@ -74,8 +74,8 @@ const TutorDetailPage = () => {
   const avatarBgGradient = "bg-gradient-to-br from-blue-500 to-indigo-600";
 
   return (
-    <div className="min-h-screen bg-[#F2F5F9] p-4 md:p-8 flex justify-center font-sans">
-      <div className="w-full max-w-[1400px]">
+    <div className="min-h-full bg-[#F2F5F9] font-sans">
+      <div className="w-full bg-white rounded-[28px] shadow-xl shadow-gray-200/50 p-6 md:p-8">
         
       <button
         onClick={() => navigate(-1)}

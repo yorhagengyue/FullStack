@@ -34,19 +34,29 @@ const SessionRoomPage = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showCodeEditor, setShowCodeEditor] = useState(false);
 
+  // Helper to get booking ID consistently
+  const getBookingId = (b) => b._id || b.id || b.bookingId;
+
   // Fetch booking details
   useEffect(() => {
     const loadBooking = async () => {
       await fetchBookings();
-      const foundBooking = bookings.find(b => b._id === bookingId || b.bookingId === bookingId);
+      const foundBooking = bookings.find(b => {
+        const bid = getBookingId(b);
+        return String(bid) === String(bookingId);
+      });
 
       if (foundBooking) {
         setBooking(foundBooking);
 
-        // Find tutor
-        const tutorId = foundBooking.tutor?.userId || foundBooking.tutorId;
-        const foundTutor = tutors.find(t => t.userId === tutorId);
-        setTutor(foundTutor);
+        // Find tutor - check multiple ID formats
+        const tutorId = foundBooking.tutor?.userId || foundBooking.tutor?.id || foundBooking.tutorId;
+        const foundTutor = tutors.find(t => 
+          String(t.userId) === String(tutorId) || 
+          String(t._id) === String(tutorId) || 
+          String(t.id) === String(tutorId)
+        );
+        setTutor(foundTutor || foundBooking.tutor);
       }
     };
 
