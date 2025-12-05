@@ -27,78 +27,9 @@ import TiltedCard from '../../components/reactbits/TiltedCard/TiltedCard';
 import SplitText from '../../components/reactbits/SplitText/SplitText';
 import Particles from '../../components/reactbits/Particles/Particles';
 
+import TopBar from '../../components/layout/TopBar';
+
 // --- Components ---
-
-const TopBar = ({ user, notifications = [] }) => {
-  const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  const navItems = [
-    { icon: Home, label: 'Home', path: '/app/dashboard', active: true },
-    { icon: Calendar, label: 'Calendar', path: '/app/sessions', active: false },
-    { icon: Activity, label: 'Activity', path: '/app/bookings', active: false },
-    { icon: MessageSquare, label: 'Messages', path: '/app/messages', active: false },
-    { icon: Settings, label: 'Settings', path: '/app/profile', active: false },
-  ];
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/app/search?q=${encodeURIComponent(searchQuery)}`);
-    }
-  };
-
-  const unreadNotifications = notifications.filter(n => !n.read).length;
-
-  return (
-    <div className="flex flex-col lg:flex-row items-center justify-between mb-4 gap-3">
-      <div className="hidden lg:block w-24"></div>
-
-      <div className="flex items-center bg-gray-50/80 p-1 rounded-full border border-gray-100 shadow-sm overflow-x-auto max-w-full">
-        {navItems.map((item, index) => (
-          <Link
-            key={index}
-            to={item.path}
-            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
-              item.active 
-                ? 'bg-white text-gray-900 shadow-[0_2px_8px_rgba(0,0,0,0.08)]' 
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <item.icon className={`w-3.5 h-3.5 ${item.active ? 'text-orange-500' : ''}`} />
-            {item.label}
-          </Link>
-        ))}
-      </div>
-
-      <div className="flex items-center gap-2">
-        <form onSubmit={handleSearch} className="relative hidden md:block">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-          <input 
-            type="text" 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search here..." 
-            className="pl-8 pr-3 py-1.5 bg-gray-50 border-none rounded-full text-xs focus:ring-2 focus:ring-blue-100 w-48 outline-none transition-all"
-          />
-        </form>
-        <Link to="/app/messages" state={{ selectedContactId: 'system' }} className="p-2 bg-white border border-gray-100 rounded-full text-gray-500 hover:bg-gray-50 shadow-sm relative">
-          <Bell className="w-4 h-4" />
-          {unreadNotifications > 0 && (
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-white"></span>
-          )}
-        </Link>
-        <Link to="/app/profile" className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-white shadow-sm overflow-hidden">
-          <img 
-            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'User'}`} 
-            alt="Profile" 
-            className="w-full h-full object-cover"
-          />
-        </Link>
-      </div>
-    </div>
-  );
-};
 
 const HeroCard = ({ nextSession }) => {
   const navigate = useNavigate();
@@ -182,11 +113,11 @@ const HeroCard = ({ nextSession }) => {
   );
 
   return (
-    <div className="relative w-full h-[280px] rounded-[24px] overflow-hidden group">
+    <div className="relative w-full h-[360px] rounded-[32px] overflow-hidden group">
       <TiltedCard
         imageSrc={bgImage}
         altText="Session Background"
-        containerHeight="280px"
+        containerHeight="360px"
         containerWidth="100%"
         imageHeight="100%"
         imageWidth="100%"
@@ -201,16 +132,16 @@ const HeroCard = ({ nextSession }) => {
 };
 
 const ScheduleItem = ({ time, title, duration, color, icon: Icon, onClick }) => (
-  <div className="grid grid-cols-[60px_1fr] gap-3 group cursor-pointer" onClick={onClick}>
-     <div className="text-right pt-2">
-        <span className="text-xs font-medium text-gray-500">{time}</span>
+  <div className="grid grid-cols-[60px_1fr] gap-4 group cursor-pointer" onClick={onClick}>
+     <div className="text-right pt-3">
+        <span className="text-sm font-medium text-gray-500">{time}</span>
      </div>
-     <div className={`relative p-3 rounded-xl transition-all duration-300 hover:shadow-md hover:scale-[1.02] ${color}`}>
+     <div className={`relative p-5 rounded-2xl transition-all duration-300 hover:shadow-md hover:scale-[1.02] ${color}`}>
         <div className="flex justify-between items-start">
            <div>
-              <h4 className="font-semibold text-gray-900 text-xs mb-0.5">{title}</h4>
-              <div className="flex items-center gap-1.5 text-[10px] text-gray-500 font-medium">
-                 <Calendar className="w-2.5 h-2.5" />
+              <h4 className="font-semibold text-gray-900 text-sm mb-1">{title}</h4>
+              <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
+                 <Calendar className="w-3 h-3" />
                  <span>{duration}</span>
               </div>
            </div>
@@ -237,7 +168,7 @@ const GreetingCard = ({ user }) => {
   };
 
   return (
-    <div className="relative bg-white rounded-[24px] p-5 shadow-sm border border-gray-100 overflow-hidden">
+    <div className="relative bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 overflow-hidden">
       {/* Subtle Particles Background */}
       <div className="absolute inset-0 z-0">
         <Particles
@@ -254,41 +185,41 @@ const GreetingCard = ({ user }) => {
       </div>
 
       <div className="relative z-10">
-        <h2 className="text-lg font-bold text-gray-900 mb-1">
+        <h2 className="text-xl font-bold text-gray-900 mb-2">
           <SplitText 
              text="Have a Good day," 
-             className="block text-sm"
+             className="block text-base"
              delay={50}
           />
           <span className="text-orange-500">{user?.username?.split(' ')[0] || 'Student'}</span> 👋
         </h2>
-        <p className="text-gray-500 text-xs mb-4 leading-relaxed">
+        <p className="text-gray-500 text-sm mb-6 leading-relaxed">
           Fuel your days with the boundless enthusiasm of a lifelong explorer.
         </p>
         
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-1.5 flex items-center gap-1.5 mb-4 border border-gray-100 focus-within:ring-2 focus-within:ring-blue-100 transition-all shadow-sm">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-2 flex items-center gap-2 mb-6 border border-gray-100 focus-within:ring-2 focus-within:ring-blue-100 transition-all shadow-sm">
            <input 
              type="text" 
              value={query}
              onChange={(e) => setQuery(e.target.value)}
              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
              placeholder="I want to learn..." 
-             className="flex-1 bg-transparent border-none px-3 py-1 text-xs text-gray-700 placeholder-gray-400 focus:outline-none"
+             className="flex-1 bg-transparent border-none px-3 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
            />
            <button 
              onClick={handleSearch}
-             className="p-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg shadow shadow-orange-200 transition-all"
+             className="p-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl shadow shadow-orange-200 transition-all"
            >
-              <Send className="w-3 h-3" />
+              <Send className="w-4 h-4" />
            </button>
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
            {['Python', 'Calculus', 'History', 'Biology'].map((tag, i) => (
              <span 
                key={i} 
                onClick={() => navigate(`/app/search?q=${tag}`)}
-               className={`px-3 py-1 rounded-full text-[10px] font-medium cursor-pointer transition-colors z-10 ${
+               className={`px-4 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors z-10 ${
                  i === 0 ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'
                }`}
              >
@@ -389,35 +320,35 @@ const Dashboard = () => {
     <div className="min-h-full bg-[#F2F5F9] font-sans">
       <div className="w-full bg-white rounded-[28px] shadow-xl shadow-gray-200/50 p-6 md:p-8">
         
-        <TopBar user={user} notifications={notifications} />
+        <TopBar />
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           
           {/* LEFT COLUMN (Main) */}
-          <div className="lg:col-span-8 space-y-6">
+          <div className="lg:col-span-8 space-y-10">
             
             <section>
                <HeroCard nextSession={nextSession} />
             </section>
 
             <section>
-              <div className="flex justify-between items-center mb-3">
-                 <h3 className="text-sm font-bold text-gray-900">Upcoming Schedule</h3>
-                 <Link to="/app/sessions" className="flex gap-1.5 group">
-                    <button className="p-1.5 group-hover:bg-gray-100 rounded-full transition-colors text-gray-400">
-                       <Clock className="w-3 h-3" />
+              <div className="flex justify-between items-center mb-5">
+                 <h3 className="text-base font-bold text-gray-900">Upcoming Schedule</h3>
+                 <Link to="/app/calendar" className="flex gap-2 group">
+                    <button className="p-2 group-hover:bg-gray-100 rounded-full transition-colors text-gray-400">
+                       <Clock className="w-4 h-4" />
                     </button>
-                    <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-2.5 py-1 shadow-sm cursor-pointer group-hover:bg-gray-50">
-                       <Calendar className="w-3 h-3 text-gray-500" />
-                       <span className="text-xs font-medium text-gray-700">
+                    <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-full px-3 py-1.5 shadow-sm cursor-pointer group-hover:bg-gray-50">
+                       <Calendar className="w-3.5 h-3.5 text-gray-500" />
+                       <span className="text-sm font-medium text-gray-700">
                          {new Date().toLocaleString('default', { month: 'short', year: 'numeric' })}
                        </span>
-                    </div>
+            </div>
                  </Link>
               </div>
 
-              <div className="bg-white rounded-[20px] border border-gray-100 p-4">
-                 <div className="grid grid-cols-5 gap-2 mb-4 text-center pb-3 border-b border-gray-100">
+              <div className="bg-white rounded-[24px] border border-gray-100 p-6">
+                 <div className="grid grid-cols-5 gap-4 mb-6 text-center pb-5 border-b border-gray-100">
                     {Array.from({ length: 5 }).map((_, i) => {
                       const date = new Date();
                       date.setDate(date.getDate() + i);
@@ -426,16 +357,16 @@ const Dashboard = () => {
                       const isToday = i === 0;
 
                       return (
-                        <div key={i} className={`flex flex-col items-center gap-0.5 ${isToday ? 'text-orange-500 font-bold' : 'text-gray-400'}`}>
-                           <span className="text-[10px] uppercase tracking-wide opacity-70">{dayName}</span>
-                           <span className="text-sm">{dayNum}</span>
-                           {isToday && <div className="w-1 h-1 bg-orange-500 rounded-full"></div>}
-                        </div>
+                        <div key={i} className={`flex flex-col items-center gap-1 ${isToday ? 'text-orange-500 font-bold' : 'text-gray-400'}`}>
+                           <span className="text-xs uppercase tracking-wide opacity-70">{dayName}</span>
+                           <span className="text-base">{dayNum}</span>
+                           {isToday && <div className="w-1.5 h-1.5 bg-orange-500 rounded-full"></div>}
+            </div>
                       );
                     })}
-                 </div>
+          </div>
 
-                 <div className="space-y-1.5">
+                 <div className="space-y-3">
                     {upcomingBookings.length > 0 ? (
                       upcomingBookings.slice(0, 3).map((booking, i) => {
                         const sessionTime = getSessionTime(booking);
@@ -467,58 +398,58 @@ const Dashboard = () => {
                         </button>
                       </div>
                     )}
-                 </div>
+              </div>
               </div>
             </section>
-          </div>
+        </div>
 
           {/* RIGHT COLUMN (Sidebar) */}
-          <div className="lg:col-span-4 space-y-4">
+          <div className="lg:col-span-4 space-y-8">
              <GreetingCard user={user} />
 
              {/* System Notifications */}
-             <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-3 border border-purple-100">
-                <div className="flex justify-between items-center mb-2">
-                   <div className="flex items-center gap-1.5">
-                      <Bell className="w-3.5 h-3.5 text-purple-500" />
-                      <h3 className="text-xs font-bold text-gray-900">System Notifications</h3>
-                   </div>
-                   <Link to="/app/messages" state={{ selectedContactId: 'system' }} className="text-purple-500 hover:text-purple-600 text-[10px] font-medium">
+             <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-[24px] p-6 border border-purple-100 min-h-[160px] flex flex-col justify-between">
+                <div className="flex justify-between items-center mb-4">
+                   <div className="flex items-center gap-2">
+                      <Bell className="w-4 h-4 text-purple-500" />
+                      <h3 className="text-sm font-bold text-gray-900">System Notifications</h3>
+                  </div>
+                   <Link to="/app/messages" state={{ selectedContactId: 'system' }} className="text-purple-500 hover:text-purple-600 text-xs font-medium">
                       View All
                    </Link>
                 </div>
                 {notifications.length > 0 ? (
-                  <div className="space-y-1.5">
+                  <div className="space-y-3 flex-1">
                      {notifications.slice(0, 2).map((notif, i) => (
-                        <div key={notif._id || i} className="bg-white/70 rounded-lg p-2 text-[10px]">
-                           <div className="font-medium text-gray-900 truncate">{notif.title}</div>
+                        <div key={notif._id || i} className="bg-white/70 rounded-xl p-3 text-xs shadow-sm">
+                           <div className="font-medium text-gray-900 truncate mb-0.5">{notif.title}</div>
                            <div className="text-gray-500 truncate">{notif.message}</div>
-                        </div>
+              </div>
                      ))}
                   </div>
                 ) : (
-                  <div className="text-center py-2 text-gray-400 text-[10px]">
+                  <div className="text-center py-4 text-gray-400 text-xs flex-1 flex items-center justify-center">
                      No notifications
-                  </div>
+                </div>
                 )}
                 {unreadNotifications > 0 && (
-                  <div className="mt-2 text-center">
-                     <span className="text-[10px] text-purple-600 font-medium">{unreadNotifications} unread</span>
+                  <div className="mt-4 text-center">
+                     <span className="text-xs text-purple-600 font-medium bg-purple-100 px-3 py-1 rounded-full">{unreadNotifications} unread</span>
                   </div>
                 )}
              </div>
 
              {/* Messages - Click anywhere to go to Messages page */}
              <div 
-               className="bg-white rounded-xl p-2 border border-gray-100 cursor-pointer hover:border-gray-200 hover:shadow-sm transition-all"
+               className="bg-white rounded-[24px] p-6 border border-gray-100 cursor-pointer hover:border-gray-200 hover:shadow-md transition-all min-h-[160px] flex flex-col"
                onClick={() => navigate('/app/messages')}
              >
-                <div className="flex justify-between items-center mb-2 px-1">
-                   <h3 className="text-xs font-bold text-gray-900">Messages</h3>
-                   <MoreHorizontal className="w-3.5 h-3.5 text-gray-400" />
+                <div className="flex justify-between items-center mb-4 px-1">
+                   <h3 className="text-sm font-bold text-gray-900">Messages</h3>
+                   <MoreHorizontal className="w-4 h-4 text-gray-400" />
                 </div>
 
-                <div className="space-y-0.5">
+                <div className="space-y-1 flex-1">
                    {recentMessages.length > 0 ? (
                      recentMessages.map(msg => (
                         <MessageItem 
@@ -532,17 +463,17 @@ const Dashboard = () => {
                         />
                      ))
                    ) : (
-                     <div className="text-center py-3 text-gray-400 text-[10px]">
+                     <div className="text-center py-4 text-gray-400 text-xs flex-1 flex items-center justify-center">
                        Click to view messages
-                     </div>
+              </div>
                    )}
-                </div>
+          </div>
 
-                <div className="w-full mt-2 bg-gray-50 rounded-lg py-1.5 px-2 text-[10px] text-gray-500 font-medium flex items-center justify-center gap-1">
-                  <MessageSquare className="w-3 h-3" />
+                <div className="w-full mt-4 bg-gray-50 rounded-xl py-2.5 px-3 text-xs text-gray-500 font-medium flex items-center justify-center gap-2 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                  <MessageSquare className="w-3.5 h-3.5" />
                   Open Messages
-                </div>
-             </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

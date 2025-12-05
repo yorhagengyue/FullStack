@@ -4,7 +4,9 @@ import {
   getBookingById,
   createBooking,
   updateBooking,
-  deleteBooking
+  deleteBooking,
+  completeSession,
+  startSession
 } from '../controllers/bookingController.js';
 import { protect, authorize } from '../middleware/auth.js';
 
@@ -16,6 +18,8 @@ router.use(protect);
 router.get('/', getBookings);
 router.get('/:id', getBookingById);
 router.post('/', createBooking);
+router.post('/:id/start', startSession);
+router.post('/:id/complete', completeSession);
 router.put('/:id', updateBooking);
 router.delete('/:id', authorize('admin'), deleteBooking);
 

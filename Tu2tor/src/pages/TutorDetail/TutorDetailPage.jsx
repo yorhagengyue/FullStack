@@ -246,9 +246,9 @@ const TutorDetailPage = () => {
                                     <Star key={i} className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-200'}`} />
                           ))}
                               </div>
-                           </div>
-                           <p className="text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-xl italic">"{review.comment}"</p>
                         </div>
+                           <p className="text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-xl italic">"{review.comment}"</p>
+                  </div>
                 ))}
               </div>
             ) : (

@@ -1,5 +1,3 @@
-import { useEffect } from 'react';
-
 /**
  * Simple Jitsi Meet integration using iframe
  * Uses public Jitsi server (meet.jit.si) - No server configuration needed!
@@ -25,26 +23,11 @@ const JitsiMeetRoom = ({ roomId, displayName, onMeetingEnd }) => {
       .join('&');
 
     const userInfoString = Object.entries(userInfo)
-      .map(([key, value]) => `userInfo.${key}=${encodeURIComponent(JSON.stringify(value))}`)
+      .map(([key, value]) => `userInfo.${key}=${encodeURIComponent(value)}`)
       .join('&');
 
     return `${baseUrl}/${roomId}#${configString}&${userInfoString}`;
   };
-
-  useEffect(() => {
-    // Listen for window close/navigation to trigger onMeetingEnd
-    const handleBeforeUnload = () => {
-      if (onMeetingEnd) {
-        onMeetingEnd();
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [onMeetingEnd]);
 
   return (
     <div className="w-full h-full bg-gray-900 rounded-lg overflow-hidden relative">

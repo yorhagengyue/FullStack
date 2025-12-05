@@ -28,3 +28,8 @@ Thumbs.db
 # Build
 dist/
 build/
+
+# Temporary Python execution files
+temp/
+*.pyc
+__pycache__/

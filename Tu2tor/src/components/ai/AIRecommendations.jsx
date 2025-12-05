@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useAI } from '../../context/AIContext';
-import { RecommendationService } from '../../ai/services/RecommendationService';
-import aiService from '../../ai/services/AIService';
+import aiAPI from '../../services/aiAPI';
 import { Sparkles, Loader2, TrendingUp, AlertCircle, X, Zap, RefreshCw, MessageCircle, ArrowRight, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -13,17 +12,31 @@ const AIRecommendations = ({ tutors, searchQuery, prioritySlider, onClose }) => 
   const [recommendations, setRecommendations] = useState([]);
   const [error, setError] = useState(null);
 
-  // Auto-generate recommendations on mount or when priority changes
+  // Disabled auto-generation due to Gemini API issues
+  // Users can manually trigger recommendations
   useEffect(() => {
-    if (isInitialized && user && tutors.length > 0) {
-      // Clear previous recommendations when priority changes
-      setRecommendations([]);
-      // Add a small delay to ensure everything is ready
-      setTimeout(() => {
-        handleGenerateRecommendations();
-      }, 500);
+    if (user && tutors.length > 0) {
+      // Generate simple recommendations without AI
+      generateSimpleRecommendations();
     }
-  }, [isInitialized, user, tutors.length, prioritySlider]);
+  }, [user, tutors.length, prioritySlider]);
+
+  // Simple recommendation algorithm (non-AI fallback)
+  const generateSimpleRecommendations = () => {
+    if (tutors.length === 0) return;
+
+    const topTutors = tutors.slice(0, 5).map(tutor => ({
+      tutorId: tutor.userId,
+      matchScore: Math.round((tutor.averageRating || 3) * 20), // Convert 5-star to 100-point scale
+      reasons: [
+        `${tutor.averageRating?.toFixed(1) || 'New'} average rating`,
+        `Specializes in ${tutor.major || 'general subjects'}`,
+        tutor.courses?.length ? `Teaches ${tutor.courses.length} courses` : 'Experienced tutor'
+      ].filter(Boolean)
+    }));
+
+    setRecommendations(topTutors.slice(0, 3));
+  };
 
   const handleGenerateRecommendations = async () => {
     if (!isInitialized || !user) {
@@ -35,23 +48,97 @@ const AIRecommendations = ({ tutors, searchQuery, prioritySlider, onClose }) => 
     setError(null);
 
     try {
-      const recService = new RecommendationService(aiService);
-
       // Get top 5 tutors for AI analysis
       const topTutors = tutors.slice(0, 5);
 
-      const result = await recService.getRecommendations(
-        user,
-        searchQuery || 'Looking for a good tutor',
-        topTutors,
-        { priority: prioritySlider }
-      );
+      // Build prompt for AI to analyze tutors
+      const tutorInfo = topTutors.map(t => ({
+        id: t.userId,
+        name: t.username,
+        major: t.major,
+        bio: t.bio || 'No bio provided',
+        rating: t.averageRating || 0,
+        courses: t.courses?.map(c => c.name).join(', ') || 'No courses listed',
+        availability: t.availability || 'Not specified'
+      }));
 
-      if (result.success && result.recommendations.length > 0) {
-        setRecommendations(result.recommendations);
+      // Ultra-simplified prompt
+      const tutorList = topTutors.map((t, i) => 
+        `${i+1}. ${t.username} - ${t.major} - ${(t.averageRating || 0).toFixed(1)} stars`
+      ).join('\n');
+
+      const prompt = `Rate these tutors for a student.
+
+Tutors:
+${tutorList}
+
+For each, give: tutor number, score 0-100, two reasons.
+Format as JSON array.`;
+
+      console.log('[AIRecommendations] Prompt:', prompt);
+      console.log('[AIRecommendations] Prompt length:', prompt.length, 'chars');
+
+      const response = await aiAPI.generateContent(prompt, {
+        maxTokens: 1000,
+        temperature: 0.7
+      });
+
+      console.log('[AIRecommendations] Full response:', response);
+      console.log('[AIRecommendations] Response keys:', Object.keys(response || {}));
+
+      // Check for errors in response
+      if (!response || response.error || !response.success) {
+        console.error('[AIRecommendations] Error response:', response);
+        const errorMsg = response?.message || response?.error || 'Failed to generate recommendations from AI';
+        throw new Error(errorMsg);
+      }
+
+      if (!response.content || response.content.trim() === '') {
+        console.error('[AIRecommendations] Missing or empty content. Full response:', JSON.stringify(response, null, 2));
+        throw new Error('AI returned empty response. This may be due to content filtering or the request being too complex.');
+      }
+
+      // Parse AI response
+      let recommendations = [];
+      try {
+        // Extract JSON from response (handle markdown code blocks)
+        let jsonText = response.content;
+        
+        // Remove markdown code blocks if present
+        jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+        
+        // Try to find JSON array
+        const jsonMatch = jsonText.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          jsonText = jsonMatch[0];
+        }
+        
+        recommendations = JSON.parse(jsonText);
+        
+        if (!Array.isArray(recommendations)) {
+          throw new Error('Response is not an array');
+        }
+        
+        // Validate and enrich recommendations
+        recommendations = recommendations
+          .filter(rec => rec.tutorId && rec.matchScore)
+          .map(rec => ({
+            ...rec,
+            matchScore: Math.min(100, Math.max(0, rec.matchScore)),
+            reasons: rec.reasons || ['AI-recommended match']
+          }))
+          .slice(0, 3); // Top 3 recommendations
+
+      } catch (parseErr) {
+        console.error('[AIRecommendations] Failed to parse AI response:', parseErr);
+        console.error('[AIRecommendations] Response content was:', response.content?.substring(0, 500));
+        throw new Error('Failed to parse AI recommendations. AI may have returned invalid format.');
+      }
+
+      if (recommendations.length > 0) {
+        setRecommendations(recommendations);
       } else {
-        const errorMsg = result.error || 'Unable to generate AI recommendations. Please try again.';
-        setError(errorMsg);
+        setError('Unable to generate AI recommendations. Please try again.');
       }
     } catch (err) {
       console.error('[AIRecommendations] Error:', err);
@@ -80,8 +167,8 @@ const AIRecommendations = ({ tutors, searchQuery, prioritySlider, onClose }) => 
             <Sparkles className="w-6 h-6 text-white" />
           </div>
           <div>
-              <h3 className="text-xl font-bold text-white tracking-tight">AI Insights</h3>
-              <p className="text-sm text-blue-200/80">Personalized matches based on your learning style</p>
+              <h3 className="text-xl font-bold text-white tracking-tight">Top Recommendations</h3>
+              <p className="text-sm text-blue-200/80">Based on ratings and expertise</p>
           </div>
         </div>
         {onClose && (
@@ -163,9 +250,9 @@ const AIRecommendations = ({ tutors, searchQuery, prioritySlider, onClose }) => 
                   {/* AI Analysis */}
                   <div className="space-y-4 mb-6">
                     <div className="bg-blue-500/10 rounded-xl p-3 border border-blue-500/10">
-                      <p className="text-[10px] font-bold text-blue-300 uppercase tracking-wider mb-2">Why This Match</p>
+                      <p className="text-[10px] font-bold text-blue-300 uppercase tracking-wider mb-2">Highlights</p>
                       <ul className="space-y-1.5">
-                        {rec.reasons.slice(0, 2).map((reason, idx) => (
+                        {rec.reasons.slice(0, 3).map((reason, idx) => (
                           <li key={idx} className="text-xs text-blue-100/80 flex items-start gap-2 leading-relaxed">
                             <span className="w-1 h-1 rounded-full bg-blue-400 mt-1.5 flex-shrink-0"></span>
                             {reason}
@@ -217,9 +304,9 @@ const AIRecommendations = ({ tutors, searchQuery, prioritySlider, onClose }) => 
                 className="flex flex-col items-center gap-3 text-blue-200/60 hover:text-white transition-colors group"
           >
                 <div className="w-12 h-12 rounded-full border-2 border-dashed border-blue-500/30 group-hover:border-blue-400 flex items-center justify-center group-hover:bg-blue-500/10 transition-all">
-                  <RefreshCw className="w-5 h-5" />
+                  <Sparkles className="w-5 h-5" />
                 </div>
-                <span className="text-xs font-medium">Regenerate</span>
+                <span className="text-xs font-medium">Try AI</span>
           </button>
             </motion.div>
         </div>

@@ -26,6 +26,7 @@ import { BADGE_CONFIG } from '../../utils/constants';
 import CountUp from '../../components/reactbits/CountUp/CountUp';
 import Aurora from '../../components/reactbits/Aurora/Aurora';
 import SplitText from '../../components/reactbits/SplitText/SplitText';
+import TopBar from '../../components/layout/TopBar';
 
 const Profile = () => {
   const { user, updateUser } = useAuth();
@@ -82,6 +83,8 @@ const Profile = () => {
     <div className="min-h-full bg-[#F2F5F9] font-sans">
       <div className="w-full bg-white rounded-[28px] shadow-xl shadow-gray-200/50 p-6 md:p-8">
         
+        <TopBar />
+
         <div className="flex justify-between items-center mb-8">
            <h1 className="text-3xl font-bold text-gray-900">
               <SplitText text="My Profile" delay={50} />

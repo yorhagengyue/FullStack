@@ -310,6 +310,155 @@ export const createBooking = async (req, res) => {
 };
 
 /**
+ * @route   POST /api/bookings/:id/complete
+ * @desc    Complete a session (by student or tutor)
+ * @access  Private
+ */
+export const completeSession = async (req, res) => {
+  try {
+    const { sessionNotes, actualDuration } = req.body;
+    
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        error: 'Booking not found',
+        message: 'No booking found with this ID'
+      });
+    }
+
+    // Check authorization - both student and tutor can complete
+    const tutor = await Tutor.findById(booking.tutorId);
+    const isStudent = booking.studentId.toString() === req.user._id.toString();
+    const isTutor = tutor && tutor.userId.toString() === req.user._id.toString();
+
+    if (!isStudent && !isTutor) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'You can only complete your own sessions'
+      });
+    }
+
+    // Can only complete confirmed sessions
+    if (booking.status !== 'confirmed') {
+      return res.status(400).json({
+        error: 'Invalid status',
+        message: 'Only confirmed sessions can be completed'
+      });
+    }
+
+    // Update booking
+    booking.status = 'completed';
+    booking.actualEndTime = new Date();
+    
+    // Calculate actual duration if not provided
+    if (actualDuration) {
+      booking.actualDuration = actualDuration;
+    } else if (booking.actualStartTime) {
+      booking.actualDuration = Math.floor((booking.actualEndTime - booking.actualStartTime) / 60000);
+    } else {
+      booking.actualDuration = booking.duration; // Use scheduled duration
+    }
+    
+    if (sessionNotes) {
+      booking.sessionNotes = sessionNotes;
+    }
+
+    await booking.save();
+
+    // Update tutor stats (only once)
+    if (!tutor.completedSessions || tutor.completedSessions === 0) {
+      tutor.completedSessions = 1;
+    } else {
+      tutor.completedSessions += 1;
+    }
+    tutor.totalSessions = (tutor.totalSessions || 0) + 1;
+    await tutor.save();
+
+    // Handle credits transfer
+    const student = await User.findById(booking.studentId);
+    if (student.credits >= booking.cost) {
+      student.credits -= booking.cost;
+      await student.save();
+
+      const tutorUser = await User.findById(tutor.userId);
+      tutorUser.credits = (tutorUser.credits || 0) + booking.cost;
+      await tutorUser.save();
+    }
+
+    // Populate for response
+    await booking.populate('studentId', 'username email school profilePicture');
+    await booking.populate({
+      path: 'tutorId',
+      populate: {
+        path: 'userId',
+        select: 'username email school profilePicture'
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Session completed successfully',
+      booking
+    });
+  } catch (error) {
+    console.error('Complete session error:', error);
+    res.status(500).json({
+      error: 'Server error',
+      message: 'Failed to complete session'
+    });
+  }
+};
+
+/**
+ * @route   POST /api/bookings/:id/start
+ * @desc    Mark session as started
+ * @access  Private
+ */
+export const startSession = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        error: 'Booking not found',
+        message: 'No booking found with this ID'
+      });
+    }
+
+    // Check authorization
+    const tutor = await Tutor.findById(booking.tutorId);
+    const isStudent = booking.studentId.toString() === req.user._id.toString();
+    const isTutor = tutor && tutor.userId.toString() === req.user._id.toString();
+
+    if (!isStudent && !isTutor) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'You can only start your own sessions'
+      });
+    }
+
+    // Only set start time if not already set
+    if (!booking.actualStartTime) {
+      booking.actualStartTime = new Date();
+      await booking.save();
+    }
+
+    res.json({
+      success: true,
+      message: 'Session started',
+      booking
+    });
+  } catch (error) {
+    console.error('Start session error:', error);
+    res.status(500).json({
+      error: 'Server error',
+      message: 'Failed to start session'
+    });
+  }
+};
+
+/**
  * @route   PUT /api/bookings/:id
  * @desc    Update booking status
  * @access  Private
@@ -345,26 +494,10 @@ export const updateBooking = async (req, res) => {
       if (isStudent && status === 'cancelled' && booking.status === 'pending') {
         booking.status = 'cancelled';
       }
-      // Tutors can confirm or complete bookings
+      // Tutors can confirm bookings
       else if (isTutor) {
         if (status === 'confirmed' && booking.status === 'pending') {
           booking.status = 'confirmed';
-        } else if (status === 'completed' && booking.status === 'confirmed') {
-          booking.status = 'completed';
-
-          // Update tutor stats
-          tutor.completedSessions += 1;
-          tutor.totalSessions += 1;
-          await tutor.save();
-
-          // Deduct credits from student and add to tutor
-          const student = await User.findById(booking.studentId);
-          student.credits -= booking.cost;
-          await student.save();
-
-          const tutorUser = await User.findById(tutor.userId);
-          tutorUser.credits += booking.cost;
-          await tutorUser.save();
         } else if (status === 'cancelled') {
           booking.status = 'cancelled';
         }

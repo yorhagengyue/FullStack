@@ -15,7 +15,9 @@ import {
   MessageSquare,
   Award,
   Sparkles,
-  Home
+  Home,
+  Clock,
+  CheckSquare
 } from 'lucide-react';
 import StaggeredMenu from '../reactbits/StaggeredMenu/StaggeredMenu';
 
@@ -77,10 +79,9 @@ const Layout = () => {
     { icon: Sparkles, label: 'AI Assistant', path: '/app/ai-chat' },
     { icon: MessageSquare, label: 'Messages', path: '/app/messages' },
     { icon: Search, label: 'Find Tutors', path: '/app/search' },
-    { icon: Calendar, label: 'My Bookings', path: '/app/bookings' },
+    { icon: Clock, label: 'My Bookings', path: '/app/bookings' },
     { icon: BookOpen, label: 'Sessions', path: '/app/sessions' },
     { icon: Star, label: 'Reviews', path: '/app/reviews' },
-    { icon: Settings, label: 'Settings', path: '/app/profile' },
   ];
 
   const pageVariants = {

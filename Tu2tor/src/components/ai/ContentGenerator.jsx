@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useAI } from '../../context/AIContext';
-import { ContentGenerationService } from '../../ai/services/ContentGenerationService';
-import aiService from '../../ai/services/AIService';
+import aiAPI from '../../services/aiAPI';
 import { Sparkles, Loader2, Copy, Check, RefreshCw } from 'lucide-react';
 
 const ContentGenerator = ({ type, data, onGenerated }) => {
@@ -37,36 +36,69 @@ const ContentGenerator = ({ type, data, onGenerated }) => {
 
     setIsGenerating(true);
     try {
-      const contentService = new ContentGenerationService(aiService);
-      let result;
+      let prompt = '';
+      let content = '';
 
       switch (type) {
         case 'bio':
-          result = await contentService.generateTutorBio(data);
-          if (result.success) setGeneratedContent(result.bio);
+          prompt = `Generate a professional tutor bio for a tutor with the following information:
+Name: ${data.name || 'Tutor'}
+Major: ${data.major || 'Not specified'}
+Courses: ${data.courses || 'Not specified'}
+Experience: ${data.experience || 'Not specified'}
+
+Create a friendly, professional bio that highlights their expertise and teaching style. Keep it concise (2-3 paragraphs).`;
           break;
         case 'message':
-          result = await contentService.generateMessage(data);
-          if (result.success) setGeneratedContent(result.message);
+          prompt = `Generate a polite booking message for the following context:
+Tutor: ${data.tutorName || 'Tutor'}
+Course: ${data.course || 'Subject'}
+Purpose: ${data.purpose || 'Learning session'}
+
+Create a professional yet friendly message expressing interest in booking a tutoring session. Keep it brief and to the point.`;
           break;
         case 'description':
-          result = await contentService.generateCourseDescription(data);
-          if (result.success) setGeneratedContent(result.description);
+          prompt = `Generate an engaging course description for:
+Course Name: ${data.courseName || 'Course'}
+Topic: ${data.topic || 'General'}
+Level: ${data.level || 'Intermediate'}
+
+Create an informative description that explains what students will learn. Keep it 2-3 paragraphs.`;
           break;
         case 'studyTips':
-          result = await contentService.generateStudyTips(data);
-          if (result.success) setGeneratedContent(result.tips);
+          prompt = `Generate personalized study tips for:
+Subject: ${data.subject || 'General'}
+Current Level: ${data.level || 'Intermediate'}
+Goals: ${data.goals || 'Improve understanding'}
+
+Provide 5-7 actionable study tips tailored to this subject and level.`;
           break;
         case 'examPrep':
-          result = await contentService.generateExamPrep(data);
-          if (result.success) setGeneratedContent(result.plan);
+          prompt = `Create a comprehensive exam preparation plan for:
+Subject: ${data.subject || 'General'}
+Exam Date: ${data.examDate || 'Upcoming'}
+Topics: ${data.topics || 'All topics'}
+
+Generate a structured study plan with timeline, key topics, and preparation strategies.`;
           break;
         default:
           setGeneratedContent('Content generation not supported for this type.');
+          return;
       }
 
-      if (result?.success && onGenerated) {
-        onGenerated(generatedContent);
+      const response = await aiAPI.generateContent(prompt, {
+        maxTokens: 500,
+        temperature: 0.7
+      });
+
+      if (response.success && response.content) {
+        content = response.content;
+        setGeneratedContent(content);
+        if (onGenerated) {
+          onGenerated(content);
+        }
+      } else {
+        throw new Error('Failed to generate content from AI');
       }
     } catch (error) {
       console.error('[ContentGenerator] Error:', error);

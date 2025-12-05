@@ -2,8 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAI } from '../../context/AIContext';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
-import { ChatService } from '../../ai/services/ChatService';
-import aiService from '../../ai/services/AIService';
+import aiAPI from '../../services/aiAPI';
 import { X, Send, Loader2, Bot, User, Sparkles, Wifi, WifiOff } from 'lucide-react';
 
 const ChatWidget = ({ isOpen, onClose }) => {
@@ -23,14 +22,6 @@ const ChatWidget = ({ isOpen, onClose }) => {
   const [streamingContent, setStreamingContent] = useState('');
 
   const messagesEndRef = useRef(null);
-  const chatServiceRef = useRef(null);
-
-  // Initialize chat service
-  useEffect(() => {
-    if (isInitialized) {
-      chatServiceRef.current = new ChatService(aiService, { tutors });
-    }
-  }, [isInitialized, tutors]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -38,7 +29,7 @@ const ChatWidget = ({ isOpen, onClose }) => {
   }, [messages, streamingContent]);
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isTyping || !chatServiceRef.current) return;
+    if (!inputMessage.trim() || isTyping || !isInitialized) return;
 
     const userMessage = {
       role: 'user',
@@ -52,41 +43,48 @@ const ChatWidget = ({ isOpen, onClose }) => {
     setStreamingContent('');
 
     try {
-      // Use streaming for better UX
+      // Use backend streaming API
       let fullContent = '';
+      const conversationHistory = messages.map((m) => ({ 
+        role: m.role, 
+        content: m.content 
+      }));
+      conversationHistory.push({ role: 'user', content: userMessage.content });
 
-      const result = await chatServiceRef.current.streamMessage(
-        userMessage.content,
-        user,
-        tutors,
-        messages.map((m) => ({ role: m.role, content: m.content })),
+      await aiAPI.streamChat(
+        conversationHistory,
+        { maxTokens: 1000, temperature: 0.7 },
         (chunk) => {
           fullContent += chunk;
           setStreamingContent(fullContent);
+        },
+        (result) => {
+          // On complete
+          const aiMessage = {
+            role: 'assistant',
+            content: result.message || fullContent,
+            timestamp: new Date(),
+            tokens: result.tokens,
+            cost: result.cost,
+          };
+          setMessages((prev) => [...prev, aiMessage]);
+          setStreamingContent('');
+          setIsTyping(false);
+        },
+        (error) => {
+          // On error
+          console.error('[ChatWidget] Stream error:', error);
+          const errorMessage = {
+            role: 'assistant',
+            content: "Sorry, I encountered an error. Please try again or rephrase your question.",
+            timestamp: new Date(),
+            isError: true,
+          };
+          setMessages((prev) => [...prev, errorMessage]);
+          setStreamingContent('');
+          setIsTyping(false);
         }
       );
-
-      if (result.success) {
-        const aiMessage = {
-          role: 'assistant',
-          content: result.message,
-          timestamp: new Date(),
-          tokens: result.tokens,
-          cost: result.cost,
-          provider: result.provider,
-        };
-
-        setMessages((prev) => [...prev, aiMessage]);
-      } else {
-        // Error fallback
-        const errorMessage = {
-          role: 'assistant',
-          content: "Sorry, I encountered an error. Please try again or rephrase your question.",
-          timestamp: new Date(),
-          isError: true,
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
     } catch (error) {
       console.error('[ChatWidget] Send message error:', error);
       const errorMessage = {

@@ -94,7 +94,7 @@ reviewSchema.methods.markAsHelpful = function() {
 // Static methods
 reviewSchema.statics.getAverageRatingForTutor = async function(tutorId) {
   const result = await this.aggregate([
-    { $match: { tutorId: mongoose.Types.ObjectId(tutorId), isVerified: true } },
+    { $match: { tutorId: new mongoose.Types.ObjectId(tutorId), isVerified: true } },
     {
       $group: {
         _id: null,
@@ -109,7 +109,7 @@ reviewSchema.statics.getAverageRatingForTutor = async function(tutorId) {
 
 reviewSchema.statics.getTutorRatingBreakdown = async function(tutorId) {
   return await this.aggregate([
-    { $match: { tutorId: mongoose.Types.ObjectId(tutorId), isVerified: true } },
+    { $match: { tutorId: new mongoose.Types.ObjectId(tutorId), isVerified: true } },
     {
       $group: {
         _id: '$rating',
@@ -159,19 +159,34 @@ reviewSchema.post('save', async function(doc) {
     const Tutor = mongoose.model('Tutor');
     const User = mongoose.model('User');
 
+    console.log('[Review Post-Save] Processing review:', {
+      reviewId: doc._id,
+      tutorId: doc.tutorId,
+      rating: doc.rating
+    });
+
     // Get updated rating stats
     const stats = await doc.constructor.getAverageRatingForTutor(doc.tutorId);
+    console.log('[Review Post-Save] Calculated stats:', stats);
 
     // Find tutor profile by userId
     const userTutor = await User.findById(doc.tutorId);
+    console.log('[Review Post-Save] Found user:', userTutor ? { id: userTutor._id, role: userTutor.role } : 'not found');
+    
     if (userTutor && userTutor.role === 'tutor') {
-      await Tutor.findOneAndUpdate(
+      const updateResult = await Tutor.findOneAndUpdate(
         { userId: doc.tutorId },
         {
           averageRating: Math.round(stats.averageRating * 100) / 100, // Round to 2 decimal places
           totalReviews: stats.totalReviews,
-        }
+        },
+        { new: true }
       );
+      console.log('[Review Post-Save] Updated tutor profile:', updateResult ? {
+        id: updateResult._id,
+        averageRating: updateResult.averageRating,
+        totalReviews: updateResult.totalReviews
+      } : 'not found');
     }
 
     // Mark booking as reviewed

@@ -22,8 +22,10 @@ const ReviewSubmitPage = () => {
   const booking = bookings.find(b => b._id === bookingId || b.bookingId === bookingId);
 
   // Get tutor - handle both populated and non-populated tutor data
-  const tutorId = booking?.tutor?.userId || booking?.tutorId;
-  const tutor = tutorId ? tutors.find(t => t.userId === tutorId) : null;
+  // If tutorId is populated, it will have userId field (User ID)
+  // If not populated, tutorId is the Tutor document ID, we need to find the User ID
+  const tutorUserId = booking?.tutorId?.userId || booking?.tutor?.userId;
+  const tutor = tutorUserId ? tutors.find(t => t.userId === tutorUserId) : null;
 
   // Available tags
   const availableTags = [
@@ -106,9 +108,10 @@ const ReviewSubmitPage = () => {
 
     try {
       // Create review using API
+      console.log('Submitting review with tutorUserId:', tutorUserId);
       await createReview({
         bookingId: booking._id || bookingId,
-        tutorId: tutorId,
+        tutorId: tutorUserId, // This should be the User ID, not Tutor ID
         rating,
         comment: comment.trim(),
         tags: selectedTags,

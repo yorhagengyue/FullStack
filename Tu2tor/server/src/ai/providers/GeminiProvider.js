@@ -1,46 +1,54 @@
 /**
- * GeminiProvider - Google Gemini AI implementation
+ * GeminiProvider - Google Gemini AI implementation (Backend)
  *
- * Provides integration with Google's Gemini AI models (Gemini Pro, Gemini Pro Vision)
+ * Provides integration with Google's Gemini AI models (Gemini Flash, Gemini Pro)
+ * Uses process.env for secure server-side API key storage
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { BaseAIProvider } from './BaseAIProvider';
+import { BaseAIProvider } from './BaseAIProvider.js';
 
 export class GeminiProvider extends BaseAIProvider {
   constructor(config) {
     super(config);
     this.providerName = 'gemini';
     this.isOnline = true;
-    this.apiKey = config.apiKey || import.meta.env.VITE_GEMINI_API_KEY;
-    this.modelName = config.model || import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.0-flash';
-    this.thinkingModelName = config.thinkingModel || import.meta.env.VITE_GEMINI_THINKING_MODEL || 'gemini-2.5-pro-exp-03-25';
+    // Use process.env instead of import.meta.env (backend)
+    this.apiKey = config.apiKey || process.env.GEMINI_API_KEY;
+    this.modelName = config.model || process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    this.thinkingModelName = config.thinkingModel || process.env.GEMINI_THINKING_MODEL || 'gemini-2.5-pro';
+    this.visionModelName = config.visionModel || process.env.GEMINI_VISION_MODEL || 'gemini-2.5-flash'; // 支持图片的模型
     this.genAI = null;
     this.model = null;
     this.thinkingModel = null;
+    this.visionModel = null; // 新增 vision 模型
     this.embeddingModel = null;
 
     // Gemini pricing (per 1000 characters)
     this.pricing = {
+      'gemini-2.5-flash': {
+        input: 0.0003,
+        output: 0.0006,
+      },
+      'gemini-2.5-pro': {
+        input: 0.0015,
+        output: 0.003,
+      },
+      'gemini-2.0-flash-exp': {
+        input: 0.00025,
+        output: 0.0005,
+      },
       'gemini-2.0-flash': {
         input: 0.00025,
         output: 0.0005,
       },
-      'gemini-2.5-pro-exp-03-25': {
-        input: 0.002,
-        output: 0.004,
-      },
-      'gemini-2.5-pro': {
+      'gemini-exp-1206': {
         input: 0.002,
         output: 0.004,
       },
       'gemini-pro': {
         input: 0.00025,
         output: 0.0005,
-      },
-      'gemini-pro-vision': {
-        input: 0.0025,
-        output: 0.0025,
       },
     };
   }
@@ -50,27 +58,29 @@ export class GeminiProvider extends BaseAIProvider {
    */
   async initialize() {
     try {
-      console.log('[GeminiProvider] Initializing...', {
+      console.log('[Backend GeminiProvider] Initializing...', {
         hasApiKey: !!this.apiKey,
         apiKeyPrefix: this.apiKey ? this.apiKey.substring(0, 10) + '...' : 'none',
         modelName: this.modelName,
         thinkingModelName: this.thinkingModelName,
+        visionModelName: this.visionModelName,
       });
 
       if (!this.apiKey) {
-        throw new Error('Gemini API key not configured. Please set VITE_GEMINI_API_KEY in .env.local');
+        throw new Error('Gemini API key not configured. Please set GEMINI_API_KEY in server .env');
       }
 
       this.genAI = new GoogleGenerativeAI(this.apiKey);
       this.model = this.genAI.getGenerativeModel({ model: this.modelName });
       this.thinkingModel = this.genAI.getGenerativeModel({ model: this.thinkingModelName });
+      this.visionModel = this.genAI.getGenerativeModel({ model: this.visionModelName });
       this.embeddingModel = this.genAI.getGenerativeModel({ model: 'embedding-001' });
 
       this.isInitialized = true;
-      console.log('[GeminiProvider] Initialized successfully');
+      console.log('[Backend GeminiProvider] Initialized successfully');
       return true;
     } catch (error) {
-      console.error('[GeminiProvider] Initialization failed:', error);
+      console.error('[Backend GeminiProvider] Initialization failed:', error);
       throw error;
     }
   }
@@ -80,7 +90,6 @@ export class GeminiProvider extends BaseAIProvider {
    */
   async checkHealth() {
     try {
-      // Quick check: just verify API key is configured
       if (!this.apiKey) {
         return {
           available: false,
@@ -89,13 +98,10 @@ export class GeminiProvider extends BaseAIProvider {
         };
       }
 
-      // Initialize if needed
       if (!this.isInitialized) {
         await this.initialize();
       }
 
-      // If initialization succeeded, consider it available
-      // Don't make actual API call during health check to avoid quota/network issues
       return {
         available: true,
         message: 'Gemini API is configured and ready',
@@ -161,7 +167,7 @@ export class GeminiProvider extends BaseAIProvider {
         model: this.modelName,
       };
     } catch (error) {
-      console.error('[GeminiProvider] Chat failed:', error);
+      console.error('[Backend GeminiProvider] Chat failed:', error);
       throw new Error(`Gemini chat failed: ${error.message}`);
     }
   }
@@ -186,7 +192,18 @@ export class GeminiProvider extends BaseAIProvider {
       });
 
       const response = await result.response;
+      
+      console.log('[Backend GeminiProvider] Response candidates:', response.candidates?.length || 0);
+      console.log('[Backend GeminiProvider] Finish reason:', response.candidates?.[0]?.finishReason);
+      
       const content = response.text();
+
+      console.log('[Backend GeminiProvider] Generated content length:', content.length);
+      if (!content || content.trim() === '') {
+        console.warn('[Backend GeminiProvider] Empty content returned!');
+        console.log('[Backend GeminiProvider] Prompt length:', prompt.length);
+        console.log('[Backend GeminiProvider] Safety ratings:', JSON.stringify(response.candidates?.[0]?.safetyRatings));
+      }
 
       // Estimate tokens and cost
       const inputChars = prompt.length;
@@ -207,7 +224,7 @@ export class GeminiProvider extends BaseAIProvider {
         model: this.modelName,
       };
     } catch (error) {
-      console.error('[GeminiProvider] Content generation failed:', error);
+      console.error('[Backend GeminiProvider] Content generation failed:', error);
       throw new Error(`Gemini content generation failed: ${error.message}`);
     }
   }
@@ -230,121 +247,154 @@ export class GeminiProvider extends BaseAIProvider {
         model: 'embedding-001',
       };
     } catch (error) {
-      console.error('[GeminiProvider] Embedding failed:', error);
+      console.error('[Backend GeminiProvider] Embedding failed:', error);
       throw new Error(`Gemini embedding failed: ${error.message}`);
     }
   }
 
   /**
    * Stream chat responses in real-time
+   * This method returns an async generator for SSE streaming
    */
-  async streamChat(messages, onChunk, options = {}) {
+  async* streamChat(messages, options = {}) {
     try {
       if (!this.isInitialized) {
         await this.initialize();
       }
 
       // Filter out system messages (Gemini doesn't support system role)
-      // System prompt is typically handled in the application context
       const filteredMessages = messages.filter(msg => msg.role !== 'system');
 
       // Convert message history to Gemini format
-      const history = filteredMessages.slice(0, -1).map(msg => {
-        const parts = [];
-
-        // Add text content
-        if (msg.content) {
-          parts.push({ text: msg.content });
-        }
-
-        // Add image files if present
-        if (msg.files && msg.files.length > 0) {
-          msg.files.forEach(file => {
-            // Convert data URL to Gemini format
-            const base64Data = file.data.split(',')[1];
-            const mimeType = file.type || 'image/jpeg';
-
-            parts.push({
-              inlineData: {
-                data: base64Data,
-                mimeType: mimeType,
-              },
-            });
-          });
-        }
-
-        return {
-          role: msg.role === 'assistant' ? 'model' : 'user',
-          parts,
-        };
-      });
+      const history = filteredMessages.slice(0, -1).map(msg => ({
+        role: msg.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: msg.content }],
+      }));
 
       const lastMessage = filteredMessages[filteredMessages.length - 1];
 
-      // Build parts for last message
-      const lastMessageParts = [];
-
-      // Add text content
-      if (lastMessage.content) {
-        lastMessageParts.push({ text: lastMessage.content });
+      // Select model based on thinking mode (both models support vision)
+      let modelToUse, modelNameUsed;
+      
+      if (options.thinkingMode) {
+        // Use Pro model for deep thinking (supports images too)
+        modelToUse = this.thinkingModel;
+        modelNameUsed = this.thinkingModelName;
+        console.log('[Backend GeminiProvider] 🧠 Deep Think mode:', modelNameUsed);
+      } else {
+        // Use Flash model for normal mode (supports images too)
+        modelToUse = this.model;
+        modelNameUsed = this.modelName;
+        console.log('[Backend GeminiProvider] 💬 Normal mode:', modelNameUsed);
       }
-
-      // Add image files if present
-      if (lastMessage.files && lastMessage.files.length > 0) {
-        lastMessage.files.forEach(file => {
-          const base64Data = file.data.split(',')[1];
-          const mimeType = file.type || 'image/jpeg';
-
-          lastMessageParts.push({
-            inlineData: {
-              data: base64Data,
-              mimeType: mimeType,
-            },
-          });
-        });
+      
+      // Check if message contains images (for logging)
+      const hasImages = lastMessage.files && lastMessage.files.length > 0;
+      if (hasImages) {
+        console.log('[Backend GeminiProvider] 🖼️ Images detected:', lastMessage.files.length, 'file(s)');
       }
-
-      // Use thinking model if thinkingMode is enabled
-      const modelToUse = options.thinkingMode ? this.thinkingModel : this.model;
-      const modelNameUsed = options.thinkingMode ? this.thinkingModelName : this.modelName;
-
-      console.log('[GeminiProvider] Using model:', modelNameUsed, 'Thinking mode:', !!options.thinkingMode, 'Has images:', lastMessage.files?.length > 0);
 
       const chat = modelToUse.startChat({
         history,
         generationConfig: {
           temperature: options.temperature || 0.7,
-          maxOutputTokens: options.maxTokens || 2000,
+          maxOutputTokens: options.maxTokens || 2500,
         },
       });
 
-      const result = await chat.sendMessageStream(lastMessageParts);
+      // Prepare message content with appropriate system prompt
+      let messageContent = lastMessage.content;
+      
+      if (options.thinkingMode) {
+        // Deep Thinking Mode: Structured reasoning prompt
+        const thinkingPrompt = `You are Tu2tor AI in Deep Thinking Mode. You MUST follow this EXACT format:
 
-      let fullContent = '';
-      for await (const chunk of result.stream) {
-        const chunkText = chunk.text();
-        fullContent += chunkText;
-        onChunk(chunkText);
+First, write "**Thinking:**" and then show your detailed reasoning process (analyze step by step, consider different approaches, explain your thought process).
+
+Then, write "**Answer:**" and provide your final comprehensive answer.
+
+CRITICAL: You must include BOTH sections. Do not skip the "**Answer:**" section.
+
+Example format:
+**Thinking:**
+Let me break this down... [your reasoning here]
+
+**Answer:**
+Based on my analysis above... [your final answer here]
+
+Now, answer this question following the format above:
+${messageContent}`;
+        
+        messageContent = thinkingPrompt;
+        console.log('[Backend GeminiProvider] 📝 Added deep thinking prompt');
+      } else {
+        // Normal Mode: Educational assistant prompt
+        const normalPrompt = `You are Tu2tor AI, a friendly and knowledgeable educational assistant.
+
+**Your Role**:
+- Help students learn and understand concepts
+- Provide clear, accurate, and helpful explanations
+- Be encouraging and supportive
+- Use examples when helpful
+- Break down complex topics into simpler parts
+
+**Guidelines**:
+- Keep responses concise but thorough
+- Use appropriate language for the student's level
+- Encourage critical thinking
+- If you don't know something, say so honestly
+
+**Student's Question**: ${messageContent}`;
+        
+        messageContent = normalPrompt;
+        console.log('[Backend GeminiProvider] 📝 Added normal mode prompt');
       }
 
-      // Calculate final stats
-      const inputChars = messages.reduce((sum, msg) => sum + msg.content.length, 0);
-      const outputChars = fullContent.length;
-      const totalTokens = Math.ceil((inputChars + outputChars) / 4);
-
-      const pricing = this.pricing[modelNameUsed] || this.pricing['gemini-2.0-flash'];
-      const cost =
-        (inputChars / 1000) * pricing.input + (outputChars / 1000) * pricing.output;
-
-      return {
-        content: fullContent,
-        tokens: totalTokens,
-        cost: parseFloat(cost.toFixed(6)),
-        provider: this.providerName,
-        model: modelNameUsed,
-      };
+      // Prepare message parts (text + images if any)
+      let messageParts;
+      if (lastMessage.files && lastMessage.files.length > 0) {
+        // Include images in the message
+        messageParts = [
+          { text: messageContent || 'What do you see in these images?' }
+        ];
+        
+        for (const file of lastMessage.files) {
+          // Extract base64 data and mime type
+          const matches = file.data.match(/^data:(.+);base64,(.+)$/);
+          if (matches) {
+            const mimeType = matches[1];
+            const base64Data = matches[2];
+            
+            messageParts.push({
+              inlineData: {
+                mimeType: mimeType,
+                data: base64Data
+              }
+            });
+            
+            console.log('[Backend GeminiProvider] 📎 Added image:', mimeType);
+          }
+        }
+        
+        const result = await chat.sendMessageStream(messageParts);
+        
+        // Stream response
+        for await (const chunk of result.stream) {
+          const chunkText = chunk.text();
+          yield chunkText;
+        }
+      } else {
+        // Text-only message
+        const result = await chat.sendMessageStream(messageContent);
+        
+        // Stream response
+        for await (const chunk of result.stream) {
+          const chunkText = chunk.text();
+          yield chunkText;
+        }
+      }
     } catch (error) {
-      console.error('[GeminiProvider] Stream chat failed:', error);
+      console.error('[Backend GeminiProvider] Stream chat failed:', error);
       throw new Error(`Gemini stream chat failed: ${error.message}`);
     }
   }
@@ -378,10 +428,10 @@ export class GeminiProvider extends BaseAIProvider {
       contentGeneration: true,
       embeddings: true,
       streaming: true,
-      vision: this.modelName.includes('vision'),
-      maxTokens: 2048,
-      contextWindow: 30720, // ~30k tokens
-      supportedModels: ['gemini-pro', 'gemini-pro-vision'],
+      vision: false, // Backend doesn't support image processing for now
+      maxTokens: 2500,
+      contextWindow: 30720,
+      supportedModels: ['gemini-2.5-flash', 'gemini-exp-1206', 'gemini-2.0-flash-exp'],
       pricing: this.pricing[this.modelName],
     };
   }
@@ -392,9 +442,11 @@ export class GeminiProvider extends BaseAIProvider {
   async cleanup() {
     this.genAI = null;
     this.model = null;
+    this.thinkingModel = null;
     this.embeddingModel = null;
     await super.cleanup();
   }
 }
 
 export default GeminiProvider;
+

@@ -110,14 +110,14 @@ const Hero = () => {
              <div className="flex flex-col gap-2">
                <SplitText
                  text="Master your courses"
-                 className="text-4xl lg:text-6xl font-bold tracking-tight text-gray-900 leading-tight text-left"
+                 className="text-3xl lg:text-5xl font-bold tracking-tight text-gray-900 leading-tight text-left"
                  delay={0.1}
                  stagger={0.08}
                  tag="h1"
                />
                <SplitText
                  text="with help from peers."
-                 className="text-4xl lg:text-6xl font-bold tracking-tight text-gray-900 leading-tight text-left"
+                 className="text-3xl lg:text-5xl font-bold tracking-tight text-gray-900 leading-tight text-left"
                  delay={0.3} // Delay the second line slightly
                  stagger={0.08}
                  tag="h1"

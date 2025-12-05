@@ -17,20 +17,34 @@ const ReviewsPage = () => {
 
   useEffect(() => {
     const fetchReviews = async () => {
-      if (!user) return;
+      if (!user) {
+        console.log('[ReviewsPage] No user found');
+        return;
+      }
+      
+      console.log('[ReviewsPage] Current user:', {
+        id: user._id,
+        role: user.role,
+        username: user.username
+      });
+      
       setIsLoading(true);
       try {
         if (user.role === 'tutor') {
-          const response = await reviewsAPI.getTutorReviews(user.userId);
+          console.log('[ReviewsPage] Fetching tutor reviews for user._id:', user._id);
+          const response = await reviewsAPI.getTutorReviews(user._id);
+          console.log('[ReviewsPage] Tutor reviews response:', response);
           setReceivedReviews(response.reviews || []);
           setStats(response.stats);
         }
-        if (user.id) {
-          const givenResponse = await reviewsAPI.getStudentReviews(user.id);
+        if (user._id) {
+          console.log('[ReviewsPage] Fetching student reviews for user._id:', user._id);
+          const givenResponse = await reviewsAPI.getStudentReviews(user._id);
+          console.log('[ReviewsPage] Student reviews response:', givenResponse);
           setGivenReviews(givenResponse || []);
         }
       } catch (error) {
-        console.error('Failed to fetch reviews:', error);
+        console.error('[ReviewsPage] Failed to fetch reviews:', error);
       } finally {
         setIsLoading(false);
       }

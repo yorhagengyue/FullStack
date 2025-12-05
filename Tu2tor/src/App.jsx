@@ -25,6 +25,9 @@ import SessionRoomPage from './pages/Sessions/SessionRoomPage';
 // NotificationsPage removed - merged into MessagesPage
 import MessagesPage from './pages/Messages/MessagesPage';
 import AIChat from './pages/AIChat/AIChat';
+import CalendarPage from './pages/Calendar/CalendarPage';
+import TodoPage from './pages/Todo/TodoPage';
+import StudyNotesPage from './pages/StudyNotes/StudyNotesPage';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -101,6 +104,9 @@ function AppRoutes() {
         <Route path="review/:bookingId" element={<ReviewSubmitPage />} />
         <Route path="sessions" element={<SessionsPage />} />
         <Route path="session/:bookingId" element={<SessionRoomPage />} />
+        <Route path="calendar" element={<CalendarPage />} />
+        <Route path="todo" element={<TodoPage />} />
+        <Route path="study-notes" element={<StudyNotesPage />} />
         <Route path="notifications" element={<Navigate to="/app/messages" state={{ selectedContactId: 'system' }} />} />
         <Route path="messages" element={<MessagesPage />} />
         <Route path="ai-chat" element={<AIChat />} />

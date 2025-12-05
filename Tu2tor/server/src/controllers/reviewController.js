@@ -75,6 +75,8 @@ export const getTutorReviews = async (req, res) => {
     const { tutorId } = req.params;
     const { page = 1, limit = 10, sort = '-createdAt' } = req.query;
 
+    console.log('[getTutorReviews] Fetching reviews for tutorId:', tutorId);
+
     const reviews = await Review.find({ tutorId, isVerified: true })
       .populate('studentId', 'username profilePicture')
       .populate('bookingId', 'subject date')
@@ -82,13 +84,17 @@ export const getTutorReviews = async (req, res) => {
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
+    console.log('[getTutorReviews] Found reviews count:', reviews.length);
+
     const total = await Review.countDocuments({ tutorId, isVerified: true });
 
     // Get rating breakdown
     const ratingBreakdown = await Review.getTutorRatingBreakdown(tutorId);
+    console.log('[getTutorReviews] Rating breakdown:', ratingBreakdown);
 
     // Get average rating
     const stats = await Review.getAverageRatingForTutor(tutorId);
+    console.log('[getTutorReviews] Stats:', stats);
 
     res.json({
       reviews,

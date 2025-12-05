@@ -36,16 +36,37 @@ const server = http.createServer(app);
 // Create WebSocket server for collaborative editing
 const wss = new WebSocketServer({ server });
 
-// Middleware
+// Middleware - Allow both localhost and 127.0.0.1
+const allowedOrigins = [
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5174',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Increase body size limit for AI chat with long message history
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Import AI service
+import aiService from './ai/services/AIService.js';
 
 // Connect to MongoDB (wait for connection before starting server)
 let dbConnected = false;
+let aiInitialized = false;
+
 const initDB = async () => {
   try {
     await connectDB();
@@ -57,8 +78,22 @@ const initDB = async () => {
   }
 };
 
-// Start DB connection
+const initAI = async () => {
+  try {
+    await aiService.initialize();
+    aiInitialized = true;
+    console.log('✅ AI service initialized');
+    console.log(`   Active provider: ${aiService.getActiveProviderName()}`);
+  } catch (error) {
+    console.error('⚠️  AI service initialization failed:', error.message);
+    console.error('   AI features will be unavailable');
+    aiInitialized = false;
+  }
+};
+
+// Start DB and AI initialization
 initDB();
+initAI();
 
 // WebSocket connection handler for collaborative code editing and chat
 // Using simple WebSocket relay
@@ -114,6 +149,8 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: dbConnected ? 'healthy' : 'unhealthy',
     mongodb: dbConnected ? 'connected' : 'disconnected',
+    ai: aiInitialized ? 'initialized' : 'unavailable',
+    aiProvider: aiInitialized ? aiService.getActiveProviderName() : 'none',
     timestamp: new Date().toISOString()
   });
 });
@@ -126,6 +163,9 @@ import bookingRoutes from './routes/bookingRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import todoRoutes from './routes/todoRoutes.js';
+import studyNoteRoutes from './routes/studyNoteRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
 
 app.use('/api/test', testRoutes);
 app.use('/api/auth', authRoutes);
@@ -134,6 +174,9 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/todos', todoRoutes);
+app.use('/api/study-notes', studyNoteRoutes);
+app.use('/api/ai', aiRoutes);
 
 import { executeCode } from './services/codeExecution.js';
 

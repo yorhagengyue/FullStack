@@ -2,7 +2,7 @@
  * BaseAIProvider - Abstract base class for all AI providers
  *
  * This class defines the interface that all AI providers must implement.
- * It ensures consistent behavior across different AI services (Gemini, Ollama, etc.)
+ * It ensures consistent behavior across different AI services (Gemini, OpenAI, etc.)
  */
 
 export class BaseAIProvider {
@@ -120,3 +120,4 @@ export class BaseAIProvider {
 }
 
 export default BaseAIProvider;
+

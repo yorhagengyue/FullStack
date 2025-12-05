@@ -1,10 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { useVideo } from '../../context/VideoContext';
+import { bookingsAPI } from '../../services/api';
 import JitsiMeetRoom from '../../components/session/JitsiMeetRoom';
 import CodeCollabEditor from '../../components/session/CodeCollabEditor';
+import MarkdownCollabEditor from '../../components/session/MarkdownCollabEditor';
+import NoteSelector from '../../components/session/NoteSelector';
+import DraggableVideo from '../../components/session/DraggableVideo';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import Toast from '../../components/ui/Toast';
 import {
   ArrowLeft,
   Clock,
@@ -18,6 +24,9 @@ import {
   BookOpen,
   Code2,
   SplitSquareHorizontal,
+  CheckCircle,
+  FileText,
+  X,
 } from 'lucide-react';
 
 const SessionRoomPage = () => {
@@ -33,6 +42,16 @@ const SessionRoomPage = () => {
   const [startTime, setStartTime] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showCodeEditor, setShowCodeEditor] = useState(false);
+  const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
+  const [showNoteSelector, setShowNoteSelector] = useState(false);
+  const [selectedNote, setSelectedNote] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false });
+  const [toast, setToast] = useState({ isOpen: false, message: '', type: 'success' });
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [videoMinimized, setVideoMinimized] = useState(false);
+  const [videoHidden, setVideoHidden] = useState(false);
+  
+  const autoCompleteTimerRef = useRef(null);
 
   // Helper to get booking ID consistently
   const getBookingId = (b) => b._id || b.id || b.bookingId;
@@ -81,7 +100,7 @@ const SessionRoomPage = () => {
   };
 
   const handleMeetingEnd = () => {
-    // Just log the session, don't navigate away
+    // Just leave the meeting, don't mark as completed
     // Users can re-enter the meeting multiple times
     if (sessionStarted && startTime) {
       const duration = Math.floor((Date.now() - startTime) / 60000); // minutes
@@ -91,17 +110,131 @@ const SessionRoomPage = () => {
     setSessionStarted(false);
   };
 
-  const handleJoinSession = () => {
+  const handleCompleteSession = () => {
+    setConfirmDialog({ isOpen: true });
+  };
+
+  const confirmCompleteSession = async () => {
+    setIsCompleting(true);
+    try {
+      const actualDuration = startTime ? Math.floor((Date.now() - startTime) / 60000) : booking.duration;
+      
+      await bookingsAPI.completeSession(bookingId, {
+        actualDuration,
+        sessionNotes: 'Session completed by user'
+      });
+
+      // Clear auto-complete timer
+      if (autoCompleteTimerRef.current) {
+        clearTimeout(autoCompleteTimerRef.current);
+      }
+
+      setToast({ 
+        isOpen: true, 
+        message: 'Session completed successfully! Redirecting...', 
+        type: 'success' 
+      });
+
+      // Redirect to reviews page after 2 seconds
+      setTimeout(() => {
+        navigate(`/app/reviews/submit/${bookingId}`);
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error completing session:', error);
+      setToast({ 
+        isOpen: true, 
+        message: 'Failed to complete session', 
+        type: 'error' 
+      });
+    } finally {
+      setIsCompleting(false);
+    }
+  };
+
+  const handleJoinSession = async () => {
     setSessionStarted(true);
     setStartTime(Date.now());
+    
+    // Mark session as started in backend
+    try {
+      await bookingsAPI.startSession(bookingId);
+    } catch (error) {
+      console.error('Error starting session:', error);
+    }
+
+    // Set auto-complete timer for 2 hours
+    autoCompleteTimerRef.current = setTimeout(async () => {
+      try {
+        await bookingsAPI.completeSession(bookingId, {
+          actualDuration: 120, // 2 hours
+          sessionNotes: 'Session auto-completed after 2 hours'
+        });
+        
+        setToast({ 
+          isOpen: true, 
+          message: 'Session auto-completed after 2 hours. Redirecting...', 
+          type: 'info' 
+        });
+
+        setTimeout(() => {
+          navigate(`/app/reviews/submit/${bookingId}`);
+        }, 3000);
+      } catch (error) {
+        console.error('Error auto-completing session:', error);
+      }
+    }, 2 * 60 * 60 * 1000); // 2 hours in milliseconds
   };
+
+  // Cleanup auto-complete timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoCompleteTimerRef.current) {
+        clearTimeout(autoCompleteTimerRef.current);
+      }
+    };
+  }, []);
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
   };
 
   const toggleCodeEditor = () => {
-    setShowCodeEditor(!showCodeEditor);
+    const newState = !showCodeEditor;
+    setShowCodeEditor(newState);
+    // Always minimize video when any editor is open during a session
+    if (sessionStarted) {
+      setVideoMinimized(newState || showMarkdownEditor);
+    }
+  };
+
+  const toggleMarkdownEditor = () => {
+    if (!selectedNote) {
+      // Show note selector if no note is selected
+      setShowNoteSelector(true);
+    } else {
+      const newState = !showMarkdownEditor;
+      setShowMarkdownEditor(newState);
+      // Always minimize video when any editor is open during a session
+      if (sessionStarted) {
+        setVideoMinimized(newState || showCodeEditor);
+      }
+    }
+  };
+
+  const handleSelectNote = (note) => {
+    setSelectedNote(note);
+    setShowNoteSelector(false);
+    setShowMarkdownEditor(true);
+    // Auto-minimize video when markdown editor opens during a session
+    if (sessionStarted) {
+      setVideoMinimized(true);
+    }
+    setToast({
+      isOpen: true,
+      message: `Opened: ${note.title}`,
+      type: 'success'
+    });
   };
 
   const minimizeToFloating = () => {
@@ -157,6 +290,26 @@ const SessionRoomPage = () => {
 
   return (
     <div className={`${isFullscreen ? 'fixed inset-0 z-50 bg-black' : 'min-h-screen bg-gray-900'}`}>
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ isOpen: false })}
+        onConfirm={confirmCompleteSession}
+        title="Complete Session"
+        message="Are you sure you want to mark this session as completed? This action will finalize the session and redirect you to submit a review."
+        confirmText="Complete"
+        cancelText="Cancel"
+        type="info"
+      />
+
+      {/* Toast Notification */}
+      <Toast
+        isOpen={toast.isOpen}
+        onClose={() => setToast({ ...toast, isOpen: false })}
+        message={toast.message}
+        type={toast.type}
+      />
+
       {/* Header - hide in fullscreen */}
       {!isFullscreen && (
         <div className="bg-gray-800 border-b border-gray-700 px-6 py-3">
@@ -183,96 +336,167 @@ const SessionRoomPage = () => {
         </div>
       )}
 
-      {/* Main Video Content */}
+      {/* Main Content Area */}
       <div className={`${isFullscreen ? 'h-full' : 'max-w-[1920px] mx-auto p-6'}`}>
-        <div className={`${isFullscreen ? 'h-full' : 'h-[calc(100vh-180px)]'} relative flex gap-4`}>
-          {/* Video Window */}
-          <div className={`bg-black ${isFullscreen ? 'h-full' : 'h-full rounded-lg'} overflow-hidden relative ${showCodeEditor ? 'w-1/2' : 'w-full'} transition-all duration-300`}>
-            {sessionStarted ? (
-              <>
-                <div className="h-full w-full">
-                  <JitsiMeetRoom
-                    roomId={booking.meetingRoomId}
-                    displayName={user?.username || 'Guest'}
-                    onMeetingEnd={handleMeetingEnd}
+        <div className={`${isFullscreen ? 'h-full' : 'h-[calc(100vh-180px)]'} relative`}>
+          
+
+          {/* Editors Container - Full Width when active */}
+          {(showCodeEditor || showMarkdownEditor) && sessionStarted && (
+            <div className="h-full flex gap-4">
+              {/* Code Editor */}
+              {showCodeEditor && (
+                <div className={`${showMarkdownEditor ? 'w-1/2' : 'w-full'} h-full rounded-lg overflow-hidden transition-all duration-300`}>
+                  <CodeCollabEditor
+                    bookingId={bookingId}
+                    language={booking.subject?.toLowerCase().includes('python') ? 'python' : 'javascript'}
+                    username={user?.username || 'Guest'}
+                    onToggleMarkdown={toggleMarkdownEditor}
+                    showMarkdown={showMarkdownEditor}
+                    onCompleteSession={handleCompleteSession}
+                    isCompleting={isCompleting}
                   />
                 </div>
+              )}
 
-                {/* Floating controls */}
-                <div className="absolute top-4 right-4 flex gap-2 z-10">
-                  <button
-                    onClick={toggleCodeEditor}
-                    className={`p-3 ${showCodeEditor ? 'bg-indigo-600' : 'bg-black/70'} hover:bg-indigo-700 text-white rounded-lg transition-colors backdrop-blur-sm`}
-                    title={showCodeEditor ? 'Hide code editor' : 'Show code editor'}
-                  >
-                    {showCodeEditor ? <SplitSquareHorizontal className="w-5 h-5" /> : <Code2 className="w-5 h-5" />}
-                  </button>
-                  <button
-                    onClick={minimizeToFloating}
-                    className="p-3 bg-black/70 hover:bg-black/90 text-white rounded-lg transition-colors backdrop-blur-sm"
-                    title="Minimize to floating window"
-                  >
-                    <Minimize2 className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={toggleFullscreen}
-                    className="p-3 bg-black/70 hover:bg-black/90 text-white rounded-lg transition-colors backdrop-blur-sm"
-                    title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                  >
-                    {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-                  </button>
+              {/* Markdown Editor */}
+              {showMarkdownEditor && selectedNote && (
+                <div className={`${showCodeEditor ? 'w-1/2' : 'w-full'} h-full rounded-lg overflow-hidden transition-all duration-300`}>
+                  <MarkdownCollabEditor
+                    bookingId={bookingId}
+                    username={user?.username || 'Guest'}
+                    initialContent={selectedNote.content || ''}
+                    noteTitle={selectedNote.title || 'Untitled'}
+                    onToggleCode={toggleCodeEditor}
+                    showCode={showCodeEditor}
+                    onCompleteSession={handleCompleteSession}
+                    isCompleting={isCompleting}
+                  />
                 </div>
-
-                {/* End Session button - bottom left */}
-                <div className="absolute bottom-4 left-4 z-10">
-                  <button
-                    onClick={handleMeetingEnd}
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-sm transition-colors"
-                  >
-                    Leave Meeting
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="h-full bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center">
-                <div className="text-center text-white">
-                  <Video className="w-24 h-24 mx-auto mb-6 opacity-90" />
-                  <h2 className="text-3xl font-bold mb-4">Ready to Join?</h2>
-                  <p className="text-white/90 mb-8 max-w-md mx-auto">
-                    Click the button below to start your video session
-                  </p>
-                  {canJoin() ? (
-                    <button
-                      onClick={handleJoinSession}
-                      className="bg-white text-primary-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-bold text-lg transition-colors inline-flex items-center space-x-2"
-                    >
-                      <Video className="w-6 h-6" />
-                      <span>Join Session Now</span>
-                    </button>
-                  ) : (
-                    <div className="bg-white/10 backdrop-blur-sm px-8 py-4 rounded-lg inline-block">
-                      <AlertCircle className="w-6 h-6 mx-auto mb-2" />
-                      <p className="text-sm">
-                        Session can be joined 15 minutes before or after scheduled time
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Code Editor Panel */}
-          {showCodeEditor && sessionStarted && (
-            <div className={`${isFullscreen ? 'h-full' : 'h-full rounded-lg'} w-1/2 overflow-hidden`}>
-              <CodeCollabEditor
-                bookingId={bookingId}
-                language={booking.subject?.toLowerCase().includes('python') ? 'python' : 'javascript'}
-                username={user?.username || 'Guest'}
-              />
+              )}
             </div>
           )}
+
+          {/* Video Window - Full screen when no editors */}
+          {!videoHidden && !(showCodeEditor || showMarkdownEditor) && (
+            <div className="bg-black rounded-xl overflow-hidden relative h-full">
+              {sessionStarted ? (
+                <>
+                  <div className="h-full w-full">
+                    <JitsiMeetRoom
+                      roomId={booking.meetingRoomId}
+                      displayName={user?.username || 'Guest'}
+                      onMeetingEnd={handleMeetingEnd}
+                    />
+                  </div>
+
+                  {/* Floating controls - Only show when video is full screen (no editors) */}
+                  <div className="absolute top-4 right-4 flex gap-2 z-10">
+                    <button
+                      onClick={toggleCodeEditor}
+                      className="p-3 bg-black/70 hover:bg-indigo-700 text-white rounded-lg transition-colors backdrop-blur-sm shadow-lg"
+                      title="Open code editor"
+                    >
+                      <Code2 className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={toggleMarkdownEditor}
+                      className="p-3 bg-black/70 hover:bg-purple-700 text-white rounded-lg transition-colors backdrop-blur-sm shadow-lg"
+                      title="Open markdown editor"
+                    >
+                      <FileText className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={minimizeToFloating}
+                      className="p-3 bg-black/70 hover:bg-black/90 text-white rounded-lg transition-colors backdrop-blur-sm shadow-lg"
+                      title="Minimize to floating window"
+                    >
+                      <Minimize2 className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={toggleFullscreen}
+                      className="p-3 bg-black/70 hover:bg-black/90 text-white rounded-lg transition-colors backdrop-blur-sm shadow-lg"
+                      title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                    >
+                      {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+                    </button>
+                  </div>
+
+                  {/* Session Control buttons - bottom left */}
+                  <div className="absolute bottom-4 left-4 z-10 flex gap-2">
+                    <button
+                      onClick={handleMeetingEnd}
+                      className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium text-sm transition-colors shadow-lg"
+                    >
+                      Leave Meeting
+                    </button>
+                    <button
+                      onClick={handleCompleteSession}
+                      disabled={isCompleting}
+                      className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-lg font-medium text-sm transition-colors shadow-lg"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      {isCompleting ? 'Completing...' : 'Complete Session'}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="h-full bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center">
+                  <div className="text-center text-white">
+                    <Video className="w-24 h-24 mx-auto mb-6 opacity-90" />
+                    <h2 className="text-3xl font-bold mb-4">Ready to Join?</h2>
+                    <p className="text-white/90 mb-8 max-w-md mx-auto">
+                      Click the button below to start your video session
+                    </p>
+                    {canJoin() ? (
+                      <button
+                        onClick={handleJoinSession}
+                        className="bg-white text-primary-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-bold text-lg transition-colors inline-flex items-center space-x-2"
+                      >
+                        <Video className="w-6 h-6" />
+                        <span>Join Session Now</span>
+                      </button>
+                    ) : (
+                      <div className="bg-white/10 backdrop-blur-sm px-8 py-4 rounded-lg inline-block">
+                        <AlertCircle className="w-6 h-6 mx-auto mb-2" />
+                        <p className="text-sm">
+                          Session can be joined 15 minutes before or after scheduled time
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Draggable Floating Video - Show when editors are active */}
+          {(showCodeEditor || showMarkdownEditor) && sessionStarted && !videoHidden && (
+            <DraggableVideo
+              onClose={handleMeetingEnd}
+              onMaximize={() => {
+                setShowCodeEditor(false);
+                setShowMarkdownEditor(false);
+                setVideoMinimized(false);
+              }}
+            >
+              <JitsiMeetRoom
+                roomId={booking.meetingRoomId}
+                displayName={user?.username || 'Guest'}
+                onMeetingEnd={handleMeetingEnd}
+              />
+            </DraggableVideo>
+          )}
+
+
         </div>
+
+        {/* Note Selector Modal */}
+        <NoteSelector
+          isOpen={showNoteSelector}
+          onClose={() => setShowNoteSelector(false)}
+          onSelectNote={handleSelectNote}
+        />
 
         {/* Session Info - Below video */}
         <div className="mt-4">

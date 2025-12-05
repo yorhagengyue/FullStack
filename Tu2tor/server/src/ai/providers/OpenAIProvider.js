@@ -1,19 +1,20 @@
 /**
- * OpenAIProvider - OpenAI GPT implementation
+ * OpenAIProvider - OpenAI GPT implementation (Backend)
  *
- * Provides integration with OpenAI's GPT models (GPT-4, GPT-4o, GPT-3.5-turbo)
+ * Provides integration with OpenAI's GPT models (GPT-4, GPT-4o, GPT-5)
+ * Uses process.env for secure server-side API key storage
  */
 
-import axios from 'axios';
-import { BaseAIProvider } from './BaseAIProvider';
+import { BaseAIProvider } from './BaseAIProvider.js';
 
 export class OpenAIProvider extends BaseAIProvider {
   constructor(config) {
     super(config);
     this.providerName = 'openai';
     this.isOnline = true;
-    this.apiKey = config.apiKey || import.meta.env.VITE_OPENAI_API_KEY;
-    this.modelName = config.model || import.meta.env.VITE_OPENAI_MODEL || 'gpt-5';
+    // Use process.env instead of import.meta.env (backend)
+    this.apiKey = config.apiKey || process.env.OPENAI_API_KEY;
+    this.modelName = config.model || process.env.OPENAI_MODEL || 'gpt-4o';
     this.baseUrl = 'https://api.openai.com/v1';
 
     // OpenAI pricing (per 1M tokens)
@@ -35,15 +36,6 @@ export class OpenAIProvider extends BaseAIProvider {
         output: 4.40 / 1000000,
       },
     };
-
-    this.axiosInstance = axios.create({
-      baseURL: this.baseUrl,
-      headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      timeout: 60000,
-    });
   }
 
   /**
@@ -51,21 +43,21 @@ export class OpenAIProvider extends BaseAIProvider {
    */
   async initialize() {
     try {
-      console.log('[OpenAIProvider] Initializing...', {
+      console.log('[Backend OpenAIProvider] Initializing...', {
         hasApiKey: !!this.apiKey,
         apiKeyPrefix: this.apiKey ? this.apiKey.substring(0, 15) + '...' : 'none',
         modelName: this.modelName,
       });
 
       if (!this.apiKey) {
-        throw new Error('OpenAI API key not configured. Please set VITE_OPENAI_API_KEY in .env.local');
+        throw new Error('OpenAI API key not configured. Please set OPENAI_API_KEY in server .env');
       }
 
       this.isInitialized = true;
-      console.log('[OpenAIProvider] Initialized successfully');
+      console.log('[Backend OpenAIProvider] Initialized successfully');
       return true;
     } catch (error) {
-      console.error('[OpenAIProvider] Initialization failed:', error);
+      console.error('[Backend OpenAIProvider] Initialization failed:', error);
       throw error;
     }
   }
@@ -93,7 +85,6 @@ export class OpenAIProvider extends BaseAIProvider {
         model: this.modelName,
       };
     } catch (error) {
-      console.error('[OpenAIProvider] Health check failed:', error);
       return {
         available: false,
         message: error.message || 'OpenAI health check failed',
@@ -106,40 +97,17 @@ export class OpenAIProvider extends BaseAIProvider {
    * Format messages for OpenAI API
    */
   formatMessages(messages) {
-    return messages.map(msg => {
-      const content = [];
-
-      // Add text content
-      if (msg.content) {
-        content.push({
-          type: 'text',
-          text: msg.content,
-        });
-      }
-
-      // Add image files if present (for vision models)
-      if (msg.files && msg.files.length > 0) {
-        msg.files.forEach(file => {
-          content.push({
-            type: 'image_url',
-            image_url: {
-              url: file.data, // data URL format
-            },
-          });
-        });
-      }
-
-      return {
-        role: msg.role === 'assistant' ? 'assistant' : 'user',
-        content: content.length === 1 && content[0].type === 'text' ? content[0].text : content,
-      };
-    });
+    return messages.map(msg => ({
+      role: msg.role === 'assistant' ? 'assistant' : msg.role === 'system' ? 'system' : 'user',
+      content: msg.content,
+    }));
   }
 
   /**
    * Stream chat responses in real-time
+   * This method returns an async generator for SSE streaming
    */
-  async streamChat(messages, onChunk, options = {}) {
+  async* streamChat(messages, options = {}) {
     try {
       if (!this.isInitialized) {
         await this.initialize();
@@ -156,27 +124,17 @@ export class OpenAIProvider extends BaseAIProvider {
       };
 
       // GPT-5 doesn't support temperature, top_p, etc.
-      // Only add temperature for older models (gpt-4o, gpt-4o-mini)
       if (!this.modelName.startsWith('gpt-5') && !this.modelName.startsWith('o3')) {
         requestBody.temperature = options.temperature || 0.7;
       }
 
       // Add reasoning_effort for GPT-5 when thinkingMode is enabled
       if (this.modelName === 'gpt-5' && options.thinkingMode) {
-        // minimal (fastest), low, medium (best quality for our use case)
         requestBody.reasoning_effort = options.reasoningEffort || 'medium';
-
-        // Optional: Add verbosity control
         requestBody.verbosity = 'medium';
       }
 
-      console.log('[OpenAIProvider] Streaming chat with', {
-        model: this.modelName,
-        messageCount: messages.length,
-        hasImages: messages.some(m => m.files && m.files.length > 0),
-        thinkingMode: options.thinkingMode,
-        reasoningEffort: requestBody.reasoning_effort,
-      });
+      console.log('[Backend OpenAIProvider] Streaming with model:', this.modelName);
 
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
@@ -194,7 +152,6 @@ export class OpenAIProvider extends BaseAIProvider {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let fullContent = '';
       let buffer = '';
 
       while (true) {
@@ -216,32 +173,16 @@ export class OpenAIProvider extends BaseAIProvider {
               const content = json.choices[0]?.delta?.content;
 
               if (content) {
-                fullContent += content;
-                onChunk(content);
+                yield content;
               }
             } catch (e) {
-              console.warn('[OpenAIProvider] Failed to parse chunk:', e);
+              console.warn('[Backend OpenAIProvider] Failed to parse chunk:', e);
             }
           }
         }
       }
-
-      // Estimate tokens (rough approximation: 1 token ≈ 4 chars)
-      const inputChars = messages.reduce((sum, msg) => sum + (msg.content?.length || 0), 0);
-      const totalTokens = Math.ceil((inputChars + fullContent.length) / 4);
-
-      const modelPricing = this.pricing[this.modelName] || this.pricing['gpt-4o'];
-      const cost = totalTokens * (modelPricing.input + modelPricing.output);
-
-      return {
-        content: fullContent,
-        tokens: totalTokens,
-        cost,
-        provider: this.providerName,
-        model: this.modelName,
-      };
     } catch (error) {
-      console.error('[OpenAIProvider] Stream chat failed:', error);
+      console.error('[Backend OpenAIProvider] Stream chat failed:', error);
       throw new Error(`OpenAI chat failed: ${error.message}`);
     }
   }
@@ -263,15 +204,27 @@ export class OpenAIProvider extends BaseAIProvider {
         max_completion_tokens: options.maxTokens || 2000,
       };
 
-      // GPT-5 doesn't support temperature
       if (!this.modelName.startsWith('gpt-5') && !this.modelName.startsWith('o3')) {
         requestBody.temperature = options.temperature || 0.7;
       }
 
-      const response = await this.axiosInstance.post('/chat/completions', requestBody);
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
 
-      const content = response.data.choices[0].message.content;
-      const usage = response.data.usage;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(`OpenAI API error: ${error.error?.message || response.statusText}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices[0].message.content;
+      const usage = data.usage;
 
       const modelPricing = this.pricing[this.modelName] || this.pricing['gpt-4o'];
       const cost =
@@ -285,8 +238,8 @@ export class OpenAIProvider extends BaseAIProvider {
         model: this.modelName,
       };
     } catch (error) {
-      console.error('[OpenAIProvider] Chat failed:', error);
-      throw new Error(`OpenAI chat failed: ${error.response?.data?.error?.message || error.message}`);
+      console.error('[Backend OpenAIProvider] Chat failed:', error);
+      throw new Error(`OpenAI chat failed: ${error.message}`);
     }
   }
 
@@ -306,12 +259,24 @@ export class OpenAIProvider extends BaseAIProvider {
         await this.initialize();
       }
 
-      const response = await this.axiosInstance.post('/embeddings', {
-        model: 'text-embedding-3-small',
-        input: text,
+      const response = await fetch(`${this.baseUrl}/embeddings`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'text-embedding-3-small',
+          input: text,
+        }),
       });
 
-      const embedding = response.data.data[0].embedding;
+      if (!response.ok) {
+        throw new Error(`OpenAI embedding failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const embedding = data.data[0].embedding;
 
       return {
         embedding,
@@ -319,7 +284,7 @@ export class OpenAIProvider extends BaseAIProvider {
         model: 'text-embedding-3-small',
       };
     } catch (error) {
-      console.warn('[OpenAIProvider] Embedding failed:', error.message);
+      console.warn('[Backend OpenAIProvider] Embedding failed:', error.message);
       return {
         embedding: null,
         dimensions: 0,
@@ -349,10 +314,6 @@ export class OpenAIProvider extends BaseAIProvider {
    * Get OpenAI capabilities
    */
   getCapabilities() {
-    const supportsVision = ['gpt-5', 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'].includes(
-      this.modelName
-    );
-
     const supportsReasoning = ['gpt-5', 'o3-mini', 'o3'].includes(this.modelName);
 
     return {
@@ -360,13 +321,12 @@ export class OpenAIProvider extends BaseAIProvider {
       contentGeneration: true,
       embeddings: true,
       streaming: true,
-      vision: supportsVision,
+      vision: false, // Backend doesn't support image processing for now
       reasoning: supportsReasoning,
       maxTokens: 8192,
-      contextWindow: this.modelName === 'gpt-5' ? 128000 : 128000,
+      contextWindow: 128000,
       supportedModels: ['gpt-5', 'gpt-4o', 'gpt-4o-mini', 'o3-mini'],
       pricing: this.pricing,
-      offline: false,
     };
   }
 
@@ -374,9 +334,9 @@ export class OpenAIProvider extends BaseAIProvider {
    * Clean up resources
    */
   async cleanup() {
-    this.axiosInstance = null;
     await super.cleanup();
   }
 }
 
 export default OpenAIProvider;
+

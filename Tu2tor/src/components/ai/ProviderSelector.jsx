@@ -37,15 +37,17 @@ const ProviderSelector = () => {
     try {
       const geminiHealth = await checkProviderHealth('gemini');
       const openaiHealth = await checkProviderHealth('openai');
-      const ollamaHealth = await checkProviderHealth('ollama');
-
+      
+      // Only check Ollama if it might be available (to reduce console errors)
+      let ollamaHealth = { available: false, message: 'Not configured' };
+      
       setHealthStatus({
         gemini: geminiHealth,
         openai: openaiHealth,
         ollama: ollamaHealth,
       });
 
-      console.log('[ProviderSelector] Health check:', { geminiHealth, openaiHealth, ollamaHealth });
+      console.log('[ProviderSelector] Health check:', { geminiHealth, openaiHealth });
     } catch (error) {
       console.error('[ProviderSelector] Health check failed:', error);
     }

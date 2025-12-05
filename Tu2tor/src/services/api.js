@@ -195,6 +195,22 @@ export const bookingsAPI = {
   },
 
   /**
+   * Start session (mark as started)
+   */
+  startSession: async (bookingId) => {
+    const response = await api.post(`/bookings/${bookingId}/start`);
+    return response.data;
+  },
+
+  /**
+   * Complete session
+   */
+  completeSession: async (bookingId, data = {}) => {
+    const response = await api.post(`/bookings/${bookingId}/complete`, data);
+    return response.data;
+  },
+
+  /**
    * Delete booking (admin only)
    */
   deleteBooking: async (bookingId) => {
@@ -323,6 +339,122 @@ export const notificationsAPI = {
    */
   deleteAllNotifications: async () => {
     const response = await api.delete('/notifications');
+    return response.data;
+  },
+};
+
+// ============================================================================
+// Todos API
+// ============================================================================
+
+export const todosAPI = {
+  /**
+   * Get all todos for current user
+   */
+  getTodos: async () => {
+    const response = await api.get('/todos');
+    return response.data;
+  },
+
+  /**
+   * Create a new todo
+   */
+  createTodo: async (todoData) => {
+    const response = await api.post('/todos', todoData);
+    return response.data;
+  },
+
+  /**
+   * Update a todo
+   */
+  updateTodo: async (todoId, updates) => {
+    const response = await api.put(`/todos/${todoId}`, updates);
+    return response.data;
+  },
+
+  /**
+   * Toggle todo completion
+   */
+  toggleTodo: async (todoId) => {
+    const response = await api.patch(`/todos/${todoId}/toggle`);
+    return response.data;
+  },
+
+  /**
+   * Delete a todo
+   */
+  deleteTodo: async (todoId) => {
+    const response = await api.delete(`/todos/${todoId}`);
+    return response.data;
+  },
+
+  /**
+   * Delete all completed todos
+   */
+  deleteCompletedTodos: async () => {
+    const response = await api.delete('/todos/completed/all');
+    return response.data;
+  },
+};
+
+// ============================================================================
+// Study Notes API
+// ============================================================================
+
+export const studyNotesAPI = {
+  /**
+   * Get all study notes for current user
+   */
+  getStudyNotes: async (params = {}) => {
+    const response = await api.get('/study-notes', { params });
+    return response.data;
+  },
+
+  /**
+   * Get a single study note
+   */
+  getStudyNote: async (noteId) => {
+    const response = await api.get(`/study-notes/${noteId}`);
+    return response.data;
+  },
+
+  /**
+   * Create a new study note
+   */
+  createStudyNote: async (noteData) => {
+    const response = await api.post('/study-notes', noteData);
+    return response.data;
+  },
+
+  /**
+   * Update a study note
+   */
+  updateStudyNote: async (noteId, updates) => {
+    const response = await api.put(`/study-notes/${noteId}`, updates);
+    return response.data;
+  },
+
+  /**
+   * Delete a study note
+   */
+  deleteStudyNote: async (noteId) => {
+    const response = await api.delete(`/study-notes/${noteId}`);
+    return response.data;
+  },
+
+  /**
+   * Get all subjects with note count
+   */
+  getSubjects: async () => {
+    const response = await api.get('/study-notes/subjects/list');
+    return response.data;
+  },
+
+  /**
+   * Get all tags
+   */
+  getTags: async () => {
+    const response = await api.get('/study-notes/tags/list');
     return response.data;
   },
 };
