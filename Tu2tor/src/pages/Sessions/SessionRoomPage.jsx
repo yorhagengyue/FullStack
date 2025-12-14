@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { useVideo } from '../../context/VideoContext';
-import { bookingsAPI } from '../../services/api';
+import { bookingsAPI, knowledgeBaseAPI, ragAPI } from '../../services/api';
 import JitsiMeetRoom from '../../components/session/JitsiMeetRoom';
 import CodeCollabEditor from '../../components/session/CodeCollabEditor';
 import MarkdownCollabEditor from '../../components/session/MarkdownCollabEditor';
@@ -27,6 +27,7 @@ import {
   CheckCircle,
   FileText,
   X,
+  Loader2,
 } from 'lucide-react';
 
 const SessionRoomPage = () => {
@@ -50,6 +51,12 @@ const SessionRoomPage = () => {
   const [isCompleting, setIsCompleting] = useState(false);
   const [videoMinimized, setVideoMinimized] = useState(false);
   const [videoHidden, setVideoHidden] = useState(false);
+  const [showKBPanel, setShowKBPanel] = useState(false);
+  const [kbQuery, setKbQuery] = useState('');
+  const [kbDocs, setKbDocs] = useState([]);
+  const [kbSelected, setKbSelected] = useState([]);
+  const [kbResults, setKbResults] = useState([]);
+  const [kbLoading, setKbLoading] = useState(false);
   
   const autoCompleteTimerRef = useRef(null);
 
@@ -84,6 +91,22 @@ const SessionRoomPage = () => {
     // Close floating window when entering full session view
     stopFloatingVideo();
   }, [bookingId, bookings, tutors]);
+
+  // Load knowledge base docs for the booking subject
+  useEffect(() => {
+    const loadKB = async () => {
+      if (!booking?.subjectId) return;
+      try {
+        const res = await knowledgeBaseAPI.list({ subjectId: booking.subjectId, status: 'completed' });
+        if (res.success) {
+          setKbDocs(res.documents || []);
+        }
+      } catch (err) {
+        console.warn('[SessionRoom] load KB failed', err);
+      }
+    };
+    loadKB();
+  }, [booking?.subjectId]);
 
   // Check if user can join
   const canJoin = () => {
@@ -222,6 +245,33 @@ const SessionRoomPage = () => {
     }
   };
 
+  const toggleKBSelection = (docId, checked) => {
+    setKbSelected((prev) => {
+      if (checked) return [...prev, docId];
+      return prev.filter(id => id !== docId);
+    });
+  };
+
+  const handleKBSearch = async () => {
+    if (!kbQuery.trim()) return;
+    setKbLoading(true);
+    try {
+      const res = await ragAPI.query({
+        question: kbQuery,
+        subjectId: booking?.subjectId,
+        documentIds: kbSelected
+      });
+      if (res.success) {
+        setKbResults(res.sources || []);
+      }
+    } catch (err) {
+      console.error('[SessionRoom] KB search failed', err);
+      setKbResults([]);
+    } finally {
+      setKbLoading(false);
+    }
+  };
+
   const handleSelectNote = (note) => {
     setSelectedNote(note);
     setShowNoteSelector(false);
@@ -339,7 +389,60 @@ const SessionRoomPage = () => {
       {/* Main Content Area */}
       <div className={`${isFullscreen ? 'h-full' : 'max-w-[1920px] mx-auto p-6'}`}>
         <div className={`${isFullscreen ? 'h-full' : 'h-[calc(100vh-180px)]'} relative`}>
-          
+          {/* Knowledge Base Panel */}
+          {showKBPanel && (
+            <div className="absolute top-4 left-4 z-20 w-80 bg-white border border-gray-200 shadow-2xl rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="font-semibold text-gray-800">Knowledge Base Search</div>
+                <button onClick={() => setShowKBPanel(false)} className="text-gray-400 hover:text-gray-700">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={kbQuery}
+                  onChange={(e) => setKbQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleKBSearch(); }}
+                  placeholder="Enter your question..."
+                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+                />
+                <button
+                  onClick={handleKBSearch}
+                  disabled={kbLoading || !kbQuery.trim()}
+                  className="px-3 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 disabled:opacity-50"
+                >
+                  {kbLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Search'}
+                </button>
+              </div>
+              <div className="max-h-24 overflow-y-auto space-y-1">
+                {kbDocs.length === 0 && (
+                  <p className="text-xs text-gray-500">No materials</p>
+                )}
+                {kbDocs.map(doc => (
+                  <label key={doc._id} className="flex items-center gap-2 text-xs text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={kbSelected.includes(doc._id)}
+                      onChange={(e) => toggleKBSelection(doc._id, e.target.checked)}
+                    />
+                    <span className="font-semibold">{doc.title}</span>
+                    {doc.metadata?.pageCount && <span className="text-gray-400">({doc.metadata.pageCount} pages)</span>}
+                  </label>
+                ))}
+              </div>
+              {kbResults.length > 0 && (
+                <div className="border-t border-gray-200 pt-2 space-y-2">
+                  <div className="text-xs font-semibold text-gray-600">References</div>
+                  {kbResults.map((r, i) => (
+                    <div key={i} className="text-xs text-gray-600 flex items-center gap-2">
+                      <FileText className="w-3 h-3" />
+                      <span>{r.title || 'Document'}{r.pageNumber ? ` - Page ${r.pageNumber}` : ''}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Editors Container - Full Width when active */}
           {(showCodeEditor || showMarkdownEditor) && sessionStarted && (
@@ -405,6 +508,13 @@ const SessionRoomPage = () => {
                       title="Open markdown editor"
                     >
                       <FileText className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => setShowKBPanel(!showKBPanel)}
+                      className={`p-3 text-white rounded-lg transition-colors backdrop-blur-sm shadow-lg ${showKBPanel ? 'bg-purple-700' : 'bg-black/70 hover:bg-purple-700'}`}
+                      title="Knowledge base panel"
+                    >
+                      <BookOpen className="w-5 h-5" />
                     </button>
                     <button
                       onClick={minimizeToFloating}

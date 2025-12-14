@@ -25,6 +25,8 @@ import { studyNotesAPI } from '../../services/api';
 import TopBar from '../../components/layout/TopBar';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Toast from '../../components/ui/Toast';
+import NoteDetailView from '../../components/notes/NoteDetailView';
+import RestructuredNoteView from '../../components/notes/RestructuredNoteView';
 
 const StudyNotesPage = () => {
   const [notes, setNotes] = useState([]);
@@ -37,9 +39,7 @@ const StudyNotesPage = () => {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [selectedNote, setSelectedNote] = useState(null);
   const [showNoteModal, setShowNoteModal] = useState(false);
-  const [editingNote, setEditingNote] = useState(null);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
-  const [editMode, setEditMode] = useState('preview'); // 'edit' or 'preview' or 'split'
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, noteId: null });
   const [toast, setToast] = useState({ isOpen: false, message: '', type: 'success' });
 
@@ -113,7 +113,25 @@ const StudyNotesPage = () => {
   };
 
   const handleDownloadNote = (note) => {
-    const blob = new Blob([note.content], { type: 'text/markdown' });
+    // Create frontmatter
+    const frontmatter = [
+      '---',
+      `title: "${note.title}"`,
+      `subject: "${note.subject}"`,
+      note.subjectId ? `subjectId: "${note.subjectId}"` : '',
+      `summary: "${note.summary || ''}"`,
+      `version: ${note.version || 1}`,
+      `created: ${new Date(note.createdAt).toISOString()}`,
+      `updated: ${new Date(note.updatedAt).toISOString()}`,
+      note.tags?.length ? `tags: [${note.tags.map(t => `"${t}"`).join(', ')}]` : '',
+      note.highlights?.length ? `highlights:\n${note.highlights.map(h => `  - "${h}"`).join('\n')}` : '',
+      note.sources?.length ? `sources:\n${note.sources.map(s => `  - title: "${s.title}"\n    pages: [${s.pages?.join(', ')}]`).join('\n')}` : '',
+      '---',
+      ''
+    ].filter(Boolean).join('\n');
+
+    const fullContent = frontmatter + '\n' + note.content;
+    const blob = new Blob([fullContent], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -122,23 +140,24 @@ const StudyNotesPage = () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    setToast({ isOpen: true, message: 'Note exported successfully!', type: 'success' });
   };
 
-  const handleUpdateNote = async () => {
-    if (!editingNote) return;
+  const handleUpdateNote = async (updatedNote) => {
+    if (!updatedNote) return;
     
     try {
-      const updated = await studyNotesAPI.updateStudyNote(editingNote._id, {
-        title: editingNote.title,
-        subject: editingNote.subject,
-        content: editingNote.content,
-        tags: editingNote.tags
+      const updated = await studyNotesAPI.updateStudyNote(updatedNote._id, {
+        title: updatedNote.title,
+        subject: updatedNote.subject,
+        content: updatedNote.content,
+        summary: updatedNote.summary,
+        highlights: updatedNote.highlights,
+        tags: updatedNote.tags
       });
       
       setNotes(notes.map(n => n._id === updated._id ? updated : n));
       setSelectedNote(updated);
-      setEditingNote(null);
-      setEditMode('preview');
       setToast({ isOpen: true, message: 'Note updated successfully!', type: 'success' });
     } catch (error) {
       console.error('Error updating note:', error);
@@ -423,12 +442,18 @@ const StudyNotesPage = () => {
 
                 {/* Card Body */}
                 <div className="p-4">
-                  {/* Summary Preview (if available) */}
-                  {note.summary && (
-                    <div className="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                      <p className="text-xs text-gray-600 line-clamp-3 leading-relaxed italic">
-                        "{note.summary}"
-                      </p>
+                  {/* Summary */}
+                  <div className="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                    <p className="text-xs text-gray-600 line-clamp-3 leading-relaxed">
+                      {note.summary || 'No summary available'}
+                    </p>
+                  </div>
+
+                  {/* Sources Count */}
+                  {note.sources && note.sources.length > 0 && (
+                    <div className="mb-3 flex items-center gap-1.5 text-xs text-gray-500">
+                      <BookOpen className="w-3 h-3 text-blue-500" />
+                      <span>{note.sources.length} source{note.sources.length > 1 ? 's' : ''} referenced</span>
                     </div>
                   )}
 
@@ -519,202 +544,45 @@ const StudyNotesPage = () => {
         />
 
         {/* Note View Modal */}
-        <AnimatePresence>
-          {showNoteModal && selectedNote && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-              onClick={() => {
-                setShowNoteModal(false);
-                setEditingNote(null);
-                setEditMode('preview');
-              }}
-            >
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full h-[90vh] flex flex-col"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Modal Header */}
-                <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                  <div className="flex-1">
-                    {editingNote ? (
-                      <input
-                        type="text"
-                        value={editingNote.title}
-                        onChange={(e) => setEditingNote({ ...editingNote, title: e.target.value })}
-                        className="text-xl font-bold text-gray-900 w-full border-b-2 border-blue-500 focus:outline-none"
-                      />
-                    ) : (
-                      <h2 className="text-xl font-bold text-gray-900">{selectedNote.title}</h2>
-                    )}
-                    <div className="flex items-center gap-3 mt-2">
-                      <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
-                        {editingNote ? (
-                          <input
-                            type="text"
-                            value={editingNote.subject}
-                            onChange={(e) => setEditingNote({ ...editingNote, subject: e.target.value })}
-                            className="bg-transparent focus:outline-none w-32"
-                          />
-                        ) : (
-                          selectedNote.subject
-                        )}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {new Date(selectedNote.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    {editingNote ? (
-                      <>
-                        <button
-                          onClick={() => setEditingNote(null)}
-                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={handleUpdateNote}
-                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          <Save className="w-4 h-4" />
-                          Save
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => setEditingNote({ ...selectedNote })}
-                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                          title="Edit"
-                        >
-                          <Edit2 className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDownloadNote(selectedNote)}
-                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                          title="Download"
-                        >
-                          <Download className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            handleDeleteNote(selectedNote._id);
-                          }}
-                          className="p-2 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowNoteModal(false);
-                            setEditingNote(null);
-                          }}
-                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Edit Mode Toggle */}
-                {editingNote && (
-                  <div className="flex items-center gap-2 px-6 py-3 bg-gray-50 border-b border-gray-200">
-                    <button
-                      onClick={() => setEditMode('edit')}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                        editMode === 'edit' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      <Edit2 className="w-4 h-4 inline mr-2" />
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => setEditMode('preview')}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                        editMode === 'preview' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      <Eye className="w-4 h-4 inline mr-2" />
-                      Preview
-                    </button>
-                    <button
-                      onClick={() => setEditMode('split')}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                        editMode === 'split' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      <FileText className="w-4 h-4 inline mr-2" />
-                      Split
-                    </button>
-                  </div>
-                )}
-
-                {/* Modal Content */}
-                <div className="flex-1 overflow-hidden">
-                  {editingNote ? (
-                    <div className="h-full flex">
-                      {/* Edit View */}
-                      {(editMode === 'edit' || editMode === 'split') && (
-                        <div className={`${editMode === 'split' ? 'w-1/2 border-r border-gray-200' : 'w-full'} overflow-y-auto p-6`}>
-                          <textarea
-                            value={editingNote.content}
-                            onChange={(e) => setEditingNote({ ...editingNote, content: e.target.value })}
-                            className="w-full h-full min-h-[500px] p-4 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none font-mono text-sm leading-relaxed resize-none"
-                            placeholder="Write your markdown here..."
-                          />
-                        </div>
-                      )}
-                      
-                      {/* Preview View */}
-                      {(editMode === 'preview' || editMode === 'split') && (
-                        <div className={`${editMode === 'split' ? 'w-1/2' : 'w-full'} overflow-y-auto p-6 bg-white`}>
-                          <div className="prose prose-lg max-w-none">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>
-                              {editingNote.content}
-                            </ReactMarkdown>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="h-full overflow-y-auto p-8 bg-gradient-to-br from-gray-50 to-white">
-                      <div className="max-w-4xl mx-auto prose prose-lg">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>
-                          {selectedNote.content}
-                        </ReactMarkdown>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Modal Footer */}
-                {selectedNote.tags && selectedNote.tags.length > 0 && !editingNote && (
-                  <div className="p-6 border-t border-gray-200 bg-gray-50">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Tag className="w-4 h-4 text-gray-500" />
-                      {selectedNote.tags.map((tag, i) => (
-                        <span key={i} className="px-3 py-1 bg-white border border-gray-200 text-gray-600 rounded-full text-xs">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {showNoteModal && selectedNote && (
+          <>
+            {/* Show RestructuredNoteView if note has restructured data */}
+            {selectedNote.restructured?.enabled ? (
+              <RestructuredNoteView
+                note={selectedNote}
+                onClose={() => {
+                  setShowNoteModal(false);
+                  setSelectedNote(null);
+                }}
+                onRestructure={async () => {
+                  // Handle re-restructure
+                  try {
+                    await studyNotesAPI.restructureNote(selectedNote._id, 'medium');
+                    const updated = await studyNotesAPI.getStudyNote(selectedNote._id);
+                    setSelectedNote(updated);
+                    setToast({ isOpen: true, message: 'Note re-restructured!', type: 'success' });
+                  } catch (error) {
+                    console.error('Re-restructure error:', error);
+                    setToast({ isOpen: true, message: 'Re-restructure failed', type: 'error' });
+                  }
+                }}
+                onDownload={() => handleDownloadNote(selectedNote)}
+              />
+            ) : (
+              <NoteDetailView
+                note={selectedNote}
+                onClose={() => {
+                  setShowNoteModal(false);
+                  setSelectedNote(null);
+                }}
+                onUpdate={handleUpdateNote}
+                onDelete={handleDeleteNote}
+                onDownload={handleDownloadNote}
+                MarkdownComponents={MarkdownComponents}
+              />
+            )}
+          </>
+        )}
       </div>
     </div>
   );

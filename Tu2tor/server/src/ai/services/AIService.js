@@ -179,6 +179,9 @@ export class AIService {
       }
 
       console.log('[Backend AIService] Generating content with', this.activeProviderName);
+      if (options.enableGrounding) {
+        console.log('[Backend AIService] 🌐 Web Search (Grounding) is ENABLED');
+      }
 
       const result = await this.activeProvider.generateContent(prompt, options);
 
@@ -203,6 +206,9 @@ export class AIService {
 
       console.log('[Backend AIService] Streaming chat with', this.activeProviderName);
       console.log('[Backend AIService] Thinking mode:', !!options.thinkingMode);
+      if (options.enableGrounding) {
+        console.log('[Backend AIService] 🌐 Web Search (Grounding) is ENABLED');
+      }
 
       // Increment request count
       this.usageStats.totalRequests++;

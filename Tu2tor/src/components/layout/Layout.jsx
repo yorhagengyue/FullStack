@@ -17,7 +17,8 @@ import {
   Sparkles,
   Home,
   Clock,
-  CheckSquare
+  CheckSquare,
+  Database
 } from 'lucide-react';
 import StaggeredMenu from '../reactbits/StaggeredMenu/StaggeredMenu';
 
@@ -77,6 +78,7 @@ const Layout = () => {
     { icon: Home, label: 'Home Page', path: '/' },
     { icon: LayoutDashboard, label: 'Dashboard', path: '/app/dashboard' },
     { icon: Sparkles, label: 'AI Assistant', path: '/app/ai-chat' },
+    { icon: Database, label: 'Knowledge Base', path: '/app/knowledge-base' },
     { icon: MessageSquare, label: 'Messages', path: '/app/messages' },
     { icon: Search, label: 'Find Tutors', path: '/app/search' },
     { icon: Clock, label: 'My Bookings', path: '/app/bookings' },

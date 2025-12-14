@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { useAI } from '../../context/AIContext';
+import { motion, AnimatePresence } from 'framer-motion';
 // Old AI services removed - now using backend API via aiAPI
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -23,19 +24,23 @@ import {
   Upload,
   Zap,
   BookOpen,
-  Save
+  Save,
+  RefreshCw,
+  FileText
 } from 'lucide-react';
 import ProviderSelector from '../../components/ai/ProviderSelector';
 import UsageMonitor from '../../components/ai/UsageMonitor';
-import { studyNotesAPI } from '../../services/api';
+import { studyNotesAPI, knowledgeBaseAPI, ragAPI } from '../../services/api';
 import { detectAcademicSubject, generateStudyNote, shouldSaveAsStudyNote, getConversationId } from '../../utils/studyNoteHelper';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Toast from '../../components/ui/Toast';
 import ShinyText from '../../components/reactbits/ShinyText/ShinyText';
-import Magnet from '../../components/reactbits/Magnet/Magnet';
 import ShuffleText from '../../components/reactbits/ShuffleText/ShuffleText';
 import PillNav from '../../components/reactbits/PillNav/PillNav';
 import ThinkingDisplay from '../../components/ai/ThinkingDisplay';
+import NoteSelectionModal from '../../components/notes/NoteSelectionModal';
+import RestructureOptionsModal from '../../components/notes/RestructureOptionsModal';
+import RestructuredNoteView from '../../components/notes/RestructuredNoteView';
 
 const AIChat = () => {
   const navigate = useNavigate();
@@ -50,7 +55,8 @@ const AIChat = () => {
   const [streamingThinking, setStreamingThinking] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [thinkingMode, setThinkingMode] = useState(false);
-  const [reasoningEffort, setReasoningEffort] = useState('high'); 
+  const [reasoningEffort, setReasoningEffort] = useState('high');
+  const [enableWebSearch, setEnableWebSearch] = useState(false); // Grounding功能 
   const [copiedCode, setCopiedCode] = useState(null);
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [detectedSubject, setDetectedSubject] = useState(null);
@@ -58,6 +64,23 @@ const AIChat = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false });
   const [toast, setToast] = useState({ isOpen: false, message: '', type: 'success' });
+  
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [noteContentToSave, setNoteContentToSave] = useState('');
+  const [noteSourcesToSave, setNoteSourcesToSave] = useState([]);
+  
+  // AI Restructure states
+  const [showRestructureModal, setShowRestructureModal] = useState(false);
+  const [isRestructuring, setIsRestructuring] = useState(false);
+  const [restructuredNote, setRestructuredNote] = useState(null);
+  const [showRestructuredView, setShowRestructuredView] = useState(false);
+
+  // RAG/知识库模式
+  const [mode, setMode] = useState('chat'); // 'chat' | 'kb'
+  const [kbDocs, setKbDocs] = useState([]);
+  const [selectedDocIds, setSelectedDocIds] = useState([]);
+  const [ragSources, setRagSources] = useState([]);
+  const [isRagLoading, setIsRagLoading] = useState(false);
 
   const messagesEndRef = useRef(null);
   const chatServiceRef = useRef(null);
@@ -104,6 +127,21 @@ const AIChat = () => {
         }
     }
   }, [messages]);
+
+  // Load knowledge base documents (current user)
+  useEffect(() => {
+    const loadDocs = async () => {
+      try {
+        const res = await knowledgeBaseAPI.list({ status: 'completed' });
+        if (res.success) {
+          setKbDocs(res.documents || []);
+        }
+      } catch (err) {
+        console.warn('[AIChat] load docs failed', err);
+      }
+    };
+    loadDocs();
+  }, []);
 
   const handleCopyCode = (code, id) => {
     navigator.clipboard.writeText(code);
@@ -224,8 +262,62 @@ const AIChat = () => {
     setIsTyping(true);
     setStreamingContent('');
     setStreamingThinking('');
+    setRagSources([]);
 
     try {
+      // 知识库模式：直接调用 RAG 接口
+      if (mode === 'kb') {
+        console.log('[AIChat] ========== RAG QUERY ==========');
+        console.log('[AIChat] Question:', userMessage.content);
+        console.log('[AIChat] Selected Doc IDs:', selectedDocIds);
+        console.log('[AIChat] Mode:', mode);
+        console.log('[AIChat] KB Docs available:', kbDocs.length);
+        console.log('[AIChat] ====================================');
+        
+        if (selectedDocIds.length === 0) {
+          setMessages((prev) => [...prev, {
+            role: 'assistant',
+            content: 'Please select at least one document from the list below before asking questions.',
+            timestamp: new Date(),
+            isError: true
+          }]);
+          setIsTyping(false);
+          return;
+        }
+        
+        setIsRagLoading(true);
+        try {
+          const res = await ragAPI.query({
+            question: userMessage.content,
+            documentIds: selectedDocIds
+          });
+          
+          console.log('[AIChat] RAG Response:', res);
+
+          setMessages((prev) => [...prev, {
+            role: 'assistant',
+            content: res.answer || 'No relevant content found in the materials.',
+            timestamp: new Date(),
+            provider: 'gemini',
+            model: 'rag + gemini',
+            sources: res.sources || []
+          }]);
+          setRagSources(res.sources || []);
+        } catch (err) {
+          console.error('[AIChat] RAG query failed:', err);
+          setMessages((prev) => [...prev, { 
+            role: 'assistant', 
+            content: "RAG查询失败: " + (err.message || '未知错误'), 
+            timestamp: new Date(), 
+            isError: true 
+          }]);
+        } finally {
+          setIsTyping(false);
+          setIsRagLoading(false);
+        }
+        return;
+      }
+
       // Import aiAPI
       const { default: aiAPI } = await import('../../services/aiAPI.js');
       
@@ -242,6 +334,7 @@ const AIChat = () => {
           reasoningEffort,
           temperature: 0.7,
           maxTokens: thinkingMode ? 2500 : 2000,
+          enableGrounding: enableWebSearch, // 启用网络搜索
         },
         (chunk) => {
           fullContent += chunk;
@@ -359,6 +452,162 @@ const AIChat = () => {
     }
   };
 
+  const handleRegenerateResponse = async (messageIndex) => {
+    // Find the user message before this assistant message
+    const userMessageIndex = messageIndex - 1;
+    if (userMessageIndex < 0 || messages[userMessageIndex].role !== 'user') {
+      console.error('[AIChat] Cannot regenerate: no user message found');
+      return;
+    }
+
+    const userMsg = messages[userMessageIndex];
+    
+    // Remove the assistant's response
+    setMessages(prev => prev.slice(0, messageIndex));
+    
+    // Resend the user's message
+    setIsTyping(true);
+    setStreamingContent('');
+    setStreamingThinking('');
+    setRagSources([]);
+    
+    try {
+      // Knowledge Base mode
+      if (mode === 'kb') {
+        setIsRagLoading(true);
+        try {
+          const res = await ragAPI.query({
+            question: userMsg.content,
+            documentIds: selectedDocIds
+          });
+
+          setMessages((prev) => [...prev, {
+            role: 'assistant',
+            content: res.answer || 'No relevant content found in the materials.',
+            timestamp: new Date(),
+            provider: 'gemini',
+            model: 'rag + gemini',
+            sources: res.sources || []
+          }]);
+          setRagSources(res.sources || []);
+        } catch (err) {
+          console.error('[AIChat] RAG query failed:', err);
+          setMessages((prev) => [...prev, {
+            role: 'assistant',
+            content: 'RAG query failed: ' + err.message,
+            timestamp: new Date(),
+            isError: true
+          }]);
+        } finally {
+          setIsRagLoading(false);
+          setIsTyping(false);
+        }
+      } else {
+        // Normal chat mode
+        // Import aiAPI
+        const { default: aiAPI } = await import('../../services/aiAPI.js');
+        
+        let fullContent = '';
+        let fullThinking = '';
+        
+        await aiAPI.streamChat(
+          messages.slice(0, userMessageIndex + 1),
+          {
+            thinkingMode,
+            reasoningEffort,
+            temperature: 0.7,
+            maxTokens: thinkingMode ? 2500 : 2000,
+            enableGrounding: enableWebSearch, // 启用网络搜索
+          },
+          (chunk) => {
+            fullContent += chunk;
+            
+            // In thinking mode, parse in real-time
+            if (thinkingMode) {
+              const thinkMatch = fullContent.match(/\*\*Thinking:\*\*([\s\S]*?)(?:\*\*Answer:\*\*|$)/i);
+              const answerMatch = fullContent.match(/\*\*Answer:\*\*([\s\S]*?)$/i);
+              
+              if (thinkMatch) {
+                setStreamingThinking(thinkMatch[1].trim());
+              } else {
+                setStreamingThinking(fullContent);
+              }
+              
+              if (answerMatch) {
+                setStreamingContent(answerMatch[1].trim());
+              }
+            } else {
+              setStreamingContent(fullContent);
+            }
+          },
+          (completeData) => {
+            // Complete callback
+            console.log('[AIChat] Regenerate complete:', completeData);
+            
+            let finalContent = completeData.fullContent || fullContent;
+            let finalThinking = '';
+
+            if (thinkingMode && finalContent) {
+              const thinkingMatch = finalContent.match(/\*\*Thinking:\*\*([\s\S]*?)(?:\*\*Answer:\*\*|$)/i);
+              const answerMatch = finalContent.match(/\*\*Answer:\*\*([\s\S]*?)$/i);
+              
+              if (thinkingMatch) {
+                finalThinking = thinkingMatch[1].trim();
+              }
+              
+              if (answerMatch) {
+                finalContent = answerMatch[1].trim();
+              } else if (thinkingMatch) {
+                finalContent = '';
+              }
+            }
+
+            setMessages((prev) => [...prev, {
+              role: 'assistant',
+              content: finalContent,
+              thinkingContent: finalThinking || undefined,
+              timestamp: new Date(),
+              provider: completeData.provider || 'gemini',
+              model: completeData.model || 'gemini-2.0-flash',
+              isThinking: completeData.isThinking || thinkingMode,
+            }]);
+            
+            setStreamingContent('');
+            setStreamingThinking('');
+            setIsTyping(false);
+          },
+          (error) => {
+            console.error('[AIChat] Stream error:', error);
+            setMessages((prev) => [...prev, { 
+              role: 'assistant', 
+              content: "Connection error: " + error.message, 
+              timestamp: new Date(), 
+              isError: true 
+            }]);
+            setIsTyping(false);
+          }
+        );
+      }
+    } catch (error) {
+      console.error('[AIChat] Regenerate error:', error);
+      setMessages((prev) => [...prev, { 
+        role: 'assistant', 
+        content: "Failed to regenerate: " + error.message, 
+        timestamp: new Date(), 
+        isError: true 
+      }]);
+      setIsTyping(false);
+      setStreamingContent('');
+      setStreamingThinking('');
+    }
+  };
+
+  const handleSaveToNote = (content, sources) => {
+    setNoteContentToSave(content);
+    setNoteSourcesToSave(sources);
+    setShowNoteModal(true);
+  };
+
   const handleClearChat = () => {
     setConfirmDialog({ isOpen: true });
   };
@@ -400,7 +649,7 @@ const AIChat = () => {
     if (importInputRef.current) importInputRef.current.value = '';
   };
 
-  const handleSaveAsStudyNote = async (manualSave = false) => {
+  const handleSaveAsStudyNote = async (manualSave = false, useRestructure = false) => {
     // If manual save and no detected subject, try to detect now
     let subject = detectedSubject;
     
@@ -422,7 +671,14 @@ const AIChat = () => {
       }
       return;
     }
+
+    // If user explicitly requested AI restructure, show options modal
+    if (manualSave && useRestructure) {
+      setShowRestructureModal(true);
+      return;
+    }
     
+    // Otherwise use old simple save method
     setIsSaving(true);
     try {
       // Generate note with AI summary
@@ -443,9 +699,125 @@ const AIChat = () => {
     }
   };
 
+  // Handle AI Restructure with selected intensity
+  const handleRestructureSave = async (intensity) => {
+    let subject = detectedSubject;
+    
+    if (!subject && messages.length >= 2) {
+      const userMessages = messages.filter(m => m.role === 'user');
+      if (userMessages.length > 0) {
+        subject = await detectAcademicSubject(userMessages[userMessages.length - 1].content);
+        if (!subject) {
+          subject = 'General IT';
+        }
+        setDetectedSubject(subject);
+      }
+    }
+
+    setIsRestructuring(true);
+    try {
+      console.log('[AIChat] Creating restructured note with intensity:', intensity);
+      
+      // Prepare messages for API
+      const formattedMessages = messages.map(m => ({
+        role: m.role,
+        content: m.content,
+        timestamp: m.timestamp || new Date()
+      }));
+
+      // Debug: Check request payload size
+      const payload = {
+        messages: formattedMessages,
+        subject: subject,
+        intensity: intensity,
+        conversationId: getConversationId(messages),
+        sources: ragSources.length > 0 ? ragSources.map(s => ({
+          docId: s.docId || s._id,
+          title: s.title,
+          pages: s.pages || []
+        })) : undefined
+      };
+      
+      const payloadSize = JSON.stringify(payload).length;
+      console.log('[AIChat] Payload size:', (payloadSize / 1024).toFixed(2), 'KB');
+      console.log('[AIChat] Message count:', formattedMessages.length);
+      console.log('[AIChat] Total content length:', formattedMessages.reduce((sum, m) => sum + m.content.length, 0));
+
+      // Call API to create restructured note
+      const response = await studyNotesAPI.createRestructuredNote(payload);
+
+      console.log('[AIChat] API response:', response);
+
+      if (response.success && response.note) {
+        console.log('[AIChat] Restructured note created:', response.note._id);
+        
+        setRestructuredNote(response.note);
+        setShowRestructureModal(false);
+        setShowRestructuredView(true);
+        lastSavedMessageCount.current = messages.length;
+        setShowSavePrompt(false);
+        
+        setToast({ 
+          isOpen: true, 
+          message: `✨ AI-restructured note created successfully! (${intensity} intensity)`, 
+          type: 'success' 
+        });
+      } else {
+        // Response received but something unexpected
+        console.warn('[AIChat] Unexpected response format:', response);
+        setToast({ 
+          isOpen: true, 
+          message: 'Note may have been created. Please check Study Notes page.', 
+          type: 'warning' 
+        });
+      }
+    } catch (error) {
+      console.error('[AIChat] Error creating restructured note:', error);
+      
+      // If network error (status 0), note might have been created
+      if (error.message?.includes('Network error') || error.status === 0) {
+        setToast({ 
+          isOpen: true, 
+          message: '⚠️ Connection interrupted. Note may have been saved - check Study Notes page.', 
+          type: 'warning' 
+        });
+        
+        // Close modal to let user check notes
+        setShowRestructureModal(false);
+      } else {
+        setToast({ 
+          isOpen: true, 
+          message: `Failed to create restructured note: ${error.message}`, 
+          type: 'error' 
+        });
+      }
+    } finally {
+      setIsRestructuring(false);
+    }
+  };
+
+  // Handle re-restructure from note view
+  const handleReRestructure = async () => {
+    if (!restructuredNote) return;
+    
+    // Could show modal to select new intensity
+    setToast({ 
+      isOpen: true, 
+      message: 'Re-restructure feature coming soon!', 
+      type: 'info' 
+    });
+  };
+
   const handleDismissSavePrompt = () => {
     setShowSavePrompt(false);
     lastSavedMessageCount.current = messages.length;
+  };
+
+  const handleToggleDoc = (docId, checked) => {
+    setSelectedDocIds(prev => {
+      if (checked) return [...prev, docId];
+      return prev.filter(id => id !== docId);
+    });
   };
 
   return (
@@ -477,17 +849,33 @@ const AIChat = () => {
         {/* Header */}
           <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white z-10 sticky top-0">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3">
-                <span className="text-4xl font-black tracking-tight bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 bg-clip-text text-transparent">
-                  AI
-                </span>
-                <ShuffleText
-                  texts={['Tu2tor', 'Assistant', 'Guide', 'Mentor']}
-                  className="px-5 py-2.5 bg-black text-white rounded-xl text-2xl font-bold tracking-wide shadow-lg shadow-black/20"
-                  speed={30}
-                  revealDuration={3}
-                  rotationInterval={3500}
-                  characters="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&*"
+              <div className="flex items-center gap-2">
+                {/* Clean, minimal AI branding */}
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold tracking-tight text-gray-900">
+                    AI
+                  </span>
+                  <ShuffleText
+                    texts={['Tu2tor', 'Assistant', 'Guide', 'Mentor']}
+                    className="text-2xl font-semibold tracking-tight bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent"
+                    speed={30}
+                    revealDuration={3}
+                    rotationInterval={3500}
+                    characters="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+                  />
+                </div>
+                {/* Subtle accent dot */}
+                <motion.div 
+                  className="w-1.5 h-1.5 rounded-full bg-green-500"
+                  animate={{ 
+                    scale: [1, 1.3, 1],
+                    opacity: [0.7, 1, 0.7]
+                  }}
+                  transition={{ 
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
                 />
               </div>
             </div>
@@ -503,14 +891,6 @@ const AIChat = () => {
                     isActive: false
                   },
                   {
-                    label: 'Save Note',
-                    icon: <Save className="w-3.5 h-3.5" />,
-                    onClick: () => handleSaveAsStudyNote(true),
-                    disabled: isSaving || messages.length < 2,
-                    title: 'Save conversation as study note',
-                    isActive: false
-                  },
-                  {
                     label: 'Notes',
                     icon: <BookOpen className="w-3.5 h-3.5" />,
                     onClick: () => navigate('/app/study-notes'),
@@ -520,30 +900,72 @@ const AIChat = () => {
                 ]}
               />
               
+              {/* Save Note with AI Restructure Option */}
+              <div className="relative group">
+                <button
+                  onClick={() => handleSaveAsStudyNote(true, false)}
+                  disabled={isSaving || isRestructuring || messages.length < 2}
+                  className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                  title="Save as simple note"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  Save Note
+                </button>
+                
+                <button
+                  onClick={() => handleSaveAsStudyNote(true, true)}
+                  disabled={isSaving || isRestructuring || messages.length < 2}
+                  className="absolute right-0 top-0 bottom-0 px-2 bg-green-600 hover:bg-green-700 text-white rounded-r-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center opacity-0 group-hover:opacity-100"
+                  title="Save with AI restructure"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              
               <div className="w-px h-6 bg-gray-200 mx-1"></div>
 
-              <Magnet padding={40} magnetStrength={2}>
-                <button onClick={handleClearChat} className="p-2.5 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-full transition-colors group" title="Clear chat">
-                  <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                </button>
-              </Magnet>
+              <motion.button 
+                onClick={handleClearChat} 
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="p-2.5 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-full transition-colors group" 
+                title="Clear chat"
+              >
+                <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              </motion.button>
 
-              <Magnet padding={40} magnetStrength={2}>
-                <button onClick={() => setShowSettings(!showSettings)} className="p-2.5 hover:bg-gray-100 text-gray-400 hover:text-gray-700 rounded-full transition-colors group" title="Settings">
-                  <Settings className="w-4 h-4 group-hover:rotate-45 transition-transform duration-500" />
-                </button>
-              </Magnet>
+              <motion.button 
+                onClick={() => setShowSettings(!showSettings)} 
+                whileHover={{ scale: 1.1, rotate: 45 }}
+                whileTap={{ scale: 0.9 }}
+                className="p-2.5 hover:bg-gray-100 text-gray-400 hover:text-gray-700 rounded-full transition-colors group" 
+                title="Settings"
+              >
+                <Settings className="w-4 h-4 transition-transform duration-500" />
+              </motion.button>
             </div>
         </div>
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
             {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center opacity-60">
-                <Sparkles className="w-16 h-16 text-violet-300 mb-6" />
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">How can I help you today?</h2>
-                <p className="text-gray-500 max-w-md">I can help you solve complex problems, explain concepts, or generate code snippets for your projects.</p>
-              </div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+                className="flex flex-col items-center justify-center h-full text-center"
+              >
+                <motion.div
+                  animate={{ rotate: [0, 360] }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                >
+                  <Sparkles className="w-16 h-16 text-gray-400 mb-6" />
+                </motion.div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  How can I help you today?
+                </h2>
+                <p className="text-gray-500 max-w-md">Ask anything, or switch to Knowledge Base mode to query your documents</p>
+              </motion.div>
             ) : (
               messages.map((msg, idx) => (
                 <div key={idx} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
@@ -580,21 +1002,118 @@ const AIChat = () => {
                               </ReactMarkdown>
                         </div>
                       )}
+                      {msg.role === 'assistant' && msg.sources?.length > 0 && (() => {
+                        // 按文档分组页码
+                        const docGroups = {};
+                        msg.sources.forEach(s => {
+                          const docTitle = s.title || 'Document';
+                          if (!docGroups[docTitle]) {
+                            docGroups[docTitle] = [];
+                          }
+                          docGroups[docTitle].push(s.pageNumber);
+                        });
+
+                        // 格式化页码范围
+                        const formatPages = (pages) => {
+                          pages.sort((a, b) => a - b);
+                          const ranges = [];
+                          let start = pages[0];
+                          let prev = pages[0];
+
+                          for (let i = 1; i <= pages.length; i++) {
+                            if (i === pages.length || pages[i] !== prev + 1) {
+                              if (start === prev) {
+                                ranges.push(`${start}`);
+                              } else if (prev === start + 1) {
+                                ranges.push(`${start}, ${prev}`);
+                              } else {
+                                ranges.push(`${start}-${prev}`);
+                              }
+                              if (i < pages.length) {
+                                start = pages[i];
+                                prev = pages[i];
+                              }
+                            } else {
+                              prev = pages[i];
+                            }
+                          }
+                          return ranges.join(', ');
+                        };
+
+                        return (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3, duration: 0.4 }}
+                            className="mt-4 pt-3 border-t border-gray-100"
+                          >
+                            <div className="flex items-start gap-2">
+                              <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mt-0.5">
+                                <BookOpen className="w-3 h-3" />
+                                <span>References</span>
+                              </div>
+                              <div className="flex-1 flex flex-col gap-1.5">
+                                {Object.entries(docGroups).map(([title, pages], idx) => (
+                                  <motion.div
+                                    key={idx}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.4 + idx * 0.1 }}
+                                    className="text-xs text-gray-700"
+                                  >
+                                    <span className="font-semibold">{title}</span>
+                                    <span className="text-gray-500 ml-1.5">p.{formatPages(pages)}</span>
+                                  </motion.div>
+                                ))}
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })()}
                     </div>
-                    <p className="text-[10px] text-gray-400 mt-2 mx-2 flex items-center gap-2">
-                      <span>{msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      {msg.role === 'assistant' && msg.model && (
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-medium ${
-                          msg.isThinking 
-                            ? 'bg-gradient-to-r from-purple-500/10 to-pink-500/10 text-purple-600 border border-purple-200' 
-                            : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          <Sparkles className="w-2.5 h-2.5" />
-                          {msg.model}
-                          {msg.isThinking && <span className="ml-0.5 text-pink-500">deep</span>}
-                        </span>
+                    <div className="flex items-center justify-between mt-2 mx-2">
+                      <p className="text-[10px] text-gray-400 flex items-center gap-2">
+                        <span>{msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        {msg.role === 'assistant' && msg.model && (
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-medium ${
+                            msg.isThinking 
+                              ? 'bg-gradient-to-r from-purple-500/10 to-pink-500/10 text-purple-600 border border-purple-200' 
+                              : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            <Sparkles className="w-2.5 h-2.5" />
+                            {msg.model}
+                            {msg.isThinking && <span className="ml-0.5 text-pink-500">deep</span>}
+                          </span>
+                        )}
+                      </p>
+                      {msg.role === 'assistant' && !isTyping && (
+                        <div className="flex items-center gap-2">
+                          <motion.button
+                            onClick={() => handleRegenerateResponse(idx)}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold text-gray-700 hover:text-white bg-gray-100 hover:bg-gray-900 rounded-full transition-all duration-200 group shadow-sm hover:shadow-md"
+                            title="Regenerate response"
+                          >
+                            <RefreshCw className="w-3 h-3 group-hover:rotate-180 transition-transform duration-500" />
+                            <span>Regenerate</span>
+                          </motion.button>
+                          
+                          {(mode === 'kb' || msg.sources?.length > 0) && (
+                            <motion.button
+                              onClick={() => handleSaveToNote(msg.content, msg.sources)}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold text-gray-700 hover:text-white bg-gray-100 hover:bg-gray-900 rounded-full transition-all duration-200 group shadow-sm hover:shadow-md"
+                              title="Save to Note"
+                            >
+                              <Save className="w-3 h-3" />
+                              <span>Save to Note</span>
+                            </motion.button>
+                          )}
+                        </div>
                       )}
-                    </p>
+                    </div>
                   </div>
                 </div>
               ))
@@ -636,6 +1155,144 @@ const AIChat = () => {
               </div>
             )}
             <div ref={messagesEndRef} />
+        </div>
+
+        {/* Knowledge Base Mode Control */}
+        <div className="px-8 pb-4 bg-gradient-to-b from-white to-gray-50/50 border-t border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <PillNav
+                items={[
+                  {
+                    label: 'Chat',
+                    isActive: mode === 'chat',
+                    onClick: () => setMode('chat'),
+                  },
+                  {
+                    label: 'Knowledge Base',
+                    isActive: mode === 'kb',
+                    onClick: () => setMode('kb'),
+                  }
+                ]}
+              />
+              
+              {/* Web Search Toggle */}
+              <motion.button
+                onClick={() => setEnableWebSearch(!enableWebSearch)}
+                className={`
+                  flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium
+                  transition-all duration-200
+                  ${enableWebSearch 
+                    ? 'bg-green-500 text-white shadow-sm' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }
+                `}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                title={enableWebSearch ? 'Web Search Enabled' : 'Web Search Disabled'}
+              >
+                <Zap className={`w-3.5 h-3.5 ${enableWebSearch ? 'animate-pulse' : ''}`} />
+                <span>Web Search</span>
+              </motion.button>
+            </div>
+            
+            <AnimatePresence>
+              {mode === 'kb' && selectedDocIds.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8, x: 20 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.8, x: 20 }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white text-xs font-semibold"
+                  style={{ borderRadius: '8px' }}
+                >
+                  <Check className="w-3 h-3" />
+                  {selectedDocIds.length} selected
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <AnimatePresence>
+            {mode === 'kb' && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+                className="overflow-hidden"
+              >
+                <div className="max-h-40 overflow-y-auto mb-3 space-y-2">
+                  {kbDocs.length === 0 ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="w-full text-center py-8 px-4 cursor-pointer bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-xl hover:border-gray-300 transition-all"
+                      onClick={() => navigate('/app/knowledge-base')}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                    >
+                      <BookOpen className="w-10 h-10 mx-auto mb-3 text-gray-400" />
+                      <p className="text-sm font-semibold text-gray-700">No materials available yet</p>
+                      <p className="text-xs text-gray-400 mt-1.5">Click to upload documents</p>
+                    </motion.div>
+                  ) : (
+                    kbDocs.map((doc, index) => (
+                      <motion.label
+                        key={doc._id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05, duration: 0.3 }}
+                        className={`group relative flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 border-l-4 ${
+                          selectedDocIds.includes(doc._id)
+                            ? 'bg-gray-900 border-green-500 text-white shadow-md'
+                            : 'bg-white border-gray-200 hover:border-gray-400 text-gray-700 hover:shadow-sm'
+                        }`}
+                        style={{ borderRadius: '8px' }}
+                        whileHover={{ x: selectedDocIds.includes(doc._id) ? 0 : 4 }}
+                      >
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                          selectedDocIds.includes(doc._id)
+                            ? 'bg-green-500 border-green-500'
+                            : 'border-gray-300 group-hover:border-gray-500'
+                        }`}>
+                          <input
+                            type="checkbox"
+                            checked={selectedDocIds.includes(doc._id)}
+                            onChange={(e) => handleToggleDoc(doc._id, e.target.checked)}
+                            className="sr-only"
+                          />
+                          {selectedDocIds.includes(doc._id) && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ type: "spring", stiffness: 500 }}
+                            >
+                              <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                            </motion.div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-baseline gap-2">
+                            <span className="font-semibold text-sm truncate">{doc.title}</span>
+                            {doc.metadata?.pageCount && (
+                              <span className={`text-[10px] font-medium flex-shrink-0 ${
+                                selectedDocIds.includes(doc._id) ? 'text-green-300' : 'text-gray-400'
+                              }`}>
+                                {doc.metadata.pageCount}p
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <FileText className={`w-4 h-4 flex-shrink-0 ${
+                          selectedDocIds.includes(doc._id) ? 'text-green-300' : 'text-gray-400'
+                        }`} />
+                      </motion.label>
+                    ))
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Save Study Note Prompt */}
@@ -737,10 +1394,10 @@ const AIChat = () => {
 
               <button
                 onClick={handleSendMessage}
-                disabled={(!inputMessage.trim() && attachedFiles.length === 0) || isTyping}
+                disabled={(!inputMessage.trim() && attachedFiles.length === 0) || isTyping || isRagLoading}
                   className="p-3 bg-gray-900 text-white rounded-full hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed mb-1 mr-1 shadow-md"
               >
-                  {isTyping ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5 ml-0.5" />}
+                  {(isTyping || isRagLoading) ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5 ml-0.5" />}
               </button>
               </div>
             </div>
@@ -761,6 +1418,47 @@ const AIChat = () => {
             </div>
           )}
         </div>
+        
+        <NoteSelectionModal
+          isOpen={showNoteModal}
+          onClose={() => setShowNoteModal(false)}
+          contentToSave={noteContentToSave}
+          sourcesToSave={noteSourcesToSave}
+          onSaveSuccess={() => setToast({ isOpen: true, message: 'Note saved successfully!', type: 'success' })}
+        />
+
+        {/* AI Restructure Options Modal */}
+        <RestructureOptionsModal
+          isOpen={showRestructureModal}
+          onClose={() => setShowRestructureModal(false)}
+          onConfirm={handleRestructureSave}
+          isProcessing={isRestructuring}
+        />
+
+        {/* Restructured Note View */}
+        {showRestructuredView && restructuredNote && (
+          <RestructuredNoteView
+            note={restructuredNote}
+            onClose={() => {
+              setShowRestructuredView(false);
+              setRestructuredNote(null);
+            }}
+            onRestructure={handleReRestructure}
+            onDownload={() => {
+              // Download logic
+              const blob = new Blob([restructuredNote.content], { type: 'text/markdown' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `${restructuredNote.title.replace(/[^a-z0-9]/gi, '_')}.md`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            isRestructuring={isRestructuring}
+          />
+        )}
       </div>
     </div>
   );

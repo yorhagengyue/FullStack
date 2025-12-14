@@ -1,32 +1,60 @@
-# Dependencies
-node_modules/
-package-lock.json
+# Tu2tor Project .gitignore
 
-# Environment variables
+# Node modules
+node_modules/
+**/node_modules/
+
+# Environment files
 .env
 .env.local
+.env.production
+**/.env
+**/.env.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Build outputs
+dist/
+build/
+**/dist/
+**/build/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*.swn
 
 # OS
 .DS_Store
 Thumbs.db
-
-# Build
-dist/
-build/
-
-# Logs
-*.log
-npm-debug.log*
+desktop.ini
 
 # Temporary files
 *.tmp
+*.temp
 ~$*
+.~*
 
-# SpecStory history (may contain secrets)
-.specstory/history/
+# SpecStory
+.specstory/
+
+# Archived temporary files
+archived_docs/temp_files/
+archived_docs/submitted_ppts/
+
+# Uploads
+Tu2tor/server/uploads/knowledge-base/*
+!Tu2tor/server/uploads/knowledge-base/.gitkeep
+
+# Package locks (optional - remove if you want to commit them)
+package-lock.json
+**/package-lock.json
+
+# Coverage
+coverage/
+**/coverage/

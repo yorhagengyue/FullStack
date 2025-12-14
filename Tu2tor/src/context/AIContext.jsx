@@ -26,12 +26,20 @@ export const AIProvider = ({ children }) => {
   const [currentProvider, setCurrentProvider] = useState(null);
   const [availableProviders, setAvailableProviders] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [hasShownError, setHasShownError] = useState(false);
 
   /**
    * Initialize - Check backend AI service health
    */
   useEffect(() => {
+    let isMounted = true;
+    let initAttempted = false;
+
     const initAI = async () => {
+      // 防止重复初始化
+      if (initAttempted) return;
+      initAttempted = true;
+
       try {
         // Import aiAPI dynamically
         const { default: aiAPI } = await import('../services/aiAPI.js');
@@ -39,14 +47,15 @@ export const AIProvider = ({ children }) => {
         // Check backend health
         const healthResponse = await aiAPI.healthCheck();
         
-        if (healthResponse.success && healthResponse.health) {
+        if (isMounted && healthResponse.success && healthResponse.health) {
           setIsInitialized(true);
+          setHasShownError(false); // 重置错误状态
           console.log('[AIContext] Backend AI service ready');
           
           // Get available providers
           try {
             const providersResponse = await aiAPI.getProviders();
-            if (providersResponse.success) {
+            if (isMounted && providersResponse.success) {
               setAvailableProviders(providersResponse.providers || []);
               setCurrentProvider(providersResponse.activeProvider || 'gemini');
             }
@@ -56,12 +65,20 @@ export const AIProvider = ({ children }) => {
         }
       } catch (error) {
         console.error('[AIContext] Failed to initialize:', error);
-        toast?.error('AI service unavailable. Please check server connection.');
+        // 只显示一次错误提示
+        if (isMounted && !hasShownError) {
+          setHasShownError(true);
+          toast?.error('AI service unavailable. Please check server connection.', 4000);
+        }
       }
     };
 
     initAI();
-  }, [toast]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, []); // 移除 toast 依赖，只初始化一次
 
   /**
    * Switch AI provider

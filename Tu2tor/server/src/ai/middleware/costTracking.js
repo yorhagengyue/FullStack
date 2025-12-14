@@ -53,10 +53,16 @@ export const checkCostLimit = (req, res, next) => {
 
   // Check total daily limit
   if (totalDailyCost >= COST_LIMITS.totalDaily) {
+    // Calculate midnight tomorrow correctly
+    const tomorrow = new Date();
+    tomorrow.setHours(0, 0, 0, 0);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
     return res.status(503).json({
+      success: false,
       error: 'Service temporarily unavailable',
       message: 'Daily AI cost limit reached. Please try again tomorrow.',
-      resetTime: new Date().setHours(24, 0, 0, 0),
+      resetTime: tomorrow.getTime(),
     });
   }
 
@@ -65,12 +71,18 @@ export const checkCostLimit = (req, res, next) => {
     const userCost = getUserCostRecord(req.user._id.toString());
 
     if (userCost.daily >= COST_LIMITS.dailyPerUser) {
+      // Calculate midnight tomorrow correctly
+      const tomorrow = new Date();
+      tomorrow.setHours(0, 0, 0, 0);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
       return res.status(429).json({
+        success: false,
         error: 'Daily limit reached',
         message: `You've reached your daily AI usage limit ($${COST_LIMITS.dailyPerUser}). Resets tomorrow.`,
         currentCost: userCost.daily.toFixed(4),
         limit: COST_LIMITS.dailyPerUser,
-        resetTime: new Date().setHours(24, 0, 0, 0),
+        resetTime: tomorrow.getTime(),
       });
     }
 

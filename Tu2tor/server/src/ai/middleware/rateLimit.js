@@ -83,6 +83,7 @@ export const aiRateLimit = (req, res, next) => {
   if (minuteCheck.exceeded) {
     const retryAfter = Math.ceil((minuteCheck.resetTime - Date.now()) / 1000);
     return res.status(429).json({
+      success: false,
       error: 'Rate limit exceeded',
       message: `Too many AI requests. Please wait ${retryAfter} seconds.`,
       retryAfter,
@@ -96,6 +97,7 @@ export const aiRateLimit = (req, res, next) => {
   if (hourCheck.exceeded) {
     const retryAfter = Math.ceil((hourCheck.resetTime - Date.now()) / 1000);
     return res.status(429).json({
+      success: false,
       error: 'Rate limit exceeded',
       message: `Hourly AI request limit reached. Please try again in ${Math.ceil(retryAfter / 60)} minutes.`,
       retryAfter,
@@ -109,6 +111,7 @@ export const aiRateLimit = (req, res, next) => {
   if (dayCheck.exceeded) {
     const retryAfter = Math.ceil((dayCheck.resetTime - Date.now()) / 1000);
     return res.status(429).json({
+      success: false,
       error: 'Rate limit exceeded',
       message: `Daily AI request limit reached. Resets in ${Math.ceil(retryAfter / 3600)} hours.`,
       retryAfter,

@@ -53,6 +53,12 @@ api.interceptors.response.use(
       });
     } else if (error.request) {
       // Request made but no response received
+      console.error('[API] Network error details:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        status: error.request?.status,
+        statusText: error.request?.statusText
+      });
       return Promise.reject({
         message: 'Network error - please check your connection',
       });
@@ -217,6 +223,65 @@ export const bookingsAPI = {
     const response = await api.delete(`/bookings/${bookingId}`);
     return response.data;
   },
+};
+
+// ============================================================================
+// Knowledge Base & RAG API
+// ============================================================================
+
+export const knowledgeBaseAPI = {
+  /**
+   * Get knowledge base documents (supports filters: subjectId, type, status)
+   */
+  list: async (params = {}) => {
+    const response = await api.get('/knowledge-base', { params });
+    return response.data;
+  },
+
+  /**
+   * Upload a knowledge base document (multipart/form-data)
+   */
+  upload: async (file, subjectId, title, metadata = {}) => {
+    const formData = new FormData();
+    // Backend expects field name "file" (multer.single('file'))
+    formData.append('file', file);
+    formData.append('subjectId', subjectId);
+    formData.append('title', title);
+    if (metadata.description) formData.append('description', metadata.description);
+    if (metadata.visibility) formData.append('visibility', metadata.visibility);
+    if (Array.isArray(metadata.tags)) {
+      metadata.tags.forEach(tag => formData.append('tags', tag));
+    }
+
+    const response = await api.post('/knowledge-base', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Delete a knowledge base document
+   */
+  delete: async (documentId) => {
+    const response = await api.delete(`/knowledge-base/${documentId}`);
+    return response.data;
+  }
+};
+
+export const ragAPI = {
+  /**
+   * RAG query (MongoDB全文 + AI)
+   */
+  query: async ({ question, subjectId, documentIds = [] }) => {
+    const response = await api.post('/rag/query', {
+      question,
+      subjectId,
+      documentIds
+    });
+    return response.data;
+  }
 };
 
 // ============================================================================
@@ -435,6 +500,14 @@ export const studyNotesAPI = {
   },
 
   /**
+   * Append content & sources to a study note
+   */
+  appendStudyNote: async (noteId, data) => {
+    const response = await api.post(`/study-notes/${noteId}/append`, data);
+    return response.data;
+  },
+
+  /**
    * Delete a study note
    */
   deleteStudyNote: async (noteId) => {
@@ -455,6 +528,42 @@ export const studyNotesAPI = {
    */
   getTags: async () => {
     const response = await api.get('/study-notes/tags/list');
+    return response.data;
+  },
+
+  // ============================================
+  // AI-Powered Note Intelligence APIs
+  // ============================================
+
+  /**
+   * Get restructure intensity options
+   */
+  getRestructureOptions: async () => {
+    const response = await api.get('/study-notes/restructure-options');
+    return response.data;
+  },
+
+  /**
+   * Create new note with AI restructuring from conversation
+   */
+  createRestructuredNote: async (data) => {
+    const response = await api.post('/study-notes/create-restructured', data);
+    return response.data;
+  },
+
+  /**
+   * Restructure existing note with AI
+   */
+  restructureNote: async (noteId, intensity = 'medium') => {
+    const response = await api.post(`/study-notes/${noteId}/restructure`, { intensity });
+    return response.data;
+  },
+
+  /**
+   * Compare original conversation with restructured version
+   */
+  compareNoteVersions: async (noteId) => {
+    const response = await api.get(`/study-notes/${noteId}/compare`);
     return response.data;
   },
 };

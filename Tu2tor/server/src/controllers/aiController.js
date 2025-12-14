@@ -79,6 +79,7 @@ export const chat = async (req, res) => {
 
     console.log('[AI Controller] Streaming chat for user:', req.user?._id);
     console.log('[AI Controller] Thinking mode:', !!options?.thinkingMode);
+    console.log('[AI Controller] Web Search (Grounding):', !!options?.enableGrounding);
 
     // Set up SSE (Server-Sent Events) for streaming
     res.setHeader('Content-Type', 'text/event-stream');

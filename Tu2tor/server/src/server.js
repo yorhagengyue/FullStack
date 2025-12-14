@@ -166,6 +166,8 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import todoRoutes from './routes/todoRoutes.js';
 import studyNoteRoutes from './routes/studyNoteRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
+import knowledgeBaseRoutes from './routes/knowledgeBaseRoutes.js';
+import ragRoutes from './routes/ragRoutes.js';
 
 app.use('/api/test', testRoutes);
 app.use('/api/auth', authRoutes);
@@ -177,6 +179,8 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/todos', todoRoutes);
 app.use('/api/study-notes', studyNoteRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/knowledge-base', knowledgeBaseRoutes);
+app.use('/api/rag', ragRoutes);
 
 import { executeCode } from './services/codeExecution.js';
 

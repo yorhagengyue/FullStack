@@ -133,8 +133,8 @@ export class GeminiProvider extends BaseAIProvider {
 
       const lastMessage = messages[messages.length - 1];
 
-      // Start chat with history
-      const chat = this.model.startChat({
+      // Build config for chat
+      const chatConfig = {
         history,
         generationConfig: {
           temperature: options.temperature || 0.7,
@@ -142,9 +142,26 @@ export class GeminiProvider extends BaseAIProvider {
           topP: options.topP || 0.95,
           topK: options.topK || 40,
         },
-      });
+      };
 
-      const result = await chat.sendMessage(lastMessage.content);
+      // Add Google Search grounding if enabled
+      if (options.enableGrounding) {
+        chatConfig.tools = [{
+          googleSearch: {}  // New API format for Google Search
+        }];
+        console.log('[Backend GeminiProvider] 🌐 Web Search enabled (Google Search) for chat');
+      }
+
+      // Start chat with history
+      const chat = this.model.startChat(chatConfig);
+
+      // Enhance message with web search instruction if enabled
+      let messageToSend = lastMessage.content;
+      if (options.enableGrounding) {
+        messageToSend = `🌐 You have access to real-time web search. Use it when needed.\n\n${lastMessage.content}`;
+      }
+
+      const result = await chat.sendMessage(messageToSend);
       const response = await result.response;
       const content = response.text();
 
@@ -181,15 +198,32 @@ export class GeminiProvider extends BaseAIProvider {
         await this.initialize();
       }
 
-      const result = await this.model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      // Enhance prompt with web search instruction if enabled
+      let enhancedPrompt = prompt;
+      if (options.enableGrounding) {
+        enhancedPrompt = `🌐 You have access to real-time web search via Google Search. Use it when needed for current information.\n\n${prompt}`;
+      }
+
+      // Build config for content generation
+      const generateConfig = {
+        contents: [{ role: 'user', parts: [{ text: enhancedPrompt }] }],
         generationConfig: {
           temperature: options.temperature || 0.7,
           maxOutputTokens: options.maxTokens || 2000,
           topP: options.topP || 0.95,
           topK: options.topK || 40,
         },
-      });
+      };
+
+      // Add Google Search grounding if enabled
+      if (options.enableGrounding) {
+        generateConfig.tools = [{
+          googleSearch: {}  // New API format for Google Search
+        }];
+        console.log('[Backend GeminiProvider] 🌐 Web Search enabled (Google Search) for content generation');
+      }
+
+      const result = await this.model.generateContent(generateConfig);
 
       const response = await result.response;
       
@@ -294,20 +328,31 @@ export class GeminiProvider extends BaseAIProvider {
         console.log('[Backend GeminiProvider] 🖼️ Images detected:', lastMessage.files.length, 'file(s)');
       }
 
-      const chat = modelToUse.startChat({
+      // Build config for chat
+      const chatConfig = {
         history,
         generationConfig: {
           temperature: options.temperature || 0.7,
           maxOutputTokens: options.maxTokens || 2500,
         },
-      });
+      };
+
+      // Add Google Search grounding if enabled
+      if (options.enableGrounding) {
+        chatConfig.tools = [{
+          googleSearch: {}  // New API format for Google Search
+        }];
+        console.log('[Backend GeminiProvider] 🌐 Web Search enabled (Google Search)');
+      }
+
+      const chat = modelToUse.startChat(chatConfig);
 
       // Prepare message content with appropriate system prompt
       let messageContent = lastMessage.content;
       
       if (options.thinkingMode) {
         // Deep Thinking Mode: Structured reasoning prompt
-        const thinkingPrompt = `You are Tu2tor AI in Deep Thinking Mode. You MUST follow this EXACT format:
+        let thinkingPrompt = `You are Tu2tor AI in Deep Thinking Mode. You MUST follow this EXACT format:
 
 First, write "**Thinking:**" and then show your detailed reasoning process (analyze step by step, consider different approaches, explain your thought process).
 
@@ -320,16 +365,20 @@ Example format:
 Let me break this down... [your reasoning here]
 
 **Answer:**
-Based on my analysis above... [your final answer here]
+Based on my analysis above... [your final answer here]`;
 
-Now, answer this question following the format above:
-${messageContent}`;
+        // Add web search instruction if enabled
+        if (options.enableGrounding) {
+          thinkingPrompt += `\n\nIMPORTANT: You have access to real-time web search via Google Search. When you need current information, latest news, or facts that may have changed recently, use the Google Search tool to get accurate, up-to-date information. Don't say you cannot access the internet - you can!`;
+        }
+
+        thinkingPrompt += `\n\nNow, answer this question following the format above:\n${messageContent}`;
         
         messageContent = thinkingPrompt;
         console.log('[Backend GeminiProvider] 📝 Added deep thinking prompt');
       } else {
         // Normal Mode: Educational assistant prompt
-        const normalPrompt = `You are Tu2tor AI, a friendly and knowledgeable educational assistant.
+        let normalPrompt = `You are Tu2tor AI, a friendly and knowledgeable educational assistant.
 
 **Your Role**:
 - Help students learn and understand concepts
@@ -342,9 +391,14 @@ ${messageContent}`;
 - Keep responses concise but thorough
 - Use appropriate language for the student's level
 - Encourage critical thinking
-- If you don't know something, say so honestly
+- If you don't know something, say so honestly`;
 
-**Student's Question**: ${messageContent}`;
+        // Add web search instruction if enabled
+        if (options.enableGrounding) {
+          normalPrompt += `\n\n**🌐 Web Search Available**: You have access to real-time web search via Google Search. When students ask about current events, latest information, or facts that may have changed recently, use the Google Search tool to provide accurate, up-to-date information. Don't say you cannot access the internet - you can and should use it when needed!`;
+        }
+
+        normalPrompt += `\n\n**Student's Question**: ${messageContent}`;
         
         messageContent = normalPrompt;
         console.log('[Backend GeminiProvider] 📝 Added normal mode prompt');

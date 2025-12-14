@@ -13,10 +13,43 @@ export const useToast = () => {
 
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
+  const [recentMessages, setRecentMessages] = useState(new Map());
 
   const addToast = (message, type = 'info', duration = 3000) => {
-    const id = Date.now();
-    setToasts((prev) => [...prev, { id, message, type, duration }]);
+    // 防重复：检查相同消息是否在最近 2 秒内显示过
+    const now = Date.now();
+    const messageKey = `${type}-${message}`;
+    const lastShown = recentMessages.get(messageKey);
+    
+    if (lastShown && now - lastShown < 2000) {
+      return; // 跳过重复消息
+    }
+
+    // 记录此消息的显示时间
+    setRecentMessages((prev) => {
+      const newMap = new Map(prev);
+      newMap.set(messageKey, now);
+      return newMap;
+    });
+
+    // 清理过期的消息记录（超过 5 秒）
+    setTimeout(() => {
+      setRecentMessages((prev) => {
+        const newMap = new Map(prev);
+        newMap.delete(messageKey);
+        return newMap;
+      });
+    }, 5000);
+
+    const id = now;
+    setToasts((prev) => {
+      // 限制同时显示的 toast 数量为 3 个
+      const newToasts = [...prev, { id, message, type, duration }];
+      if (newToasts.length > 3) {
+        return newToasts.slice(-3); // 只保留最新的 3 个
+      }
+      return newToasts;
+    });
   };
 
   const removeToast = (id) => {

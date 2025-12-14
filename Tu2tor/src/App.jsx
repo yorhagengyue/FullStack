@@ -28,6 +28,7 @@ import AIChat from './pages/AIChat/AIChat';
 import CalendarPage from './pages/Calendar/CalendarPage';
 import TodoPage from './pages/Todo/TodoPage';
 import StudyNotesPage from './pages/StudyNotes/StudyNotesPage';
+import KnowledgeBaseUpload from './pages/KnowledgeBase/KnowledgeBaseUpload';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -107,6 +108,7 @@ function AppRoutes() {
         <Route path="calendar" element={<CalendarPage />} />
         <Route path="todo" element={<TodoPage />} />
         <Route path="study-notes" element={<StudyNotesPage />} />
+        <Route path="knowledge-base" element={<KnowledgeBaseUpload />} />
         <Route path="notifications" element={<Navigate to="/app/messages" state={{ selectedContactId: 'system' }} />} />
         <Route path="messages" element={<MessagesPage />} />
         <Route path="ai-chat" element={<AIChat />} />

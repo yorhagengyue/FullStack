@@ -143,6 +143,9 @@ export const generateStudyNote = async (messages, subject) => {
   let codeExamples = [];
   
   try {
+    // Import aiAPI dynamically
+    const { default: aiAPI } = await import('../services/aiAPI.js');
+    
     const summaryPrompt = `Analyze this technical conversation and provide a structured summary in JSON format:
 
 Conversation:
