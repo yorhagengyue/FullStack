@@ -66,22 +66,22 @@ const Hero = () => {
   };
 
   const searchPlaceholders = [
-    "Python Programming",
-    "Calculus II",
-    "Data Structures",
-    "Organic Chemistry",
-    "Machine Learning"
+    "Programming Fundamentals",
+    "Web Application Development",
+    "Database Design",
+    "Cybersecurity & Forensics",
+    "Applied AI & Machine Learning"
   ];
 
   const placeholderText = TypewriterPlaceholder({ texts: searchPlaceholders });
 
   const folderItems = [
-    { title: "Verified Student Tutors" },
-    { title: "Smart Match Algorithm" },
-    { title: "Real-time Code Collab" },
-    { title: "Instant 1-on-1 Chat" },
+    { title: "TP IIT Verified Tutors" },
+    { title: "Real-time Code Collaboration" },
+    { title: "Instant Chat & Video" },
+    { title: "Module-Specific Help" },
     { title: "Progress Tracking" },
-    { title: "Secure Payments" }
+    { title: "Peer Credit System" }
   ];
 
   const textTypeContent = ["print(boost_grades())"];
@@ -109,14 +109,14 @@ const Hero = () => {
           <div className="mb-6">
              <div className="flex flex-col gap-2">
                <SplitText
-                 text="Master your courses"
+                 text="Ace your TP IIT modules"
                  className="text-3xl lg:text-5xl font-bold tracking-tight text-gray-900 leading-tight text-left"
                  delay={0.1}
                  stagger={0.08}
                  tag="h1"
                />
                <SplitText
-                 text="with help from peers."
+                 text="with help from your peers."
                  className="text-3xl lg:text-5xl font-bold tracking-tight text-gray-900 leading-tight text-left"
                  delay={0.3} // Delay the second line slightly
                  stagger={0.08}
@@ -148,10 +148,10 @@ const Hero = () => {
               </div>
               
               <div className="pl-4 border-l-2 border-gray-800">
-                 <span className="text-gray-500"># Connect with verified student tutors</span>
+                 <span className="text-gray-500"># Connect with A-grade TP IIT students</span>
                  <br />
                  <span className="text-purple-400">return</span>
-                 <span className="text-green-400"> "Book sessions, chat instantly, and boost your grades."</span>
+                 <span className="text-green-400"> "Get help, share knowledge, ace your modules!"</span>
               </div>
 
               <div className="mt-4 text-blue-300">
@@ -168,7 +168,7 @@ const Hero = () => {
               </div>
               
               <div className="mt-2 pl-4 text-green-400 opacity-0 animate-[fadeIn_0.5s_ease-in-out_2.5s_forwards]">
-                "Book sessions, chat instantly, and boost your grades."
+                "Get help, share knowledge, ace your modules!"
               </div>
             </div>
           </motion.div>
@@ -217,16 +217,29 @@ const Hero = () => {
           </motion.div>
           
           {/* Trust Indicators */}
-          <motion.div variants={fadeInUp} initial="hidden" animate="visible" className="mt-12 flex items-center gap-6 text-sm text-gray-500">
+          <motion.div 
+            variants={fadeInUp} 
+            initial="hidden" 
+            animate="visible" 
+            className="mt-12 inline-flex items-center gap-4 px-5 py-3 rounded-2xl bg-gradient-to-r from-blue-50 to-purple-50 border border-gray-200/60 backdrop-blur-sm"
+          >
             <div className="flex -space-x-2">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center overflow-hidden bg-cover bg-center" style={{ backgroundImage: `url(https://i.pravatar.cc/100?img=${i + 10})` }} />
+                <div 
+                  key={i} 
+                  className="w-9 h-9 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center overflow-hidden bg-cover bg-center shadow-sm" 
+                  style={{ backgroundImage: `url(https://i.pravatar.cc/100?img=${i + 10})` }} 
+                />
               ))}
             </div>
-            <p className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500"></span>
-              Joined by <strong className="text-gray-900">500+ students</strong> this sem
-            </p>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                <span className="text-gray-600">Joined by</span>
+              </span>
+              <strong className="text-gray-900 font-semibold">500+ TP IIT students</strong>
+              <span className="text-gray-500">this semester</span>
+            </div>
           </motion.div>
         </div>
 

@@ -145,6 +145,11 @@ const GooeyNav = ({
     if (activeLi) {
       updateEffectPosition(activeLi);
       textRef.current?.classList.add('active');
+      // Initialize filter background: on mount, set active directly without particles animation
+      // On subsequent changes, particles animation is triggered via handleClick → makeParticles()
+      if (filterRef.current && !filterRef.current.classList.contains('active')) {
+        filterRef.current.classList.add('active');
+      }
     }
     const resizeObserver = new ResizeObserver(() => {
       const currentActiveLi = navRef.current?.querySelectorAll('li')[activeIndex];

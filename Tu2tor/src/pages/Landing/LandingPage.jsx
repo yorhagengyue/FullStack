@@ -42,7 +42,7 @@ const LandingPage = () => {
         <nav className="max-w-7xl mx-auto px-6 lg:px-8 w-full">
           <div className="flex justify-between items-center">
             <Link to="/" className="flex items-center space-x-2 shrink-0">
-              <img src="/icon.png" alt="Tu2tor" className="w-8 h-8" />
+              <img src="/logo-plain.png" alt="Tu2tor" className="h-10" />
               <span className="text-lg font-bold text-gray-900 tracking-tight">Tu2tor</span>
             </Link>
 
@@ -80,7 +80,7 @@ const LandingPage = () => {
            <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Trending on Tu2tor</span>
         </div>
         <ScrollVelocity
-          texts={['Python Programming • Calculus II • Machine Learning • Data Structures • Web Development • Digital Marketing • Graphic Design • ']} 
+          texts={['Applied AI • Web Development • Cybersecurity • Database Design • Game Development • Business IT • Computer Engineering • ']} 
           velocity={50} 
           className="text-gray-900 font-bold hover:text-blue-600 transition-colors cursor-default"
         />
@@ -113,10 +113,10 @@ const LandingPage = () => {
             variants={staggerChildren}
           >
             <motion.h2 variants={fadeInUp} className="text-5xl font-semibold mb-6">
-              Start learning today
+              Start your learning journey
             </motion.h2>
             <motion.p variants={fadeInUp} className="text-xl text-gray-300 mb-10">
-              Join thousands of students helping each other succeed
+              Join hundreds of TP IIT students helping each other succeed
             </motion.p>
 
             <motion.div variants={fadeInUp}>
