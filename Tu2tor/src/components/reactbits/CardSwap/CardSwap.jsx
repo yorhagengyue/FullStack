@@ -179,6 +179,7 @@ const CardSwap = ({
       };
       const resume = () => {
         tlRef.current?.play();
+        clearInterval(intervalRef.current); // Clear any existing interval before creating new one
         intervalRef.current = window.setInterval(swap, delay);
       };
       node.addEventListener('mouseenter', pause);
