@@ -5,7 +5,7 @@ services:
     env: node
     region: singapore
     plan: starter
-    rootDir: server
+    rootDir: Tu2tor/server
     buildCommand: npm install
     startCommand: npm start
     envVars:
@@ -28,7 +28,7 @@ services:
       - key: KB_MAX_CONCURRENT
         value: 3
       - key: FRONTEND_URL
-        value: https://tu2tor.onrender.com
+        value: https://tu2tor-frontend.onrender.com
     healthCheckPath: /api/test/db-status
     autoDeploy: true
 
@@ -38,6 +38,7 @@ services:
     env: static
     region: singapore
     plan: starter
+    rootDir: Tu2tor
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
     envVars:
