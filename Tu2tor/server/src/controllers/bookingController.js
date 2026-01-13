@@ -177,6 +177,8 @@ export const getBookingById = async (req, res) => {
       success: true,
       booking: {
         id: booking._id,
+        _id: booking._id,
+        bookingId: booking._id,
         student: {
           id: booking.studentId._id,
           username: booking.studentId.username,
@@ -202,6 +204,13 @@ export const getBookingById = async (req, res) => {
         status: booking.status,
         cost: booking.cost,
         notes: booking.notes,
+        sessionType: booking.sessionType,
+        meetingRoomId: booking.meetingRoomId,
+        hasReview: booking.hasReview,
+        actualStartTime: booking.actualStartTime,
+        actualEndTime: booking.actualEndTime,
+        actualDuration: booking.actualDuration,
+        sessionNotes: booking.sessionNotes,
         createdAt: booking.createdAt,
         updatedAt: booking.updatedAt
       }
@@ -399,7 +408,43 @@ export const completeSession = async (req, res) => {
     res.json({
       success: true,
       message: 'Session completed successfully',
-      booking
+      booking: {
+        id: booking._id,
+        _id: booking._id,
+        bookingId: booking._id,
+        student: {
+          id: booking.studentId._id,
+          username: booking.studentId.username,
+          email: booking.studentId.email,
+          school: booking.studentId.school,
+          profilePicture: booking.studentId.profilePicture
+        },
+        tutor: {
+          id: booking.tutorId._id,
+          userId: booking.tutorId.userId._id,
+          username: booking.tutorId.userId.username,
+          email: booking.tutorId.userId.email,
+          school: booking.tutorId.userId.school,
+          profilePicture: booking.tutorId.userId.profilePicture
+        },
+        subject: booking.subject,
+        date: booking.date,
+        timeSlot: booking.timeSlot,
+        duration: booking.duration,
+        location: booking.location,
+        status: booking.status,
+        cost: booking.cost,
+        notes: booking.notes,
+        sessionType: booking.sessionType,
+        meetingRoomId: booking.meetingRoomId,
+        hasReview: booking.hasReview,
+        actualStartTime: booking.actualStartTime,
+        actualEndTime: booking.actualEndTime,
+        actualDuration: booking.actualDuration,
+        sessionNotes: booking.sessionNotes,
+        createdAt: booking.createdAt,
+        updatedAt: booking.updatedAt
+      }
     });
   } catch (error) {
     console.error('Complete session error:', error);
@@ -444,10 +489,56 @@ export const startSession = async (req, res) => {
       await booking.save();
     }
 
+    // Populate for response
+    await booking.populate('studentId', 'username email school profilePicture');
+    await booking.populate({
+      path: 'tutorId',
+      populate: {
+        path: 'userId',
+        select: 'username email school profilePicture'
+      }
+    });
+
     res.json({
       success: true,
       message: 'Session started',
-      booking
+      booking: {
+        id: booking._id,
+        _id: booking._id,
+        bookingId: booking._id,
+        student: {
+          id: booking.studentId._id,
+          username: booking.studentId.username,
+          email: booking.studentId.email,
+          school: booking.studentId.school,
+          profilePicture: booking.studentId.profilePicture
+        },
+        tutor: {
+          id: booking.tutorId._id,
+          userId: booking.tutorId.userId._id,
+          username: booking.tutorId.userId.username,
+          email: booking.tutorId.userId.email,
+          school: booking.tutorId.userId.school,
+          profilePicture: booking.tutorId.userId.profilePicture
+        },
+        subject: booking.subject,
+        date: booking.date,
+        timeSlot: booking.timeSlot,
+        duration: booking.duration,
+        location: booking.location,
+        status: booking.status,
+        cost: booking.cost,
+        notes: booking.notes,
+        sessionType: booking.sessionType,
+        meetingRoomId: booking.meetingRoomId,
+        hasReview: booking.hasReview,
+        actualStartTime: booking.actualStartTime,
+        actualEndTime: booking.actualEndTime,
+        actualDuration: booking.actualDuration,
+        sessionNotes: booking.sessionNotes,
+        createdAt: booking.createdAt,
+        updatedAt: booking.updatedAt
+      }
     });
   } catch (error) {
     console.error('Start session error:', error);
@@ -525,9 +616,39 @@ export const updateBooking = async (req, res) => {
       message: 'Booking updated successfully',
       booking: {
         id: booking._id,
-        status: booking.status,
+        _id: booking._id,
+        bookingId: booking._id,
+        student: {
+          id: booking.studentId._id,
+          username: booking.studentId.username,
+          email: booking.studentId.email,
+          school: booking.studentId.school,
+          profilePicture: booking.studentId.profilePicture
+        },
+        tutor: {
+          id: booking.tutorId._id,
+          userId: booking.tutorId.userId._id,
+          username: booking.tutorId.userId.username,
+          email: booking.tutorId.userId.email,
+          school: booking.tutorId.userId.school,
+          profilePicture: booking.tutorId.userId.profilePicture
+        },
+        subject: booking.subject,
+        date: booking.date,
+        timeSlot: booking.timeSlot,
+        duration: booking.duration,
         location: booking.location,
+        status: booking.status,
+        cost: booking.cost,
         notes: booking.notes,
+        sessionType: booking.sessionType,
+        meetingRoomId: booking.meetingRoomId,
+        hasReview: booking.hasReview,
+        actualStartTime: booking.actualStartTime,
+        actualEndTime: booking.actualEndTime,
+        actualDuration: booking.actualDuration,
+        sessionNotes: booking.sessionNotes,
+        createdAt: booking.createdAt,
         updatedAt: booking.updatedAt
       }
     });
