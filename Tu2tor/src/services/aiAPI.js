@@ -8,7 +8,7 @@
 import axios from 'axios';
 
 // Use /api prefix for Vite proxy or full URL for production
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 const AI_API_URL = `${API_BASE_URL}/ai`;
 
 // Get auth token from localStorage
