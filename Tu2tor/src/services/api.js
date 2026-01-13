@@ -2,11 +2,11 @@ import axios from 'axios';
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: '/api', // Proxied to http://localhost:5000/api by Vite
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api', // Use env variable or default to proxy
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 seconds
+  timeout: 30000, // 30 seconds for production
 });
 
 // Request interceptor - add auth token to all requests

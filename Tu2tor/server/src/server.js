@@ -36,10 +36,12 @@ const server = http.createServer(app);
 // Create WebSocket server for collaborative editing
 const wss = new WebSocketServer({ server });
 
-// Middleware - Allow both localhost and 127.0.0.1
+// Middleware - CORS configuration
 const allowedOrigins = [
   'http://localhost:5174',
   'http://127.0.0.1:5174',
+  'https://tu2tor.pages.dev',
+  'https://3fbd1b0d.tu2tor.pages.dev',
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
@@ -48,9 +50,15 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
     
+    // In production, allow any *.pages.dev domain for flexibility
+    if (process.env.NODE_ENV === 'production' && origin && origin.includes('.pages.dev')) {
+      return callback(null, true);
+    }
+    
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.warn(`[CORS] Blocked origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -71,9 +79,9 @@ const initDB = async () => {
   try {
     await connectDB();
     dbConnected = true;
-    console.log('✅ Database connection established');
+    console.log('[DB] Database connection established');
   } catch (error) {
-    console.error('❌ Failed to connect to database:', error.message);
+    console.error('[DB] Failed to connect to database:', error.message);
     dbConnected = false;
   }
 };
@@ -82,11 +90,11 @@ const initAI = async () => {
   try {
     await aiService.initialize();
     aiInitialized = true;
-    console.log('✅ AI service initialized');
-    console.log(`   Active provider: ${aiService.getActiveProviderName()}`);
+    console.log('[AI] AI service initialized');
+    console.log(`[AI] Active provider: ${aiService.getActiveProviderName()}`);
   } catch (error) {
-    console.error('⚠️  AI service initialization failed:', error.message);
-    console.error('   AI features will be unavailable');
+    console.error('[AI] AI service initialization failed:', error.message);
+    console.error('[AI] AI features will be unavailable');
     aiInitialized = false;
   }
 };
@@ -103,7 +111,7 @@ wss.on('connection', (ws, req) => {
   const room = req.url.slice(1) || 'default-room';
   ws.room = room;
 
-  console.log(`✅ WebSocket client connected to room: ${room}`);
+  console.log(`[WebSocket] Client connected to room: ${room}`);
 
   // Relay messages to all other connected clients IN THE SAME ROOM
   ws.on('message', (message) => {
@@ -128,7 +136,7 @@ wss.on('connection', (ws, req) => {
   });
 
   ws.on('close', () => {
-    console.log(`❌ WebSocket client disconnected from room: ${room}`);
+    console.log(`[WebSocket] Client disconnected from room: ${room}`);
   });
 
   ws.on('error', (error) => {
@@ -221,9 +229,9 @@ app.use((req, res) => {
 
 // Start server with WebSocket support
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌐 Environment: ${process.env.NODE_ENV}`);
-  console.log(`🔗 API: http://localhost:${PORT}`);
-  console.log(`🔗 Frontend: ${process.env.FRONTEND_URL}`);
-  console.log(`🔌 WebSocket server ready for collaborative editing`);
+  console.log(`[Server] Running on port ${PORT}`);
+  console.log(`[Server] Environment: ${process.env.NODE_ENV}`);
+  console.log(`[Server] API: http://localhost:${PORT}`);
+  console.log(`[Server] Frontend: ${process.env.FRONTEND_URL}`);
+  console.log(`[Server] WebSocket server ready for collaborative editing`);
 });
