@@ -36,8 +36,6 @@ services:
   - type: web
     name: tu2tor-frontend
     env: static
-    region: singapore
-    plan: starter
     rootDir: Tu2tor
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
