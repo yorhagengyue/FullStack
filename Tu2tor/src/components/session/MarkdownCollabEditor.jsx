@@ -35,18 +35,7 @@ const MarkdownCollabEditor = ({ bookingId, username = 'Guest', initialContent = 
     ydocRef.current = ydoc;
 
     // Connect to WebSocket server for collaboration
-    // Automatically use WSS in production (https) and WS in development (http)
-    const getWebSocketUrl = () => {
-      const apiBase = import.meta.env.VITE_API_BASE_URL;
-      if (apiBase && apiBase.includes('https://')) {
-        // Production: convert https://domain/api to wss://domain
-        return apiBase.replace('https://', 'wss://').replace('/api', '');
-      }
-      // Development: use local WebSocket
-      return 'ws://localhost:5000';
-    };
-    
-    const wsUrl = getWebSocketUrl();
+    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:5000';
     const provider = new WebsocketProvider(
       wsUrl,
       `markdown-session-${bookingId}`,

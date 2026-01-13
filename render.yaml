@@ -63,6 +63,8 @@ services:
     envVars:
       - key: VITE_API_BASE_URL
         value: https://tu2tor-backend.onrender.com/api
+      - key: VITE_WS_URL
+        value: wss://tu2tor-backend.onrender.com
       - key: VITE_JITSI_DOMAIN
         value: meet.jit.si
       - key: VITE_APP_NAME
