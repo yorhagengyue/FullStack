@@ -346,7 +346,18 @@ export const AppProvider = ({ children }) => {
     if (wsConnected || ws) return;
 
     // Connect to WebSocket for real-time chat
-    const wsHost = 'ws://localhost:5000';
+    // Automatically use WSS in production and WS in development
+    const getWebSocketHost = () => {
+      const apiBase = import.meta.env.VITE_API_BASE_URL;
+      if (apiBase && apiBase.includes('https://')) {
+        // Production: convert https://domain/api to wss://domain
+        return apiBase.replace('https://', 'wss://').replace('/api', '');
+      }
+      // Development: use local WebSocket
+      return 'ws://localhost:5000';
+    };
+    
+    const wsHost = getWebSocketHost();
 
     let socket = null;
     let reconnectAttempts = 0;

@@ -5,7 +5,9 @@
 const JitsiMeetRoom = ({ roomId, displayName, onMeetingEnd }) => {
   // Build Jitsi URL with room name and configuration
   const buildJitsiUrl = () => {
-    const baseUrl = 'https://meet.jit.si';
+    const baseUrl = import.meta.env.VITE_JITSI_DOMAIN 
+      ? `https://${import.meta.env.VITE_JITSI_DOMAIN}` 
+      : 'https://meet.jit.si';
     // Use hash parameters to configure Jitsi
     const config = {
       prejoinPageEnabled: false,
