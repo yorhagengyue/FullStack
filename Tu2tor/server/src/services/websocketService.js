@@ -33,7 +33,8 @@ class WebSocketService {
       this.sendToClient(ws, {
         type: 'connection',
         room: room,
-        connectedUsers: this.rooms.get(room).size,
+        userCount: this.rooms.get(room).size,
+        users: this.getRoomUsers(room),
         timestamp: new Date().toISOString()
       });
 
@@ -41,7 +42,8 @@ class WebSocketService {
       this.broadcastToRoom(room, {
         type: 'user-joined',
         room: room,
-        connectedUsers: this.rooms.get(room).size,
+        userCount: this.rooms.get(room).size,
+        users: this.getRoomUsers(room),
         timestamp: new Date().toISOString()
       }, ws);
 
@@ -84,7 +86,8 @@ class WebSocketService {
         // Broadcast updated user list
         this.broadcastToRoom(ws.room, {
           type: 'user-list-updated',
-          connectedUsers: this.getRoomUsers(ws.room),
+          userCount: this.rooms.get(ws.room).size,
+          users: this.getRoomUsers(ws.room),
           timestamp: new Date().toISOString()
         });
         return;
@@ -125,7 +128,8 @@ class WebSocketService {
         type: 'user-left',
         userId: ws.userId,
         username: ws.username,
-        connectedUsers: this.rooms.get(room).size,
+        userCount: this.rooms.get(room).size,
+        users: this.getRoomUsers(room),
         timestamp: new Date().toISOString()
       });
 
