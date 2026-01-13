@@ -216,7 +216,7 @@ export async function queryWithRAG({ question, subjectId, documentIds = [] }) {
   });
 
   if (searchResult.chunks.length === 0) {
-    console.log('[RAG Service] ⚠️  NO CHUNKS FOUND! Returning fallback message.');
+    console.log('[RAG Service] WARNING: NO CHUNKS FOUND! Returning fallback message.');
   }
 
   const prompt = buildPrompt(question, searchResult.chunks);

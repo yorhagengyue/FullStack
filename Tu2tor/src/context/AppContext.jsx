@@ -354,14 +354,14 @@ export const AppProvider = ({ children }) => {
 
     const connect = () => {
       if (reconnectAttempts >= maxReconnectAttempts) {
-        console.log('⚠️ Max WebSocket reconnect attempts reached, falling back to polling');
+        console.log('[WebSocket] Max reconnect attempts reached, falling back to polling');
         return;
       }
 
       socket = new WebSocket(`${wsHost}/chat-system`);
 
       socket.onopen = () => {
-        console.log('✅ Connected to Chat WebSocket');
+        console.log('[WebSocket] Connected to Chat WebSocket');
         setWsConnected(true);
         reconnectAttempts = 0;
       };
@@ -383,7 +383,7 @@ export const AppProvider = ({ children }) => {
       };
 
       socket.onclose = () => {
-        console.log('❌ Chat WebSocket disconnected');
+        console.log('[WebSocket] Chat WebSocket disconnected');
         setWsConnected(false);
         // Don't auto-reconnect to avoid infinite loop
       };

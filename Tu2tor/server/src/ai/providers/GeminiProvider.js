@@ -149,7 +149,7 @@ export class GeminiProvider extends BaseAIProvider {
         chatConfig.tools = [{
           googleSearch: {}  // New API format for Google Search
         }];
-        console.log('[Backend GeminiProvider] 🌐 Web Search enabled (Google Search) for chat');
+        console.log('[Backend GeminiProvider] Web Search enabled (Google Search) for chat');
       }
 
       // Start chat with history
@@ -220,7 +220,7 @@ export class GeminiProvider extends BaseAIProvider {
         generateConfig.tools = [{
           googleSearch: {}  // New API format for Google Search
         }];
-        console.log('[Backend GeminiProvider] 🌐 Web Search enabled (Google Search) for content generation');
+        console.log('[Backend GeminiProvider] Web Search enabled (Google Search) for content generation');
       }
 
       const result = await this.model.generateContent(generateConfig);
@@ -325,7 +325,7 @@ export class GeminiProvider extends BaseAIProvider {
       // Check if message contains images (for logging)
       const hasImages = lastMessage.files && lastMessage.files.length > 0;
       if (hasImages) {
-        console.log('[Backend GeminiProvider] 🖼️ Images detected:', lastMessage.files.length, 'file(s)');
+        console.log('[Backend GeminiProvider] Images detected:', lastMessage.files.length, 'file(s)');
       }
 
       // Build config for chat
@@ -342,7 +342,7 @@ export class GeminiProvider extends BaseAIProvider {
         chatConfig.tools = [{
           googleSearch: {}  // New API format for Google Search
         }];
-        console.log('[Backend GeminiProvider] 🌐 Web Search enabled (Google Search)');
+        console.log('[Backend GeminiProvider] Web Search enabled (Google Search)');
       }
 
       const chat = modelToUse.startChat(chatConfig);
@@ -375,7 +375,7 @@ Based on my analysis above... [your final answer here]`;
         thinkingPrompt += `\n\nNow, answer this question following the format above:\n${messageContent}`;
         
         messageContent = thinkingPrompt;
-        console.log('[Backend GeminiProvider] 📝 Added deep thinking prompt');
+        console.log('[Backend GeminiProvider] Added deep thinking prompt');
       } else {
         // Normal Mode: Educational assistant prompt
         let normalPrompt = `You are Tu2tor AI, a friendly and knowledgeable educational assistant.
@@ -401,7 +401,7 @@ Based on my analysis above... [your final answer here]`;
         normalPrompt += `\n\n**Student's Question**: ${messageContent}`;
         
         messageContent = normalPrompt;
-        console.log('[Backend GeminiProvider] 📝 Added normal mode prompt');
+        console.log('[Backend GeminiProvider] Added normal mode prompt');
       }
 
       // Prepare message parts (text + images if any)

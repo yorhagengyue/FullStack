@@ -113,8 +113,8 @@ const MergedSection = () => {
                         <p className="text-gray-500 text-sm">Earn peer credits, save AI notes, and level up your skills.</p>
                     </div>
                 </div>
-              </div>
-            </div>
+          </div>
+       </div>
 
             {/* CardSwap Demo */}
             <div className="h-[600px] w-full relative flex items-start justify-center lg:justify-end pt-30">
@@ -206,8 +206,8 @@ const MergedSection = () => {
                   <div className="h-1.5 w-16 bg-indigo-500 rounded-full mt-4"></div>
                 </Card>
               </CardSwap>
-            </div>
-          </div>
+                        </div>
+                    </div>
       </div>
     </section>
   );

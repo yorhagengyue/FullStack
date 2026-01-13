@@ -26,7 +26,9 @@ import {
   BookOpen,
   Save,
   RefreshCw,
-  FileText
+  FileText,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import ProviderSelector from '../../components/ai/ProviderSelector';
 import UsageMonitor from '../../components/ai/UsageMonitor';
@@ -81,6 +83,7 @@ const AIChat = () => {
   const [selectedDocIds, setSelectedDocIds] = useState([]);
   const [ragSources, setRagSources] = useState([]);
   const [isRagLoading, setIsRagLoading] = useState(false);
+  const [showDocList, setShowDocList] = useState(true); // Toggle doc list visibility
 
   const messagesEndRef = useRef(null);
   const chatServiceRef = useRef(null);
@@ -1194,6 +1197,29 @@ const AIChat = () => {
                 <Zap className={`w-3.5 h-3.5 ${enableWebSearch ? 'animate-pulse' : ''}`} />
                 <span>Web Search</span>
               </motion.button>
+              
+              {/* Collapse Toggle Button (only show in KB mode with docs) */}
+              {mode === 'kb' && kbDocs.length > 0 && (
+                <motion.button
+                  onClick={() => setShowDocList(!showDocList)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all duration-200"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  title={showDocList ? 'Hide document list' : 'Show document list'}
+                >
+                  {showDocList ? (
+                    <>
+                      <ChevronUp className="w-3.5 h-3.5" />
+                      <span>Hide Docs</span>
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="w-3.5 h-3.5" />
+                      <span>Show Docs</span>
+                    </>
+                  )}
+                </motion.button>
+              )}
             </div>
             
             <AnimatePresence>
@@ -1212,8 +1238,21 @@ const AIChat = () => {
             </AnimatePresence>
           </div>
 
+          {/* Collapsed State Hint */}
+          {mode === 'kb' && !showDocList && selectedDocIds.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-3 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700 flex items-center gap-2"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Using {selectedDocIds.length} document{selectedDocIds.length > 1 ? 's' : ''} as context</span>
+            </motion.div>
+          )}
+
           <AnimatePresence>
-            {mode === 'kb' && (
+            {mode === 'kb' && showDocList && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
@@ -1221,7 +1260,7 @@ const AIChat = () => {
                 transition={{ duration: 0.3 }}
                 className="overflow-hidden"
               >
-                <div className="max-h-40 overflow-y-auto mb-3 space-y-2">
+                <div className="max-h-32 overflow-y-auto mb-3 space-y-2">
                   {kbDocs.length === 0 ? (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}

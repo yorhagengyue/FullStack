@@ -22,15 +22,15 @@ const seedDatabase = async () => {
 
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('[Seed] Connected to MongoDB');
 
     // Clear existing data
-    console.log('🗑️  Clearing existing data...');
+    console.log('[Seed] Clearing existing data...');
     await User.deleteMany({});
     await Tutor.deleteMany({});
     await Booking.deleteMany({});
     await Review.deleteMany({});
-    console.log('✅ Existing data cleared');
+    console.log('[Seed] Existing data cleared');
 
     // Create Users (Students & Tutors)
     console.log('👥 Creating users...');
@@ -353,7 +353,7 @@ const seedDatabase = async () => {
       },
     ]);
 
-    console.log(`✅ Created ${users.length} users`);
+    console.log(`[Seed] Created ${users.length} users`);
 
     // Find students and tutors
     const students = users.filter(u => u.role === 'student');
@@ -749,7 +749,7 @@ const seedDatabase = async () => {
       },
     ]);
 
-    console.log(`✅ Created ${tutors.length} tutor profiles`);
+    console.log(`[Seed] Created ${tutors.length} tutor profiles`);
 
     // Create Bookings
     console.log('📅 Creating bookings...');
@@ -1075,7 +1075,7 @@ const seedDatabase = async () => {
       },
     ]);
 
-    console.log(`✅ Created ${bookings.length} bookings`);
+    console.log(`[Seed] Created ${bookings.length} bookings`);
 
     // Create Reviews
     console.log('⭐ Creating reviews...');
@@ -1210,10 +1210,10 @@ const seedDatabase = async () => {
       },
     ]);
 
-    console.log(`✅ Created ${reviews.length} reviews`);
+    console.log(`[Seed] Created ${reviews.length} reviews`);
 
-    console.log('\n🎉 Database seeding completed successfully!');
-    console.log('\n📊 Summary:');
+    console.log('\n[Seed] Database seeding completed successfully!');
+    console.log('\n[Seed] Summary:');
     console.log(`   Users: ${users.length} (${students.length} students, ${tutorUsers.length} tutors)`);
     console.log(`   Tutor Profiles: ${tutors.length}`);
     console.log(`   Bookings: ${bookings.length}`);
@@ -1225,7 +1225,7 @@ const seedDatabase = async () => {
 
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error seeding database:', error);
+    console.error('[Seed] Error seeding database:', error);
     process.exit(1);
   }
 };

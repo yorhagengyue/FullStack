@@ -15,15 +15,15 @@ dotenv.config();
 
 const migrateReviewTutorIds = async () => {
   try {
-    console.log('🔄 Starting Review tutorId migration...\n');
+    console.log('[Migration] Starting Review tutorId migration...\n');
 
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/tu2tor');
-    console.log('✅ Connected to MongoDB\n');
+    console.log('[Migration] Connected to MongoDB\n');
 
     // Get all reviews
     const reviews = await Review.find({});
-    console.log(`📊 Found ${reviews.length} reviews to check\n`);
+    console.log(`[Migration] Found ${reviews.length} reviews to check\n`);
 
     let migratedCount = 0;
     let alreadyCorrectCount = 0;
@@ -48,23 +48,23 @@ const migrateReviewTutorIds = async () => {
             review.tutorId = tutor.userId;
             await review.save();
             
-            console.log(`✅ Review ${review._id}: Migrated tutorId`);
+            console.log(`[Migration] Review ${review._id}: Migrated tutorId`);
             console.log(`   Old (Tutor ID): ${oldTutorId}`);
             console.log(`   New (User ID):  ${tutor.userId}\n`);
             migratedCount++;
           } else {
-            console.log(`⚠️  Review ${review._id}: Could not find corresponding Tutor or User`);
+            console.log(`[Migration] WARNING: Review ${review._id}: Could not find corresponding Tutor or User`);
             errorCount++;
           }
         }
       } catch (err) {
-        console.error(`❌ Error processing review ${review._id}:`, err.message);
+        console.error(`[Migration] Error processing review ${review._id}:`, err.message);
         errorCount++;
       }
     }
 
     console.log('\n' + '='.repeat(60));
-    console.log('📈 Migration Summary:');
+    console.log('[Migration] Summary:');
     console.log('='.repeat(60));
     console.log(`Total reviews:        ${reviews.length}`);
     console.log(`Already correct:      ${alreadyCorrectCount}`);
@@ -73,7 +73,7 @@ const migrateReviewTutorIds = async () => {
     console.log('='.repeat(60) + '\n');
 
     // Recalculate tutor stats for all tutors
-    console.log('🔄 Recalculating tutor statistics...\n');
+    console.log('[Migration] Recalculating tutor statistics...\n');
     
     const tutors = await Tutor.find({});
     for (const tutor of tutors) {
@@ -83,23 +83,23 @@ const migrateReviewTutorIds = async () => {
         tutor.totalReviews = stats.totalReviews;
         await tutor.save();
         
-        console.log(`✅ Updated stats for tutor ${tutor.userId}:`, {
+        console.log(`[Migration] Updated stats for tutor ${tutor.userId}:`, {
           averageRating: tutor.averageRating,
           totalReviews: tutor.totalReviews
         });
       } catch (err) {
-        console.error(`❌ Error updating tutor ${tutor._id}:`, err.message);
+        console.error(`[Migration] Error updating tutor ${tutor._id}:`, err.message);
       }
     }
 
-    console.log('\n✅ Migration completed successfully!\n');
+    console.log('\n[Migration] Completed successfully!\n');
     
   } catch (error) {
-    console.error('❌ Migration failed:', error);
+    console.error('[Migration] Failed:', error);
     process.exit(1);
   } finally {
     await mongoose.connection.close();
-    console.log('🔌 Database connection closed');
+    console.log('[Migration] Database connection closed');
     process.exit(0);
   }
 };

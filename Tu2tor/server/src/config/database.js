@@ -18,19 +18,19 @@ const connectDB = async () => {
       w: 'majority'
     });
 
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    console.log(`[MongoDB] Connected: ${conn.connection.host}`);
 
     mongoose.connection.on('error', (err) => {
-      console.error('❌ MongoDB connection error:', err);
+      console.error('[MongoDB] Connection error:', err);
     });
 
     mongoose.connection.on('disconnected', () => {
-      console.warn('⚠️ MongoDB disconnected');
+      console.warn('[MongoDB] Disconnected');
     });
 
     return conn;
   } catch (error) {
-    console.error('❌ Error connecting to MongoDB:', error.message);
+    console.error('[MongoDB] Error connecting to MongoDB:', error.message);
     throw error;
   }
 };

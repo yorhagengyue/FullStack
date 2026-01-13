@@ -1,0 +1,62 @@
+services:
+  # Backend API
+  - type: web
+    name: tu2tor-backend
+    env: node
+    region: singapore
+    plan: starter
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: GEMINI_THINKING_MODEL
+        value: gemini-2.5-pro
+      - key: GEMINI_VISION_MODEL
+        value: gemini-2.5-flash
+      - key: KB_MAX_CONCURRENT
+        value: 3
+      - key: FRONTEND_URL
+        value: https://tu2tor.onrender.com
+    healthCheckPath: /api/test/db-status
+    autoDeploy: true
+
+  # Frontend Static Site
+  - type: web
+    name: tu2tor-frontend
+    env: static
+    region: singapore
+    plan: starter
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://tu2tor-backend.onrender.com/api
+      - key: VITE_JITSI_DOMAIN
+        value: meet.jit.si
+      - key: VITE_APP_NAME
+        value: Tu2tor
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+    autoDeploy: true
+

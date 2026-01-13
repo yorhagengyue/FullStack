@@ -29,6 +29,7 @@ import CalendarPage from './pages/Calendar/CalendarPage';
 import TodoPage from './pages/Todo/TodoPage';
 import StudyNotesPage from './pages/StudyNotes/StudyNotesPage';
 import KnowledgeBaseUpload from './pages/KnowledgeBase/KnowledgeBaseUpload';
+import NotFound from './pages/NotFound/NotFound';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -114,8 +115,8 @@ function AppRoutes() {
         <Route path="ai-chat" element={<AIChat />} />
       </Route>
 
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to={isAuthenticated ? "/app/dashboard" : "/"} />} />
+      {/* 404 Not Found */}
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }

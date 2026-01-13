@@ -215,32 +215,6 @@ const Hero = () => {
               Log In
             </Link>
           </motion.div>
-          
-          {/* Trust Indicators */}
-          <motion.div 
-            variants={fadeInUp} 
-            initial="hidden" 
-            animate="visible" 
-            className="mt-12 inline-flex items-center gap-4 px-5 py-3 rounded-2xl bg-gradient-to-r from-blue-50 to-purple-50 border border-gray-200/60 backdrop-blur-sm"
-          >
-            <div className="flex -space-x-2">
-              {[1, 2, 3, 4].map((i) => (
-                <div 
-                  key={i} 
-                  className="w-9 h-9 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center overflow-hidden bg-cover bg-center shadow-sm" 
-                  style={{ backgroundImage: `url(https://i.pravatar.cc/100?img=${i + 10})` }} 
-                />
-              ))}
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                <span className="text-gray-600">Joined by</span>
-              </span>
-              <strong className="text-gray-900 font-semibold">500+ TP IIT students</strong>
-              <span className="text-gray-500">this semester</span>
-            </div>
-          </motion.div>
         </div>
 
         {/* Visual Content (Right Side) */}

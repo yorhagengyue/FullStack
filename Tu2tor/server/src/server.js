@@ -40,8 +40,8 @@ const wss = new WebSocketServer({ server });
 const allowedOrigins = [
   'http://localhost:5174',
   'http://127.0.0.1:5174',
-  'https://tu2tor.pages.dev',
-  'https://3fbd1b0d.tu2tor.pages.dev',
+  'https://tu2tor-frontend.onrender.com',
+  'https://tu2tor.onrender.com',
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
@@ -50,8 +50,8 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
     
-    // In production, allow any *.pages.dev domain for flexibility
-    if (process.env.NODE_ENV === 'production' && origin && origin.includes('.pages.dev')) {
+    // In production, allow any *.onrender.com domain for flexibility
+    if (process.env.NODE_ENV === 'production' && origin && origin.includes('.onrender.com')) {
       return callback(null, true);
     }
     

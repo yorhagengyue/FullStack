@@ -9,6 +9,7 @@ export default {
       animation: {
         shine: 'shine 5s linear infinite',
         gradient: 'gradient 8s linear infinite',
+        'spin-slow': 'spin 8s linear infinite',
       },
       keyframes: {
         shine: {
