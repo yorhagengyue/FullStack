@@ -9,6 +9,7 @@ import CodeCollabEditor from '../../components/session/CodeCollabEditor';
 import MarkdownCollabEditor from '../../components/session/MarkdownCollabEditor';
 import NoteSelector from '../../components/session/NoteSelector';
 import DraggableVideo from '../../components/session/DraggableVideo';
+import SessionControls from '../../components/session/SessionControls';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Toast from '../../components/ui/Toast';
 import {
@@ -611,94 +612,117 @@ const SessionRoomPage = () => {
                     />
                   </div>
 
-                  {/* Floating controls - Only show when video is full screen (no editors) */}
-                  <div className="absolute top-4 right-4 flex gap-2 z-10">
-                    {/* Participant count badge */}
-                    {sessionStarted && (
-                      <div className="px-3 py-2 bg-black/70 text-white rounded-lg backdrop-blur-sm shadow-lg flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-sm font-medium">{connectedUsers} {connectedUsers === 1 ? 'participant' : 'participants'}</span>
-                      </div>
-                    )}
-                    <button
-                      onClick={toggleCodeEditor}
-                      className="p-3 bg-black/70 hover:bg-indigo-700 text-white rounded-lg transition-colors backdrop-blur-sm shadow-lg"
-                      title="Open code editor"
-                    >
-                      <Code2 className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={toggleMarkdownEditor}
-                      className="p-3 bg-black/70 hover:bg-purple-700 text-white rounded-lg transition-colors backdrop-blur-sm shadow-lg"
-                      title="Open markdown editor"
-                    >
-                      <FileText className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => setShowKBPanel(!showKBPanel)}
-                      className={`p-3 text-white rounded-lg transition-colors backdrop-blur-sm shadow-lg ${showKBPanel ? 'bg-purple-700' : 'bg-black/70 hover:bg-purple-700'}`}
-                      title="Knowledge base panel"
-                    >
-                      <BookOpen className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={minimizeToFloating}
-                      className="p-3 bg-black/70 hover:bg-black/90 text-white rounded-lg transition-colors backdrop-blur-sm shadow-lg"
-                      title="Minimize to floating window"
-                    >
-                      <Minimize2 className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={toggleFullscreen}
-                      className="p-3 bg-black/70 hover:bg-black/90 text-white rounded-lg transition-colors backdrop-blur-sm shadow-lg"
-                      title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                    >
-                      {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-                    </button>
-                  </div>
+                  {/* Enhanced Session Controls */}
+                  <SessionControls
+                    sessionStarted={sessionStarted}
+                    startTime={startTime}
+                    connectedUsers={connectedUsers}
+                    showCodeEditor={showCodeEditor}
+                    showMarkdownEditor={showMarkdownEditor}
+                    showKBPanel={showKBPanel}
+                    isFullscreen={isFullscreen}
+                    onToggleCode={toggleCodeEditor}
+                    onToggleMarkdown={toggleMarkdownEditor}
+                    onToggleKB={() => setShowKBPanel(!showKBPanel)}
+                    onMinimize={minimizeToFloating}
+                    onToggleFullscreen={toggleFullscreen}
+                    bookingInfo={{
+                      subject: booking.subject,
+                      duration: booking.duration
+                    }}
+                  />
 
-                  {/* Session Control buttons - bottom left */}
-                  <div className="absolute bottom-4 left-4 z-10 flex gap-2">
+                  {/* Enhanced Session Control buttons */}
+                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex gap-3">
                     <button
                       onClick={handleMeetingEnd}
-                      className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium text-sm transition-colors shadow-lg"
+                      className="group px-6 py-3 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white rounded-xl font-semibold text-sm transition-all duration-300 shadow-2xl border border-white/10 hover:scale-105 flex items-center gap-2"
                     >
-                      Leave Meeting
+                      <Video className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                      <span>Leave Meeting</span>
                     </button>
                     <button
                       onClick={handleCompleteSession}
                       disabled={isCompleting}
-                      className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-lg font-medium text-sm transition-colors shadow-lg"
+                      className="group flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-xl font-semibold text-sm transition-all duration-300 shadow-2xl border border-white/20 hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed"
                     >
-                      <CheckCircle className="w-4 h-4" />
-                      {isCompleting ? 'Completing...' : 'Complete Session'}
+                      {isCompleting ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span>Completing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                          <span>Complete Session</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </>
               ) : (
-                <div className="h-full bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <Video className="w-24 h-24 mx-auto mb-6 opacity-90" />
-                    <h2 className="text-3xl font-bold mb-4">Ready to Join?</h2>
-                    <p className="text-white/90 mb-8 max-w-md mx-auto">
-                      Click the button below to start your video session
+                <div className="h-full bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center relative overflow-hidden">
+                  {/* Animated Background Elements */}
+                  <div className="absolute inset-0">
+                    <div className="absolute top-20 left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
+                    <div className="absolute bottom-20 right-20 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse delay-700"></div>
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer"></div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="relative text-center text-white px-4">
+                    {/* Animated Video Icon */}
+                    <div className="relative mb-8">
+                      <div className="absolute inset-0 bg-white/20 rounded-full blur-2xl animate-pulse"></div>
+                      <div className="relative bg-white/10 backdrop-blur-sm p-8 rounded-full border-4 border-white/30 shadow-2xl">
+                        <Video className="w-24 h-24 animate-bounce" />
+                      </div>
+                    </div>
+
+                    <h2 className="text-5xl font-black mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent drop-shadow-lg">
+                      Ready to Join?
+                    </h2>
+                    <p className="text-xl text-white/90 mb-2 font-medium">
+                      {booking.subject}
                     </p>
+                    <p className="text-white/70 mb-10 max-w-md mx-auto">
+                      Click the button below to start your collaborative learning session
+                    </p>
+
                     {canJoin() ? (
                       <button
                         onClick={handleJoinSession}
-                        className="bg-white text-primary-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-bold text-lg transition-colors inline-flex items-center space-x-2"
+                        className="group relative bg-white text-indigo-600 hover:bg-gray-50 px-10 py-5 rounded-2xl font-black text-xl transition-all duration-300 inline-flex items-center gap-3 shadow-2xl hover:shadow-white/20 hover:scale-105 overflow-hidden"
                       >
-                        <Video className="w-6 h-6" />
-                        <span>Join Session Now</span>
+                        {/* Shimmer effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+                        
+                        <div className="relative flex items-center gap-3">
+                          <Video className="w-7 h-7 group-hover:rotate-12 transition-transform" />
+                          <span>Join Session Now</span>
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        </div>
                       </button>
                     ) : (
-                      <div className="bg-white/10 backdrop-blur-sm px-8 py-4 rounded-lg inline-block">
-                        <AlertCircle className="w-6 h-6 mx-auto mb-2" />
-                        <p className="text-sm">
+                      <div className="bg-white/10 backdrop-blur-xl px-8 py-6 rounded-2xl inline-block border border-white/20 shadow-2xl">
+                        <AlertCircle className="w-8 h-8 mx-auto mb-3 animate-pulse" />
+                        <p className="text-sm font-medium">
                           Session can be joined 15 minutes before or after scheduled time
                         </p>
                       </div>
                     )}
+
+                    {/* Session Details */}
+                    <div className="mt-10 flex items-center justify-center gap-6 text-sm">
+                      <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+                        <Clock className="w-4 h-4" />
+                        <span>{booking.duration} minutes</span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+                        <MapPin className="w-4 h-4" />
+                        <span>{booking.location}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
