@@ -17,6 +17,9 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
+      - key: FRONTEND_URL
+        value: https://tu2tor-frontend.onrender.com
+      # AI Configuration
       - key: GEMINI_API_KEY
         sync: false
       - key: GEMINI_MODEL
@@ -25,10 +28,28 @@ services:
         value: gemini-2.5-pro
       - key: GEMINI_VISION_MODEL
         value: gemini-2.5-flash
+      - key: DEFAULT_AI_PROVIDER
+        value: gemini
+      # OpenAI Backup (optional)
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o
+      # Rate Limiting
+      - key: AI_RATE_LIMIT_PER_MINUTE
+        value: 20
+      - key: AI_RATE_LIMIT_PER_HOUR
+        value: 100
+      - key: AI_RATE_LIMIT_PER_DAY
+        value: 1000
+      # Cost Controls
+      - key: AI_MAX_DAILY_COST_PER_USER
+        value: 1.00
+      - key: AI_MAX_DAILY_COST_TOTAL
+        value: 50.00
+      # Knowledge Base
       - key: KB_MAX_CONCURRENT
         value: 3
-      - key: FRONTEND_URL
-        value: https://tu2tor-frontend.onrender.com
     healthCheckPath: /api/test/db-status
     autoDeploy: true
 
