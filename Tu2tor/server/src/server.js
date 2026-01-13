@@ -36,6 +36,15 @@ const server = http.createServer(app);
 // Create WebSocket server for collaborative editing
 const wss = new WebSocketServer({ server });
 
+// Import WebSocket service
+import WebSocketService from './services/websocketService.js';
+const wsService = new WebSocketService(wss);
+
+// Add WebSocket stats endpoint
+app.get('/api/websocket/stats', (req, res) => {
+  res.json(wsService.getStats());
+});
+
 // Middleware - CORS configuration
 const allowedOrigins = [
   'http://localhost:5174',
@@ -103,47 +112,7 @@ const initAI = async () => {
 initDB();
 initAI();
 
-// WebSocket connection handler for collaborative code editing and chat
-// Using simple WebSocket relay
-wss.on('connection', (ws, req) => {
-  // Extract room name from URL (e.g., /room-name)
-  // For chat, the room can be 'chat-senderId-receiverId'
-  const room = req.url.slice(1) || 'default-room';
-  ws.room = room;
-
-  console.log(`[WebSocket] Client connected to room: ${room}`);
-
-  // Relay messages to all other connected clients IN THE SAME ROOM
-  ws.on('message', (message) => {
-    try {
-      // Parse message to check if it's a chat message
-      const parsedMessage = JSON.parse(message);
-      
-      // Relay to all clients in the room
-    wss.clients.forEach((client) => {
-      if (client !== ws && client.readyState === 1 && client.room === ws.room) { // 1 = OPEN
-          client.send(message); // Send original message (buffer or string)
-        }
-      });
-    } catch (e) {
-      // Not JSON or simple relay
-      wss.clients.forEach((client) => {
-        if (client !== ws && client.readyState === 1 && client.room === ws.room) {
-        client.send(message);
-      }
-    });
-    }
-  });
-
-  ws.on('close', () => {
-    console.log(`[WebSocket] Client disconnected from room: ${room}`);
-  });
-
-  ws.on('error', (error) => {
-    console.error('WebSocket error:', error);
-  });
-});
-
+// WebSocket connection handling is now in WebSocketService
 // Basic routes
 app.get('/', (req, res) => {
   res.json({

@@ -41,6 +41,8 @@ const SessionRoomPage = () => {
   const [tutor, setTutor] = useState(null);
   const [sessionStarted, setSessionStarted] = useState(false);
   const [startTime, setStartTime] = useState(null);
+  const [connectedUsers, setConnectedUsers] = useState(1);
+  const [wsConnection, setWsConnection] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showCodeEditor, setShowCodeEditor] = useState(false);
   const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
@@ -63,7 +65,7 @@ const SessionRoomPage = () => {
   // Helper to get booking ID consistently
   const getBookingId = (b) => b._id || b.id || b.bookingId;
 
-  // Fetch booking details
+  // Fetch booking details and restore session state
   useEffect(() => {
     const loadBooking = async () => {
       await fetchBookings();
@@ -83,6 +85,44 @@ const SessionRoomPage = () => {
           String(t.id) === String(tutorId)
         );
         setTutor(foundTutor || foundBooking.tutor);
+
+        // ✅ Restore session state from backend data
+        if (foundBooking.actualStartTime && foundBooking.status === 'confirmed') {
+          const backendStartTime = new Date(foundBooking.actualStartTime).getTime();
+          setSessionStarted(true);
+          setStartTime(backendStartTime);
+          
+          // Set up auto-complete timer based on elapsed time
+          const elapsed = Date.now() - backendStartTime;
+          const twoHours = 2 * 60 * 60 * 1000;
+          const remaining = twoHours - elapsed;
+          
+          if (remaining > 0) {
+            console.log(`[Session] Restored session state. ${Math.floor(remaining / 60000)} minutes until auto-complete`);
+            autoCompleteTimerRef.current = setTimeout(async () => {
+              try {
+                await bookingsAPI.completeSession(bookingId, {
+                  actualDuration: 120,
+                  sessionNotes: 'Session auto-completed after 2 hours'
+                });
+                setToast({ 
+                  isOpen: true, 
+                  message: 'Session auto-completed after 2 hours. Redirecting...', 
+                  type: 'info' 
+                });
+                setTimeout(() => {
+                  navigate(`/app/reviews/submit/${bookingId}`);
+                }, 3000);
+              } catch (error) {
+                console.error('[Session] Error auto-completing session:', error);
+              }
+            }, remaining);
+          } else {
+            // Session has exceeded 2 hours, should auto-complete
+            console.log('[Session] Session exceeded 2 hours, auto-completing...');
+            handleAutoComplete();
+          }
+        }
       }
     };
 
@@ -175,39 +215,117 @@ const SessionRoomPage = () => {
     }
   };
 
-  const handleJoinSession = async () => {
-    setSessionStarted(true);
-    setStartTime(Date.now());
-    
-    // Mark session as started in backend
+  const handleAutoComplete = async () => {
     try {
-      await bookingsAPI.startSession(bookingId);
+      await bookingsAPI.completeSession(bookingId, {
+        actualDuration: 120,
+        sessionNotes: 'Session auto-completed after 2 hours'
+      });
+      setToast({ 
+        isOpen: true, 
+        message: 'Session auto-completed after 2 hours. Redirecting...', 
+        type: 'info' 
+      });
+      setTimeout(() => {
+        navigate(`/app/reviews/submit/${bookingId}`);
+      }, 3000);
     } catch (error) {
-      console.error('Error starting session:', error);
+      console.error('[Session] Error auto-completing session:', error);
     }
-
-    // Set auto-complete timer for 2 hours
-    autoCompleteTimerRef.current = setTimeout(async () => {
-      try {
-        await bookingsAPI.completeSession(bookingId, {
-          actualDuration: 120, // 2 hours
-          sessionNotes: 'Session auto-completed after 2 hours'
-        });
-        
-        setToast({ 
-          isOpen: true, 
-          message: 'Session auto-completed after 2 hours. Redirecting...', 
-          type: 'info' 
-        });
-
-        setTimeout(() => {
-          navigate(`/app/reviews/submit/${bookingId}`);
-        }, 3000);
-      } catch (error) {
-        console.error('Error auto-completing session:', error);
-      }
-    }, 2 * 60 * 60 * 1000); // 2 hours in milliseconds
   };
+
+  const handleJoinSession = async () => {
+    // Mark session as started in backend first
+    try {
+      const response = await bookingsAPI.startSession(bookingId);
+      const startedBooking = response.booking;
+      
+      // Update local state with backend data
+      setBooking(startedBooking);
+      setSessionStarted(true);
+      
+      // Use the server's timestamp for consistency
+      const backendStartTime = new Date(startedBooking.actualStartTime).getTime();
+      setStartTime(backendStartTime);
+      
+      console.log('[Session] Session started at:', new Date(backendStartTime).toISOString());
+
+      // Set auto-complete timer for 2 hours
+      autoCompleteTimerRef.current = setTimeout(async () => {
+        await handleAutoComplete();
+      }, 2 * 60 * 60 * 1000); // 2 hours in milliseconds
+      
+      setToast({ 
+        isOpen: true, 
+        message: 'Session started successfully!', 
+        type: 'success' 
+      });
+    } catch (error) {
+      console.error('[Session] Error starting session:', error);
+      setToast({ 
+        isOpen: true, 
+        message: 'Failed to start session. Please try again.', 
+        type: 'error' 
+      });
+    }
+  };
+
+  // Setup WebSocket connection for presence tracking
+  useEffect(() => {
+    if (!booking?.meetingRoomId || !sessionStarted) return;
+
+    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:5000';
+    const presenceRoom = `presence-${booking.meetingRoomId}`;
+    
+    try {
+      const ws = new WebSocket(`${wsUrl}/${presenceRoom}`);
+      
+      ws.onopen = () => {
+        console.log('[Presence] Connected to presence tracking');
+        // Authenticate with server
+        ws.send(JSON.stringify({
+          type: 'auth',
+          userId: user._id,
+          username: user.username
+        }));
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'connection' || data.type === 'user-joined' || data.type === 'user-left') {
+            setConnectedUsers(data.connectedUsers || 1);
+            console.log(`[Presence] Users in session: ${data.connectedUsers}`);
+          }
+
+          if (data.type === 'user-list-updated') {
+            setConnectedUsers(data.connectedUsers?.length || 1);
+          }
+        } catch (e) {
+          // Not JSON, ignore
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('[Presence] WebSocket error:', error);
+      };
+
+      ws.onclose = () => {
+        console.log('[Presence] Disconnected from presence tracking');
+      };
+
+      setWsConnection(ws);
+
+      return () => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.close();
+        }
+      };
+    } catch (error) {
+      console.error('[Presence] Failed to connect:', error);
+    }
+  }, [booking?.meetingRoomId, sessionStarted, user]);
 
   // Cleanup auto-complete timer on unmount
   useEffect(() => {
@@ -495,6 +613,13 @@ const SessionRoomPage = () => {
 
                   {/* Floating controls - Only show when video is full screen (no editors) */}
                   <div className="absolute top-4 right-4 flex gap-2 z-10">
+                    {/* Participant count badge */}
+                    {sessionStarted && (
+                      <div className="px-3 py-2 bg-black/70 text-white rounded-lg backdrop-blur-sm shadow-lg flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span className="text-sm font-medium">{connectedUsers} {connectedUsers === 1 ? 'participant' : 'participants'}</span>
+                      </div>
+                    )}
                     <button
                       onClick={toggleCodeEditor}
                       className="p-3 bg-black/70 hover:bg-indigo-700 text-white rounded-lg transition-colors backdrop-blur-sm shadow-lg"

@@ -34,18 +34,7 @@ const CodeCollabEditor = ({ bookingId, language = 'javascript', username = 'Gues
     const ydoc = new Y.Doc();
 
     // Connect to WebSocket server for collaboration
-    // Automatically use WSS in production (https) and WS in development (http)
-    const getWebSocketUrl = () => {
-      const apiBase = import.meta.env.VITE_API_BASE_URL;
-      if (apiBase && apiBase.includes('https://')) {
-        // Production: convert https://domain/api to wss://domain
-        return apiBase.replace('https://', 'wss://').replace('/api', '');
-      }
-      // Development: use local WebSocket
-      return 'ws://localhost:5000';
-    };
-    
-    const wsUrl = getWebSocketUrl();
+    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:5000';
     const provider = new WebsocketProvider(
       wsUrl,
       `code-session-${bookingId}`,
@@ -264,6 +253,20 @@ const CodeCollabEditor = ({ bookingId, language = 'javascript', username = 'Gues
               {showMarkdown ? 'Hide Notes' : 'Notes'}
             </button>
           )}
+
+          {/* Connection Status */}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-700 rounded" title={`Connection: ${connectionStatus}`}>
+            <div className={`w-2 h-2 rounded-full ${
+              connectionStatus === 'connected' ? 'bg-green-500 animate-pulse' :
+              connectionStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' :
+              'bg-red-500'
+            }`}></div>
+            <span className="text-white text-sm font-medium">
+              {connectionStatus === 'connected' ? 'Synced' :
+               connectionStatus === 'connecting' ? 'Connecting...' :
+               'Disconnected'}
+            </span>
+          </div>
 
           {/* Connected Users */}
           <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-700 rounded">

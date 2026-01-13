@@ -23,6 +23,7 @@ const MarkdownCollabEditor = ({ bookingId, username = 'Guest', initialContent = 
   const [connectedUsers, setConnectedUsers] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState('connecting'); // 'connecting' | 'connected' | 'disconnected'
   
   const textareaRef = useRef(null);
   const providerRef = useRef(null);
@@ -65,6 +66,19 @@ const MarkdownCollabEditor = ({ bookingId, username = 'Guest', initialContent = 
         .filter(state => state.user)
         .map(state => state.user);
       setConnectedUsers(users);
+    });
+
+    // Track connection status
+    provider.on('status', ({ status }) => {
+      console.log('[MarkdownCollab] Connection status:', status);
+      setConnectionStatus(status);
+    });
+
+    provider.on('sync', (isSynced) => {
+      console.log('[MarkdownCollab] Synced:', isSynced);
+      if (isSynced) {
+        setConnectionStatus('connected');
+      }
     });
 
     // Sync content changes
@@ -260,6 +274,20 @@ const MarkdownCollabEditor = ({ bookingId, username = 'Guest', initialContent = 
               {showCode ? 'Hide Code' : 'Code'}
             </button>
           )}
+
+          {/* Connection Status */}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-black/30 border border-purple-500/30 rounded-lg backdrop-blur-sm" title={`Connection: ${connectionStatus}`}>
+            <div className={`w-2 h-2 rounded-full ${
+              connectionStatus === 'connected' ? 'bg-green-500 animate-pulse' :
+              connectionStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' :
+              'bg-red-500'
+            }`}></div>
+            <span className="text-white text-sm font-medium">
+              {connectionStatus === 'connected' ? 'Synced' :
+               connectionStatus === 'connecting' ? 'Connecting...' :
+               'Disconnected'}
+            </span>
+          </div>
 
           {/* Connected Users */}
           <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/20 border border-green-500/30 rounded-lg backdrop-blur-sm">
