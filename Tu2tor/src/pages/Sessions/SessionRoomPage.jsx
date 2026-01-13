@@ -295,12 +295,12 @@ const SessionRoomPage = () => {
           const data = JSON.parse(event.data);
           
           if (data.type === 'connection' || data.type === 'user-joined' || data.type === 'user-left') {
-            setConnectedUsers(data.connectedUsers || 1);
-            console.log(`[Presence] Users in session: ${data.connectedUsers}`);
+            setConnectedUsers(data.userCount || 1);
+            console.log(`[Presence] Users in session: ${data.userCount}`);
           }
 
           if (data.type === 'user-list-updated') {
-            setConnectedUsers(data.connectedUsers?.length || 1);
+            setConnectedUsers(data.userCount || 1);
           }
         } catch (e) {
           // Not JSON, ignore
