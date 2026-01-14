@@ -44,8 +44,8 @@ const JitsiMeetRoom = ({
 
     // Enhanced Jitsi configuration
     const config = {
-      // Prejoin settings
-      prejoinPageEnabled: false,
+      // Prejoin settings - Enable to show camera preview before joining
+      prejoinPageEnabled: true,
       
       // Audio/Video settings
       startWithAudioMuted: false,
@@ -99,10 +99,17 @@ const JitsiMeetRoom = ({
       disableJoinLeaveSounds: false,
       enableNoAudioDetection: true,
       enableNoisyMicDetection: true,
-    };
-
-    const userInfo = {
-      displayName: displayName || 'Guest',
+      
+      // Media constraints
+      constraints: {
+        video: {
+          height: { ideal: quality === 'high' ? 720 : quality === 'medium' ? 360 : 180 },
+          width: { ideal: quality === 'high' ? 1280 : quality === 'medium' ? 640 : 320 }
+        }
+      },
+      
+      // Enable camera preview in prejoin
+      disableInitialGUM: false,
     };
 
     // Build config string
@@ -116,11 +123,13 @@ const JitsiMeetRoom = ({
       })
       .join('&');
 
-    const userInfoString = Object.entries(userInfo)
-      .map(([key, value]) => `userInfo.${key}=${encodeURIComponent(value)}`)
-      .join('&');
+    // Use Jitsi's standard room name format for display name
+    // Format: baseUrl/roomName/displayName
+    const roomPath = displayName 
+      ? `${roomId}/${encodeURIComponent(displayName.replace(/\s+/g, '_'))}`
+      : roomId;
 
-    return `${baseUrl}/${roomId}#${configString}&${userInfoString}`;
+    return `${baseUrl}/${roomPath}#${configString}`;
   };
 
   // Handle iframe load error
@@ -205,11 +214,12 @@ const JitsiMeetRoom = ({
       {/* Jitsi Meet iframe */}
       <iframe
         src={buildJitsiUrl()}
-        allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-read; clipboard-write"
+        allow="camera *; microphone *; fullscreen *; display-capture *; autoplay *; clipboard-read; clipboard-write; compute-pressure *; geolocation *"
         allowFullScreen
         className="w-full h-full border-0"
         title="Video Conference"
         onError={handleIframeError}
+        sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-presentation"
         style={{
           colorScheme: 'dark'
         }}

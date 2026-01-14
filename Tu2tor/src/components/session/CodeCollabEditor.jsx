@@ -16,6 +16,11 @@ const CodeCollabEditor = ({ bookingId, language = 'javascript', username = 'Gues
   const [executionHistory, setExecutionHistory] = useState([]);
   const [showOutput, setShowOutput] = useState(false);
   const [isOutputMaximized, setIsOutputMaximized] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState('connecting');
+
+  useEffect(() => {
+    console.log('[CodeCollabEditor] Initialized with connectionStatus:', connectionStatus);
+  }, []);
 
   const languages = [
     { value: 'javascript', label: 'JavaScript' },
@@ -30,6 +35,19 @@ const CodeCollabEditor = ({ bookingId, language = 'javascript', username = 'Gues
   useEffect(() => {
     if (!editorRef.current) return;
 
+    // Configure Monaco Environment to disable workers
+    // This prevents worker-related errors
+    window.MonacoEnvironment = {
+      getWorker() {
+        // Return a fake worker to prevent Monaco from trying to load actual workers
+        return new Worker(
+          URL.createObjectURL(
+            new Blob(['self.onmessage = () => {}'], { type: 'text/javascript' })
+          )
+        );
+      }
+    };
+
     // Initialize Yjs document
     const ydoc = new Y.Doc();
 
@@ -41,6 +59,10 @@ const CodeCollabEditor = ({ bookingId, language = 'javascript', username = 'Gues
       ydoc
     );
     providerRef.current = provider;
+
+    provider.on('status', ({ status }) => {
+      setConnectionStatus(status);
+    });
 
     // Get the shared text type
     const ytext = ydoc.getText('monaco');

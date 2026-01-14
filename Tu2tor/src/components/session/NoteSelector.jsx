@@ -3,17 +3,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Search, FileText, Calendar, Tag, Loader2, Plus } from 'lucide-react';
 import { studyNotesAPI } from '../../services/api';
 
-const NoteSelector = ({ isOpen, onClose, onSelectNote }) => {
+const NoteSelector = ({ onClose, onSelect }) => {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
 
   useEffect(() => {
-    if (isOpen) {
-      loadNotes();
-    }
-  }, [isOpen]);
+    loadNotes();
+  }, []);
 
   const loadNotes = async () => {
     setLoading(true);
@@ -45,15 +43,13 @@ const NoteSelector = ({ isOpen, onClose, onSelectNote }) => {
   const subjects = [...new Set(notes.map(note => note.subject))];
 
   const handleCreateNew = () => {
-    onSelectNote({
+    onSelect({
       title: 'New Collaborative Note',
       content: '# New Collaborative Note\n\nStart writing here...',
       subject: 'General',
       isNew: true
     });
   };
-
-  if (!isOpen) return null;
 
   return (
     <AnimatePresence>
@@ -148,7 +144,7 @@ const NoteSelector = ({ isOpen, onClose, onSelectNote }) => {
                     {filteredNotes.map((note) => (
                       <motion.button
                         key={note._id}
-                        onClick={() => onSelectNote(note)}
+                        onClick={() => onSelect(note)}
                         className="bg-gray-700 hover:bg-gray-600 rounded-xl p-4 text-left transition-all border border-gray-600 hover:border-purple-500"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}

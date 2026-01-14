@@ -26,6 +26,11 @@ const MarkdownCollabEditor = ({ bookingId, username = 'Guest', initialContent = 
   const [connectionStatus, setConnectionStatus] = useState('connecting'); // 'connecting' | 'connected' | 'disconnected'
   
   const textareaRef = useRef(null);
+
+  // Debug log to verify state initialization
+  useEffect(() => {
+    console.log('[MarkdownCollabEditor] Initialized with connectionStatus:', connectionStatus);
+  }, []);
   const providerRef = useRef(null);
   const ydocRef = useRef(null);
   const ytextRef = useRef(null);

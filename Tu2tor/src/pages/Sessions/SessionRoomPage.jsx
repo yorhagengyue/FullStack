@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
@@ -15,7 +15,6 @@ import Toast from '../../components/ui/Toast';
 import {
   ArrowLeft,
   Clock,
-  Calendar,
   MapPin,
   Video,
   AlertCircle,
@@ -29,15 +28,7 @@ import {
   FileText,
   X,
   Loader2,
-  Home,
-  MessageSquare,
-  Settings,
-  User,
-  LogOut,
-  Mic,
-  MicOff,
-  Search,
-  MoreHorizontal
+  Home
 } from 'lucide-react';
 
 const SessionRoomPage = () => {
@@ -55,9 +46,7 @@ const SessionRoomPage = () => {
   const [startTime, setStartTime] = useState(null);
 
   // Connection State
-  const [wsConnection, setWsConnection] = useState(null);
   const [connectedUsers, setConnectedUsers] = useState(0);
-  const [roomUsers, setRoomUsers] = useState([]); // List of users for right panel
 
   // UI State
   const [showCodeEditor, setShowCodeEditor] = useState(false);
@@ -68,12 +57,12 @@ const SessionRoomPage = () => {
   const [videoMinimized, setVideoMinimized] = useState(false);
   const [videoHidden, setVideoHidden] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [activeTab, setActiveTab] = useState('participants'); // 'participants', 'chat'
 
-  // Dialogs
+  // Dialogs & Toasts
   const [showEndDialog, setShowEndDialog] = useState(false);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
   // Helper function to get WebSocket URL
   const getWebSocketHost = () => {
@@ -101,44 +90,6 @@ const SessionRoomPage = () => {
     loadBooking();
   }, [bookingId]);
 
-  // WebSocket Connection for Presence
-  useEffect(() => {
-    if (!sessionStarted || !booking) return;
-
-    const wsUrl = `${getWebSocketHost()}/${booking.meetingRoomId}`;
-    const ws = new WebSocket(wsUrl);
-
-    ws.onopen = () => {
-      // Authenticate
-      ws.send(JSON.stringify({
-        type: 'auth',
-        userId: user._id,
-        username: user.username
-      }));
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'connection' || data.type === 'user-joined' || data.type === 'user-left' || data.type === 'user-list-updated') {
-          if (data.userCount !== undefined) {
-            setConnectedUsers(data.userCount);
-          }
-          if (data.users) {
-            setRoomUsers(data.users);
-          }
-        }
-      } catch (e) {
-        // Ignore non-JSON messages (Yjs)
-      }
-    };
-
-    setWsConnection(ws);
-
-    return () => {
-      ws.close();
-    };
-  }, [sessionStarted, booking, user]);
 
   const handleJoinSession = async () => {
     try {
@@ -220,6 +171,7 @@ const SessionRoomPage = () => {
     setShowCodeEditor(false);
   };
 
+
   if (loading) return (
     <div className="flex items-center justify-center h-screen bg-gray-50">
       <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -283,22 +235,23 @@ const SessionRoomPage = () => {
             </button>
           </div>
 
-          {/* Right Side - Preview */}
-          <div className="flex-1 bg-gray-100 p-8 flex items-center justify-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10" />
-            <div className="relative w-full aspect-video bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex items-center justify-center">
-              <div className="text-center text-white/80">
-                <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p>Camera Preview</p>
+          {/* Right Side - Info Card */}
+          <div className="flex-1 bg-gradient-to-br from-blue-50 to-indigo-50 p-8 flex items-center justify-center relative overflow-hidden">
+            <div className="relative max-w-md text-center">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-blue-600 flex items-center justify-center shadow-lg">
+                <Video className="w-10 h-10 text-white" />
               </div>
-              {/* Fake camera controls */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3">
-                <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center text-white">
-                  <MicOff className="w-5 h-5" />
-                </div>
-                <div className="w-10 h-10 rounded-full bg-gray-700/50 flex items-center justify-center text-white backdrop-blur-sm">
-                  <Video className="w-5 h-5" />
-                </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                Camera & Microphone Setup
+              </h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                After clicking "Join Classroom", you'll see a preview screen where you can test your camera and microphone before joining the session.
+              </p>
+              <div className="bg-white rounded-xl p-4 shadow-sm">
+                <p className="text-sm text-gray-500 flex items-center justify-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  Your browser will request camera and microphone permissions
+                </p>
               </div>
             </div>
           </div>
@@ -318,6 +271,15 @@ const SessionRoomPage = () => {
   // Active Session Layout
   return (
     <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
+      {/* Toast Notification */}
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ ...toast, show: false })}
+        />
+      )}
+
       {/* Left Sidebar - Navigation */}
       <aside className="w-20 bg-white border-r border-gray-100 flex flex-col items-center py-8 z-30 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
         <div className="mb-12">
@@ -329,14 +291,11 @@ const SessionRoomPage = () => {
         <div className="flex-1 flex flex-col gap-8 w-full">
           <NavItem icon={Home} label="Home" onClick={() => navigate('/dashboard')} />
           <NavItem icon={Video} label="Classroom" active />
-          <NavItem icon={MessageSquare} label="Chats" />
-          <NavItem icon={Calendar} label="Schedule" />
-          <NavItem icon={Settings} label="Settings" />
         </div>
 
         <div className="mt-auto flex flex-col gap-6">
-          <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-sm cursor-pointer hover:ring-2 hover:ring-blue-100 transition-all">
-             {/* User Avatar */}
+          <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-sm">
+             {/* User Avatar - Display only */}
              <div className="w-full h-full bg-gradient-to-tr from-blue-400 to-purple-400 flex items-center justify-center text-white font-bold text-xs">
                {user?.username?.[0]?.toUpperCase() || 'U'}
              </div>
@@ -356,25 +315,6 @@ const SessionRoomPage = () => {
             </p>
           </div>
           
-          <div className="flex items-center gap-4">
-            <button className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-semibold">
-              <User className="w-4 h-4" />
-              Invite Participant
-            </button>
-            <div className="h-8 w-px bg-gray-200 mx-2"></div>
-            <div className="flex -space-x-2">
-              {roomUsers.slice(0, 3).map((u, i) => (
-                <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600 shadow-sm" title={u.username}>
-                  {u.username[0].toUpperCase()}
-                </div>
-              ))}
-              {roomUsers.length > 3 && (
-                <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-500 shadow-sm">
-                  +{roomUsers.length - 3}
-                </div>
-              )}
-            </div>
-          </div>
         </header>
 
         {/* Content Body */}
@@ -382,22 +322,6 @@ const SessionRoomPage = () => {
           
           {/* Central Stage */}
           <div className="flex-1 flex flex-col gap-4 relative">
-            
-            {/* Top Carousel (Mockup or functional if we had streams) */}
-            {/* Currently purely decorative or for future stream expansion */}
-            {/* <div className="h-24 flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-              {roomUsers.map((u, i) => (
-                <div key={i} className="flex-shrink-0 w-32 bg-gray-800 rounded-xl overflow-hidden relative border-2 border-transparent hover:border-blue-500 transition-all">
-                  <div className="absolute inset-0 flex items-center justify-center text-white/30">
-                    <User className="w-8 h-8" />
-                  </div>
-                  <div className="absolute bottom-2 left-2 text-white text-xs font-medium bg-black/50 px-2 py-0.5 rounded">
-                    {u.username}
-                  </div>
-                </div>
-              ))}
-            </div> */}
-
             {/* Main Viewport */}
             <div className="flex-1 bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden relative group">
               
@@ -458,7 +382,6 @@ const SessionRoomPage = () => {
               <SessionControls
                 sessionStarted={sessionStarted}
                 startTime={startTime}
-                connectedUsers={connectedUsers}
                 showCodeEditor={showCodeEditor}
                 showMarkdownEditor={showMarkdownEditor}
                 showKBPanel={showKBPanel}
@@ -468,85 +391,10 @@ const SessionRoomPage = () => {
                 onToggleKB={() => setShowKBPanel(!showKBPanel)}
                 onToggleFullscreen={toggleFullscreen}
                 onEndMeeting={handleMeetingEnd}
-                bookingInfo={{
-                  subject: booking.subject,
-                  duration: booking.duration
-                }}
               />
             </div>
           </div>
 
-          {/* Right Panel - Collapsible */}
-          <aside className="w-80 bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden flex flex-col">
-            <div className="flex items-center p-2 m-2 bg-gray-100 rounded-xl">
-              <TabButton 
-                active={activeTab === 'participants'} 
-                onClick={() => setActiveTab('participants')}
-                label={`Participants (${connectedUsers})`}
-              />
-              <TabButton 
-                active={activeTab === 'chat'} 
-                onClick={() => setActiveTab('chat')}
-                label="Chat Room"
-              />
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-              {activeTab === 'participants' ? (
-                <div className="space-y-4">
-                  {roomUsers.map((u, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl transition-colors group cursor-pointer">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center text-blue-600 font-bold border border-blue-50">
-                        {u.username[0].toUpperCase()}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-900 text-sm">{u.username}</p>
-                        <p className="text-xs text-blue-500">
-                          {u.userId === user._id ? 'You' : 'Participant'}
-                        </p>
-                      </div>
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="p-1.5 hover:bg-gray-200 rounded-lg text-gray-500">
-                          <MicOff className="w-3.5 h-3.5" />
-                        </button>
-                        <button className="p-1.5 hover:bg-gray-200 rounded-lg text-gray-500">
-                          <MoreHorizontal className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {roomUsers.length === 0 && (
-                     <div className="text-center text-gray-400 mt-10">
-                       <User className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                       <p>No participants yet</p>
-                     </div>
-                  )}
-                </div>
-              ) : (
-                <div className="h-full flex flex-col justify-center text-center text-gray-400">
-                  <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                  <p>Chat is handled inside the video interface</p>
-                </div>
-              )}
-            </div>
-            
-            {/* Bottom Info in Right Panel */}
-            <div className="p-4 border-t border-gray-100 bg-gray-50">
-              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <h3 className="font-semibold text-sm mb-2 text-gray-800">Next Class</h3>
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600">
-                    <Clock className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Advanced Physics</p>
-                    <p className="text-xs">Tomorrow, 10:00 AM</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </aside>
         </div>
       </main>
 
@@ -591,26 +439,16 @@ const NavItem = ({ icon: Icon, active, onClick, label }) => (
     className={`w-full relative flex flex-col items-center gap-1 p-3 transition-all ${
       active ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
     }`}
+    title={label}
   >
     <div className={`p-3 rounded-xl transition-all ${active ? 'bg-blue-50 shadow-sm' : 'hover:bg-gray-100'}`}>
       <Icon className={`w-6 h-6 ${active ? 'fill-blue-600' : ''}`} strokeWidth={active ? 2.5 : 2} />
     </div>
-    {/* <span className="text-[10px] font-medium">{label}</span> */}
     {active && (
       <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-blue-600 rounded-l-full"></div>
     )}
   </button>
 );
 
-const TabButton = ({ active, onClick, label }) => (
-  <button
-    onClick={onClick}
-    className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-      active ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-    }`}
-  >
-    {label}
-  </button>
-);
 
 export default SessionRoomPage;

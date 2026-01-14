@@ -3,30 +3,15 @@ import {
   Code2, 
   FileText, 
   BookOpen, 
-  Minimize2, 
   Maximize, 
   Minimize, 
-  Users,
-  Clock,
-  Video,
-  Mic,
-  MicOff,
-  VideoOff,
-  Monitor,
-  Settings,
-  MessageSquare,
-  MoreVertical,
-  Info,
-  Keyboard,
   Phone,
-  Share,
   Layout
 } from 'lucide-react';
 
 const SessionControls = ({
   sessionStarted,
   startTime,
-  connectedUsers,
   showCodeEditor,
   showMarkdownEditor,
   showKBPanel,
@@ -34,14 +19,10 @@ const SessionControls = ({
   onToggleCode,
   onToggleMarkdown,
   onToggleKB,
-  onMinimize,
   onToggleFullscreen,
   onEndMeeting,
-  bookingInfo
 }) => {
   const [sessionDuration, setSessionDuration] = useState('00:00:00');
-  const [micEnabled, setMicEnabled] = useState(true);
-  const [cameraEnabled, setCameraEnabled] = useState(true);
 
   // Update session duration timer
   useEffect(() => {
@@ -86,7 +67,8 @@ const SessionControls = ({
             {badge}
           </span>
         )}
-        <span className="absolute -top-10 scale-0 transition-all rounded bg-gray-900 p-2 text-xs text-white group-hover:scale-100 opacity-0 group-hover:opacity-100 whitespace-nowrap z-50">
+        {/* Tooltip */}
+        <span className="absolute -top-10 left-1/2 -translate-x-1/2 scale-0 transition-all rounded bg-gray-900 p-2 text-xs text-white group-hover:scale-100 opacity-0 group-hover:opacity-100 whitespace-nowrap z-50 shadow-lg pointer-events-none">
           {label}
         </span>
       </button>
@@ -94,26 +76,16 @@ const SessionControls = ({
   };
 
   return (
-    <div className={`flex items-center gap-4 px-8 py-4 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 ${
+    <div className={`flex items-center gap-4 px-6 py-3 bg-white rounded-full shadow-xl border border-gray-200 z-50 ${
       isFullscreen ? 'fixed bottom-6 left-1/2 -translate-x-1/2' : ''
     }`}>
       
-      {/* Audio Controls */}
-      <ControlButton 
-        icon={micEnabled ? Mic : MicOff} 
-        label={micEnabled ? "Mute Microphone" : "Unmute Microphone"}
-        variant={micEnabled ? "default" : "danger"} // Use danger style for muted state usually, or default/gray
-        onClick={() => setMicEnabled(!micEnabled)}
-      />
-      
-      <ControlButton 
-        icon={cameraEnabled ? Video : VideoOff} 
-        label={cameraEnabled ? "Turn Off Camera" : "Turn On Camera"}
-        variant={cameraEnabled ? "default" : "danger"}
-        onClick={() => setCameraEnabled(!cameraEnabled)}
-      />
+      {/* Session Timer (Visible in control bar) */}
+      <div className="mr-4 px-3 py-1 bg-gray-50 rounded-full border border-gray-100 text-xs font-mono font-medium text-gray-500 hidden sm:block">
+        {sessionDuration}
+      </div>
 
-      <div className="w-px h-8 bg-gray-200 mx-2" />
+      <div className="w-px h-8 bg-gray-200 mx-1 hidden sm:block" />
 
       {/* Collaboration Tools */}
       <ControlButton 
@@ -139,11 +111,11 @@ const SessionControls = ({
 
       <div className="w-px h-8 bg-gray-200 mx-2" />
 
-      {/* Screen Share & Layout */}
+      {/* View Controls */}
       <ControlButton 
-        icon={Monitor} 
-        label="Share Screen" 
-        onClick={() => {}} 
+        icon={isFullscreen ? Minimize : Maximize} 
+        label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+        onClick={onToggleFullscreen}
       />
 
       {/* End Meeting - Big Red Button */}
@@ -152,21 +124,6 @@ const SessionControls = ({
         label="End Meeting" 
         variant="danger"
         onClick={onEndMeeting}
-      />
-
-      <div className="w-px h-8 bg-gray-200 mx-2" />
-
-      {/* View Controls */}
-      <ControlButton 
-        icon={isFullscreen ? Minimize : Maximize} 
-        label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-        onClick={onToggleFullscreen}
-      />
-      
-      <ControlButton 
-        icon={Settings} 
-        label="Settings" 
-        onClick={() => {}} 
       />
 
     </div>

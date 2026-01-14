@@ -1,6 +1,6 @@
 /**
- * Enhanced WebSocket Service for real-time collaboration
- * Handles Yjs document sync, chat messages, and presence tracking
+ * WebSocket Service for real-time collaboration
+ * Handles Yjs document sync for code and markdown editors
  */
 
 class WebSocketService {
@@ -17,8 +17,6 @@ class WebSocketService {
       
       ws.room = room;
       ws.isAlive = true;
-      ws.userId = null; // Will be set after authentication if needed
-      ws.username = null;
 
       // Add client to room
       if (!this.rooms.has(room)) {
@@ -28,24 +26,6 @@ class WebSocketService {
 
       console.log(`[WebSocket] Client connected to room: ${room}`);
       console.log(`[WebSocket] Room ${room} now has ${this.rooms.get(room).size} clients`);
-
-      // Send welcome message with room info
-      this.sendToClient(ws, {
-        type: 'connection',
-        room: room,
-        userCount: this.rooms.get(room).size,
-        users: this.getRoomUsers(room),
-        timestamp: new Date().toISOString()
-      });
-
-      // Broadcast user joined to others in room
-      this.broadcastToRoom(room, {
-        type: 'user-joined',
-        room: room,
-        userCount: this.rooms.get(room).size,
-        users: this.getRoomUsers(room),
-        timestamp: new Date().toISOString()
-      }, ws);
 
       // Heartbeat - pong response
       ws.on('pong', () => {
@@ -73,45 +53,9 @@ class WebSocketService {
   }
 
   handleMessage(ws, message) {
-    try {
-      // Try to parse as JSON for control messages
-      const data = JSON.parse(message);
-      
-      // Handle authentication message
-      if (data.type === 'auth') {
-        ws.userId = data.userId;
-        ws.username = data.username;
-        console.log(`[WebSocket] User ${ws.username} authenticated in room ${ws.room}`);
-        
-        // Broadcast updated user list
-        this.broadcastToRoom(ws.room, {
-          type: 'user-list-updated',
-          userCount: this.rooms.get(ws.room).size,
-          users: this.getRoomUsers(ws.room),
-          timestamp: new Date().toISOString()
-        });
-        return;
-      }
-
-      // Handle presence update
-      if (data.type === 'presence') {
-        this.broadcastToRoom(ws.room, {
-          type: 'presence-update',
-          userId: ws.userId,
-          username: ws.username,
-          ...data.state
-        }, ws);
-        return;
-      }
-
-      // For other JSON messages (like chat), relay them
-      this.broadcastToRoom(ws.room, message, ws);
-      
-    } catch (e) {
-      // Not JSON - this is likely a Yjs binary message
-      // Relay binary messages to all clients in the same room (for Yjs sync)
-      this.broadcastToRoom(ws.room, message, ws);
-    }
+    // Simply relay all messages (primarily Yjs binary sync)
+    // to all clients in the same room
+    this.broadcastToRoom(ws.room, message, ws);
   }
 
   handleDisconnect(ws) {
@@ -122,16 +66,6 @@ class WebSocketService {
       
       console.log(`[WebSocket] Client disconnected from room: ${room}`);
       console.log(`[WebSocket] Room ${room} now has ${this.rooms.get(room).size} clients`);
-
-      // Broadcast user left to others in room
-      this.broadcastToRoom(room, {
-        type: 'user-left',
-        userId: ws.userId,
-        username: ws.username,
-        userCount: this.rooms.get(room).size,
-        users: this.getRoomUsers(room),
-        timestamp: new Date().toISOString()
-      });
 
       // Clean up empty rooms
       if (this.rooms.get(room).size === 0) {
@@ -144,13 +78,26 @@ class WebSocketService {
   broadcastToRoom(room, message, excludeClient = null) {
     if (!this.rooms.has(room)) return;
 
-    const messageStr = typeof message === 'string' ? message : JSON.stringify(message);
-    const messageBuf = Buffer.isBuffer(message) ? message : Buffer.from(messageStr);
+    // Handle different message types correctly
+    let dataToSend;
+    if (Buffer.isBuffer(message)) {
+      // Already a Buffer, use as-is (for Yjs binary sync)
+      dataToSend = message;
+    } else if (message instanceof Uint8Array) {
+      // Yjs binary message, convert to Buffer
+      dataToSend = Buffer.from(message);
+    } else if (typeof message === 'string') {
+      // String message, use as-is
+      dataToSend = message;
+    } else {
+      // Object, serialize to JSON
+      dataToSend = JSON.stringify(message);
+    }
 
     this.rooms.get(room).forEach((client) => {
       if (client !== excludeClient && client.readyState === 1) { // 1 = OPEN
         try {
-          client.send(messageBuf);
+          client.send(dataToSend);
         } catch (error) {
           console.error(`[WebSocket] Error sending to client:`, error.message);
         }
@@ -158,26 +105,7 @@ class WebSocketService {
     });
   }
 
-  sendToClient(ws, data) {
-    if (ws.readyState === 1) { // 1 = OPEN
-      ws.send(JSON.stringify(data));
-    }
-  }
 
-  getRoomUsers(room) {
-    if (!this.rooms.has(room)) return [];
-    
-    const users = [];
-    this.rooms.get(room).forEach((client) => {
-      if (client.userId) {
-        users.push({
-          userId: client.userId,
-          username: client.username
-        });
-      }
-    });
-    return users;
-  }
 
   setupHeartbeat() {
     const interval = setInterval(() => {
@@ -207,8 +135,7 @@ class WebSocketService {
 
     this.rooms.forEach((clients, room) => {
       stats.rooms[room] = {
-        clientCount: clients.size,
-        users: this.getRoomUsers(room)
+        clientCount: clients.size
       };
     });
 
