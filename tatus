@@ -1,0 +1,235 @@
+warning: in the working copy of 'Tu2tor/src/pages/Sessions/SessionRoomPage.jsx', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/Tu2tor/src/pages/Sessions/SessionRoomPage.jsx b/Tu2tor/src/pages/Sessions/SessionRoomPage.jsx[m
+[1mindex 1a13080..aecc8bd 100644[m
+[1m--- a/Tu2tor/src/pages/Sessions/SessionRoomPage.jsx[m
+[1m+++ b/Tu2tor/src/pages/Sessions/SessionRoomPage.jsx[m
+[36m@@ -41,8 +41,6 @@[m [mconst SessionRoomPage = () => {[m
+   const [tutor, setTutor] = useState(null);[m
+   const [sessionStarted, setSessionStarted] = useState(false);[m
+   const [startTime, setStartTime] = useState(null);[m
+[31m-  const [connectedUsers, setConnectedUsers] = useState(1);[m
+[31m-  const [wsConnection, setWsConnection] = useState(null);[m
+   const [isFullscreen, setIsFullscreen] = useState(false);[m
+   const [showCodeEditor, setShowCodeEditor] = useState(false);[m
+   const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);[m
+[36m@@ -65,7 +63,7 @@[m [mconst SessionRoomPage = () => {[m
+   // Helper to get booking ID consistently[m
+   const getBookingId = (b) => b._id || b.id || b.bookingId;[m
+ [m
+[31m-  // Fetch booking details and restore session state[m
+[32m+[m[32m  // Fetch booking details[m
+   useEffect(() => {[m
+     const loadBooking = async () => {[m
+       await fetchBookings();[m
+[36m@@ -85,44 +83,6 @@[m [mconst SessionRoomPage = () => {[m
+           String(t.id) === String(tutorId)[m
+         );[m
+         setTutor(foundTutor || foundBooking.tutor);[m
+[31m-[m
+[31m-        // ✅ Restore session state from backend data[m
+[31m-        if (foundBooking.actualStartTime && foundBooking.status === 'confirmed') {[m
+[31m-          const backendStartTime = new Date(foundBooking.actualStartTime).getTime();[m
+[31m-          setSessionStarted(true);[m
+[31m-          setStartTime(backendStartTime);[m
+[31m-          [m
+[31m-          // Set up auto-complete timer based on elapsed time[m
+[31m-          const elapsed = Date.now() - backendStartTime;[m
+[31m-          const twoHours = 2 * 60 * 60 * 1000;[m
+[31m-          const remaining = twoHours - elapsed;[m
+[31m-          [m
+[31m-          if (remaining > 0) {[m
+[31m-            console.log(`[Session] Restored session state. ${Math.floor(remaining / 60000)} minutes until auto-complete`);[m
+[31m-            autoCompleteTimerRef.current = setTimeout(async () => {[m
+[31m-              try {[m
+[31m-                await bookingsAPI.completeSession(bookingId, {[m
+[31m-                  actualDuration: 120,[m
+[31m-                  sessionNotes: 'Session auto-completed after 2 hours'[m
+[31m-                });[m
+[31m-                setToast({ [m
+[31m-                  isOpen: true, [m
+[31m-                  message: 'Session auto-completed after 2 hours. Redirecting...', [m
+[31m-                  type: 'info' [m
+[31m-                });[m
+[31m-                setTimeout(() => {[m
+[31m-                  navigate(`/app/reviews/submit/${bookingId}`);[m
+[31m-                }, 3000);[m
+[31m-              } catch (error) {[m
+[31m-                console.error('[Session] Error auto-completing session:', error);[m
+[31m-              }[m
+[31m-            }, remaining);[m
+[31m-          } else {[m
+[31m-            // Session has exceeded 2 hours, should auto-complete[m
+[31m-            console.log('[Session] Session exceeded 2 hours, auto-completing...');[m
+[31m-            handleAutoComplete();[m
+[31m-          }[m
+[31m-        }[m
+       }[m
+     };[m
+ [m
+[36m@@ -215,117 +175,39 @@[m [mconst SessionRoomPage = () => {[m
+     }[m
+   };[m
+ [m
+[31m-  const handleAutoComplete = async () => {[m
+[31m-    try {[m
+[31m-      await bookingsAPI.completeSession(bookingId, {[m
+[31m-        actualDuration: 120,[m
+[31m-        sessionNotes: 'Session auto-completed after 2 hours'[m
+[31m-      });[m
+[31m-      setToast({ [m
+[31m-        isOpen: true, [m
+[31m-        message: 'Session auto-completed after 2 hours. Redirecting...', [m
+[31m-        type: 'info' [m
+[31m-      });[m
+[31m-      setTimeout(() => {[m
+[31m-        navigate(`/app/reviews/submit/${bookingId}`);[m
+[31m-      }, 3000);[m
+[31m-    } catch (error) {[m
+[31m-      console.error('[Session] Error auto-completing session:', error);[m
+[31m-    }[m
+[31m-  };[m
+[31m-[m
+   const handleJoinSession = async () => {[m
+[31m-    // Mark session as started in backend first[m
+[31m-    try {[m
+[31m-      const response = await bookingsAPI.startSession(bookingId);[m
+[31m-      const startedBooking = response.booking;[m
+[31m-      [m
+[31m-      // Update local state with backend data[m
+[31m-      setBooking(startedBooking);[m
+[31m-      setSessionStarted(true);[m
+[31m-      [m
+[31m-      // Use the server's timestamp for consistency[m
+[31m-      const backendStartTime = new Date(startedBooking.actualStartTime).getTime();[m
+[31m-      setStartTime(backendStartTime);[m
+[31m-      [m
+[31m-      console.log('[Session] Session started at:', new Date(backendStartTime).toISOString());[m
+[31m-[m
+[31m-      // Set auto-complete timer for 2 hours[m
+[31m-      autoCompleteTimerRef.current = setTimeout(async () => {[m
+[31m-        await handleAutoComplete();[m
+[31m-      }, 2 * 60 * 60 * 1000); // 2 hours in milliseconds[m
+[31m-      [m
+[31m-      setToast({ [m
+[31m-        isOpen: true, [m
+[31m-        message: 'Session started successfully!', [m
+[31m-        type: 'success' [m
+[31m-      });[m
+[31m-    } catch (error) {[m
+[31m-      console.error('[Session] Error starting session:', error);[m
+[31m-      setToast({ [m
+[31m-        isOpen: true, [m
+[31m-        message: 'Failed to start session. Please try again.', [m
+[31m-        type: 'error' [m
+[31m-      });[m
+[31m-    }[m
+[31m-  };[m
+[31m-[m
+[31m-  // Setup WebSocket connection for presence tracking[m
+[31m-  useEffect(() => {[m
+[31m-    if (!booking?.meetingRoomId || !sessionStarted) return;[m
+[31m-[m
+[31m-    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:5000';[m
+[31m-    const presenceRoom = `presence-${booking.meetingRoomId}`;[m
+[32m+[m[32m    setSessionStarted(true);[m
+[32m+[m[32m    setStartTime(Date.now());[m
+     [m
+[32m+[m[32m    // Mark session as started in backend[m
+     try {[m
+[31m-      const ws = new WebSocket(`${wsUrl}/${presenceRoom}`);[m
+[31m-      [m
+[31m-      ws.onopen = () => {[m
+[31m-        console.log('[Presence] Connected to presence tracking');[m
+[31m-        // Authenticate with server[m
+[31m-        ws.send(JSON.stringify({[m
+[31m-          type: 'auth',[m
+[31m-          userId: user._id,[m
+[31m-          username: user.username[m
+[31m-        }));[m
+[31m-      };[m
+[31m-[m
+[31m-      ws.onmessage = (event) => {[m
+[31m-        try {[m
+[31m-          const data = JSON.parse(event.data);[m
+[31m-          [m
+[31m-          if (data.type === 'connection' || data.type === 'user-joined' || data.type === 'user-left') {[m
+[31m-            setConnectedUsers(data.connectedUsers || 1);[m
+[31m-            console.log(`[Presence] Users in session: ${data.connectedUsers}`);[m
+[31m-          }[m
+[31m-[m
+[31m-          if (data.type === 'user-list-updated') {[m
+[31m-            setConnectedUsers(data.connectedUsers?.length || 1);[m
+[31m-          }[m
+[31m-        } catch (e) {[m
+[31m-          // Not JSON, ignore[m
+[31m-        }[m
+[31m-      };[m
+[31m-[m
+[31m-      ws.onerror = (error) => {[m
+[31m-        console.error('[Presence] WebSocket error:', error);[m
+[31m-      };[m
+[31m-[m
+[31m-      ws.onclose = () => {[m
+[31m-        console.log('[Presence] Disconnected from presence tracking');[m
+[31m-      };[m
+[31m-[m
+[31m-      setWsConnection(ws);[m
+[31m-[m
+[31m-      return () => {[m
+[31m-        if (ws.readyState === WebSocket.OPEN) {[m
+[31m-          ws.close();[m
+[31m-        }[m
+[31m-      };[m
+[32m+[m[32m      await bookingsAPI.startSession(bookingId);[m
+     } catch (error) {[m
+[31m-      console.error('[Presence] Failed to connect:', error);[m
+[32m+[m[32m      console.error('Error starting session:', error);[m
+     }[m
+[31m-  }, [booking?.meetingRoomId, sessionStarted, user]);[m
+[32m+[m
+[32m+[m[32m    // Set auto-complete timer for 2 hours[m
+[32m+[m[32m    autoCompleteTimerRef.current = setTimeout(async () => {[m
+[32m+[m[32m      try {[m
+[32m+[m[32m        await bookingsAPI.completeSession(bookingId, {[m
+[32m+[m[32m          actualDuration: 120, // 2 hours[m
+[32m+[m[32m          sessionNotes: 'Session auto-completed after 2 hours'[m
+[32m+[m[32m        });[m
+[32m+[m[41m        [m
+[32m+[m[32m        setToast({[m[41m [m
+[32m+[m[32m          isOpen: true,[m[41m [m
+[32m+[m[32m          message: 'Session auto-completed after 2 hours. Redirecting...',[m[41m [m
+[32m+[m[32m          type: 'info'[m[41m [m
+[32m+[m[32m        });[m
+[32m+[m
+[32m+[m[32m        setTimeout(() => {[m
+[32m+[m[32m          navigate(`/app/reviews/submit/${bookingId}`);[m
+[32m+[m[32m        }, 3000);[m
+[32m+[m[32m      } catch (error) {[m
+[32m+[m[32m        console.error('Error auto-completing session:', error);[m
+[32m+[m[32m      }[m
+[32m+[m[32m    }, 2 * 60 * 60 * 1000); // 2 hours in milliseconds[m
+[32m+[m[32m  };[m
+ [m
+   // Cleanup auto-complete timer on unmount[m
+   useEffect(() => {[m
+[36m@@ -613,13 +495,6 @@[m [mconst SessionRoomPage = () => {[m
+ [m
+                   {/* Floating controls - Only show when video is full screen (no editors) */}[m
+                   <div className="absolute top-4 right-4 flex gap-2 z-10">[m
+[31m-                    {/* Participant count badge */}[m
+[31m-                    {sessionStarted && ([m
+[31m-                      <div className="px-3 py-2 bg-black/70 text-white rounded-lg backdrop-blur-sm shadow-lg flex items-center gap-2">[m
+[31m-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>[m
+[31m-                        <span className="text-sm font-medium">{connectedUsers} {connectedUsers === 1 ? 'participant' : 'participants'}</span>[m
+[31m-                      </div>[m
+[31m-                    )}[m
+                     <button[m
+                       onClick={toggleCodeEditor}[m
+                       className="p-3 bg-black/70 hover:bg-indigo-700 text-white rounded-lg transition-colors backdrop-blur-sm shadow-lg"[m
+[36m@@ -772,4 +647,4 @@[m [mconst SessionRoomPage = () => {[m
+   );[m
+ };[m
+ [m
+[31m-export default SessionRoomPage;[m
+[32m+[m[32mexport default SessionRoomPage;[m
+\ No newline at end of file[m
