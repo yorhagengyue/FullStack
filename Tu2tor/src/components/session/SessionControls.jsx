@@ -17,7 +17,10 @@ import {
   MessageSquare,
   MoreVertical,
   Info,
-  Keyboard
+  Keyboard,
+  Phone,
+  Share,
+  Layout
 } from 'lucide-react';
 
 const SessionControls = ({
@@ -33,11 +36,12 @@ const SessionControls = ({
   onToggleKB,
   onMinimize,
   onToggleFullscreen,
+  onEndMeeting,
   bookingInfo
 }) => {
   const [sessionDuration, setSessionDuration] = useState('00:00:00');
-  const [showShortcuts, setShowShortcuts] = useState(false);
-  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [micEnabled, setMicEnabled] = useState(true);
+  const [cameraEnabled, setCameraEnabled] = useState(true);
 
   // Update session duration timer
   useEffect(() => {
@@ -60,226 +64,113 @@ const SessionControls = ({
     return () => clearInterval(interval);
   }, [sessionStarted, startTime]);
 
-  const shortcuts = [
-    { key: 'C', action: 'Toggle Code Editor' },
-    { key: 'M', action: 'Toggle Markdown Editor' },
-    { key: 'K', action: 'Toggle Knowledge Base' },
-    { key: 'F', action: 'Toggle Fullscreen' },
-    { key: 'ESC', action: 'Exit Editors' },
-  ];
+  const ControlButton = ({ icon: Icon, label, isActive, onClick, variant = 'default', badge }) => {
+    const baseClasses = "relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 shadow-md group";
+    const variants = {
+      default: "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900 border border-gray-200",
+      active: "bg-blue-100 text-blue-600 border border-blue-200 hover:bg-blue-200",
+      danger: "bg-red-500 text-white hover:bg-red-600 shadow-red-200",
+      primary: "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200",
+      dark: "bg-gray-800 text-white hover:bg-gray-700"
+    };
+
+    return (
+      <button 
+        onClick={onClick}
+        className={`${baseClasses} ${isActive ? variants.active : variants[variant]}`}
+        title={label}
+      >
+        <Icon className="w-5 h-5" />
+        {badge && (
+          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+            {badge}
+          </span>
+        )}
+        <span className="absolute -top-10 scale-0 transition-all rounded bg-gray-900 p-2 text-xs text-white group-hover:scale-100 opacity-0 group-hover:opacity-100 whitespace-nowrap z-50">
+          {label}
+        </span>
+      </button>
+    );
+  };
 
   return (
-    <>
-      {/* Main Control Bar */}
-      <div className="absolute top-4 right-4 z-50 flex flex-col gap-2">
-        {/* Top Stats Bar */}
-        <div className="flex items-center gap-2">
-          {/* Session Timer */}
-          {sessionStarted && (
-            <div className="px-4 py-2 bg-gradient-to-r from-indigo-600/90 to-purple-600/90 backdrop-blur-md text-white rounded-xl shadow-2xl border border-white/20 flex items-center gap-2">
-              <Clock className="w-4 h-4 animate-pulse" />
-              <span className="text-sm font-mono font-bold">{sessionDuration}</span>
-            </div>
-          )}
+    <div className={`flex items-center gap-4 px-8 py-4 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 ${
+      isFullscreen ? 'fixed bottom-6 left-1/2 -translate-x-1/2' : ''
+    }`}>
+      
+      {/* Audio Controls */}
+      <ControlButton 
+        icon={micEnabled ? Mic : MicOff} 
+        label={micEnabled ? "Mute Microphone" : "Unmute Microphone"}
+        variant={micEnabled ? "default" : "danger"} // Use danger style for muted state usually, or default/gray
+        onClick={() => setMicEnabled(!micEnabled)}
+      />
+      
+      <ControlButton 
+        icon={cameraEnabled ? Video : VideoOff} 
+        label={cameraEnabled ? "Turn Off Camera" : "Turn On Camera"}
+        variant={cameraEnabled ? "default" : "danger"}
+        onClick={() => setCameraEnabled(!cameraEnabled)}
+      />
 
-          {/* Participant Count */}
-          {sessionStarted && (
-            <div className="px-4 py-2 bg-gradient-to-r from-green-600/90 to-emerald-600/90 backdrop-blur-md text-white rounded-xl shadow-2xl border border-white/20 flex items-center gap-2 group hover:scale-105 transition-transform">
-              <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
-              <Users className="w-4 h-4" />
-              <span className="text-sm font-bold">{connectedUsers}</span>
-              <span className="text-xs hidden group-hover:inline ml-1 transition-all">
-                {connectedUsers === 1 ? 'participant' : 'participants'}
-              </span>
-            </div>
-          )}
+      <div className="w-px h-8 bg-gray-200 mx-2" />
 
-          {/* Session Info Tooltip */}
-          <button
-            className="p-2 bg-black/60 backdrop-blur-md text-white rounded-xl shadow-lg border border-white/10 hover:bg-black/80 transition-all group"
-            title="Session Information"
-          >
-            <Info className="w-4 h-4" />
-          </button>
-        </div>
+      {/* Collaboration Tools */}
+      <ControlButton 
+        icon={Code2} 
+        label="Code Editor" 
+        isActive={showCodeEditor}
+        onClick={onToggleCode}
+      />
 
-        {/* Tool Controls */}
-        <div className="flex items-center gap-2">
-          {/* Code Editor Button */}
-          <button
-            onClick={onToggleCode}
-            className={`group relative p-3 backdrop-blur-md rounded-xl transition-all duration-300 shadow-lg border ${
-              showCodeEditor 
-                ? 'bg-gradient-to-r from-indigo-600 to-blue-600 border-indigo-400/50 scale-105' 
-                : 'bg-black/60 border-white/10 hover:bg-black/80 hover:scale-105'
-            }`}
-            title="Code Editor (C)"
-          >
-            <Code2 className={`w-5 h-5 transition-colors ${showCodeEditor ? 'text-white' : 'text-gray-300'}`} />
-            {showCodeEditor && (
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-indigo-400 to-blue-400 rounded-full"></div>
-            )}
-          </button>
+      <ControlButton 
+        icon={FileText} 
+        label="Markdown Notes" 
+        isActive={showMarkdownEditor}
+        onClick={onToggleMarkdown}
+      />
 
-          {/* Markdown Editor Button */}
-          <button
-            onClick={onToggleMarkdown}
-            className={`group relative p-3 backdrop-blur-md rounded-xl transition-all duration-300 shadow-lg border ${
-              showMarkdownEditor 
-                ? 'bg-gradient-to-r from-purple-600 to-pink-600 border-purple-400/50 scale-105' 
-                : 'bg-black/60 border-white/10 hover:bg-black/80 hover:scale-105'
-            }`}
-            title="Markdown Editor (M)"
-          >
-            <FileText className={`w-5 h-5 transition-colors ${showMarkdownEditor ? 'text-white' : 'text-gray-300'}`} />
-            {showMarkdownEditor && (
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full"></div>
-            )}
-          </button>
+      <ControlButton 
+        icon={BookOpen} 
+        label="Knowledge Base" 
+        isActive={showKBPanel}
+        onClick={onToggleKB}
+      />
 
-          {/* Knowledge Base Button */}
-          <button
-            onClick={onToggleKB}
-            className={`group relative p-3 backdrop-blur-md rounded-xl transition-all duration-300 shadow-lg border ${
-              showKBPanel 
-                ? 'bg-gradient-to-r from-amber-600 to-orange-600 border-amber-400/50 scale-105' 
-                : 'bg-black/60 border-white/10 hover:bg-black/80 hover:scale-105'
-            }`}
-            title="Knowledge Base (K)"
-          >
-            <BookOpen className={`w-5 h-5 transition-colors ${showKBPanel ? 'text-white' : 'text-gray-300'}`} />
-            {showKBPanel && (
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-amber-400 to-orange-400 rounded-full"></div>
-            )}
-          </button>
+      <div className="w-px h-8 bg-gray-200 mx-2" />
 
-          {/* Divider */}
-          <div className="w-px h-8 bg-white/20"></div>
+      {/* Screen Share & Layout */}
+      <ControlButton 
+        icon={Monitor} 
+        label="Share Screen" 
+        onClick={() => {}} 
+      />
 
-          {/* Minimize Button */}
-          <button
-            onClick={onMinimize}
-            className="p-3 bg-black/60 backdrop-blur-md text-white rounded-xl shadow-lg border border-white/10 hover:bg-black/80 hover:scale-105 transition-all"
-            title="Minimize to Floating (Esc)"
-          >
-            <Minimize2 className="w-5 h-5" />
-          </button>
+      {/* End Meeting - Big Red Button */}
+      <ControlButton 
+        icon={Phone} 
+        label="End Meeting" 
+        variant="danger"
+        onClick={onEndMeeting}
+      />
 
-          {/* Fullscreen Button */}
-          <button
-            onClick={onToggleFullscreen}
-            className="p-3 bg-black/60 backdrop-blur-md text-white rounded-xl shadow-lg border border-white/10 hover:bg-black/80 hover:scale-105 transition-all"
-            title={isFullscreen ? 'Exit Fullscreen (F)' : 'Enter Fullscreen (F)'}
-          >
-            {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-          </button>
+      <div className="w-px h-8 bg-gray-200 mx-2" />
 
-          {/* More Menu */}
-          <div className="relative">
-            <button
-              onClick={() => setShowMoreMenu(!showMoreMenu)}
-              className={`p-3 backdrop-blur-md text-white rounded-xl shadow-lg border transition-all ${
-                showMoreMenu 
-                  ? 'bg-white/20 border-white/30' 
-                  : 'bg-black/60 border-white/10 hover:bg-black/80'
-              }`}
-              title="More Options"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </button>
+      {/* View Controls */}
+      <ControlButton 
+        icon={isFullscreen ? Minimize : Maximize} 
+        label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+        onClick={onToggleFullscreen}
+      />
+      
+      <ControlButton 
+        icon={Settings} 
+        label="Settings" 
+        onClick={() => {}} 
+      />
 
-            {/* More Menu Dropdown */}
-            {showMoreMenu && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-gray-900/95 backdrop-blur-xl rounded-xl shadow-2xl border border-white/10 overflow-hidden">
-                <button
-                  onClick={() => {
-                    setShowShortcuts(true);
-                    setShowMoreMenu(false);
-                  }}
-                  className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition-colors flex items-center gap-3"
-                >
-                  <Keyboard className="w-4 h-4" />
-                  <span className="text-sm font-medium">Keyboard Shortcuts</span>
-                </button>
-                <button
-                  className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition-colors flex items-center gap-3"
-                >
-                  <Settings className="w-4 h-4" />
-                  <span className="text-sm font-medium">Video Settings</span>
-                </button>
-                <button
-                  className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition-colors flex items-center gap-3"
-                >
-                  <MessageSquare className="w-4 h-4" />
-                  <span className="text-sm font-medium">Chat History</span>
-                </button>
-                <button
-                  className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition-colors flex items-center gap-3"
-                >
-                  <Monitor className="w-4 h-4" />
-                  <span className="text-sm font-medium">Screen Share</span>
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Session Info Card (collapsed by default) */}
-        {bookingInfo && bookingInfo.subject && bookingInfo.duration && (
-          <div className="mt-2 p-3 bg-black/60 backdrop-blur-md text-white rounded-xl shadow-lg border border-white/10 text-xs space-y-1 max-w-xs">
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400">Subject:</span>
-              <span className="font-semibold">{bookingInfo.subject}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400">Duration:</span>
-              <span className="font-semibold">{bookingInfo.duration} min</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Keyboard Shortcuts Modal */}
-      {showShortcuts && (
-        <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fadeIn"
-          onClick={() => setShowShortcuts(false)}
-        >
-          <div 
-            className="bg-gradient-to-br from-gray-900 to-black border border-white/20 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <Keyboard className="w-8 h-8 text-indigo-400" />
-              <h3 className="text-2xl font-bold text-white">Keyboard Shortcuts</h3>
-            </div>
-
-            <div className="space-y-3">
-              {shortcuts.map((shortcut, index) => (
-                <div 
-                  key={index}
-                  className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  <span className="text-gray-300">{shortcut.action}</span>
-                  <kbd className="px-3 py-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold rounded border border-white/20 shadow-lg">
-                    {shortcut.key}
-                  </kbd>
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={() => setShowShortcuts(false)}
-              className="mt-6 w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-lg transition-all"
-            >
-              Got it!
-            </button>
-          </div>
-        </div>
-      )}
-    </>
+    </div>
   );
 };
 
 export default SessionControls;
-
