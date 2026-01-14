@@ -225,7 +225,7 @@ const SessionControls = ({
         </div>
 
         {/* Session Info Card (collapsed by default) */}
-        {bookingInfo && (
+        {bookingInfo && bookingInfo.subject && bookingInfo.duration && (
           <div className="mt-2 p-3 bg-black/60 backdrop-blur-md text-white rounded-xl shadow-lg border border-white/10 text-xs space-y-1 max-w-xs">
             <div className="flex items-center gap-2">
               <span className="text-gray-400">Subject:</span>

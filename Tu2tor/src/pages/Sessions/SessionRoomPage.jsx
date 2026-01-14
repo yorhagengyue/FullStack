@@ -718,10 +718,12 @@ const SessionRoomPage = () => {
                         <Clock className="w-4 h-4" />
                         <span>{booking.duration} minutes</span>
                       </div>
-                      <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-                        <MapPin className="w-4 h-4" />
-                        <span>{booking.location}</span>
-                      </div>
+                      {booking.location && (
+                        <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+                          <MapPin className="w-4 h-4" />
+                          <span>{booking.location}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -772,10 +774,12 @@ const SessionRoomPage = () => {
                     <Clock className="w-4 h-4" />
                     <span className="text-sm">{booking.duration} min</span>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-300">
-                    <MapPin className="w-4 h-4" />
-                    <span className="text-sm">{booking.location}</span>
-                  </div>
+                  {booking.location && (
+                    <div className="flex items-center gap-2 text-gray-300">
+                      <MapPin className="w-4 h-4" />
+                      <span className="text-sm">{booking.location}</span>
+                    </div>
+                  )}
                 </div>
                 {tutor && (
                   <div className="flex items-center gap-2 text-gray-300">
