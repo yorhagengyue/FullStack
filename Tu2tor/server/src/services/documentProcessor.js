@@ -3,6 +3,10 @@ import path from 'path';
 import { PDFParse } from 'pdf-parse';
 import Tesseract from 'tesseract.js';
 import KnowledgeBase from '../models/KnowledgeBase.js';
+import KnowledgeChunk from '../models/KnowledgeChunk.js';
+import openai from '../config/openai.js';
+import { encoding_for_model } from 'tiktoken';
+import crypto from 'crypto';
 
 // CommonJS modules - use dynamic import
 import { createRequire } from 'module';
@@ -17,6 +21,187 @@ class DocumentProcessor {
   static queue = [];
   static activeCount = 0;
   static MAX_CONCURRENT = parseInt(process.env.KB_MAX_CONCURRENT || '2', 10);
+
+  // 初始化 tiktoken encoder
+  static encoder = encoding_for_model('gpt-4o');
+
+  // 分块缓存
+  static chunkCache = new Map();
+
+  /**
+   * 计算内容哈希（用于缓存键）
+   */
+  static getContentHash(text) {
+    return crypto.createHash('md5').update(text).digest('hex');
+  }
+
+  /**
+   * Token 计数方法
+   */
+  static countTokens(text) {
+    try {
+      const tokens = this.encoder.encode(text);
+      return tokens.length;
+    } catch (error) {
+      console.error('[Token Count Error]', error);
+      // 降级方案：粗略估算（1 token ≈ 4 字符）
+      return Math.ceil(text.length / 4);
+    }
+  }
+
+  /**
+   * 清理资源
+   */
+  static cleanup() {
+    if (this.encoder) {
+      this.encoder.free();
+    }
+  }
+
+  /**
+   * AI 智能分块
+   */
+  static async aiChunkText(text, options = {}) {
+    const {
+      minTokens = 300,      // 最小 Token 数
+      maxTokens = 600,      // 最大 Token 数
+      targetTokens = 450,   // 目标 Token 数
+    } = options;
+
+    console.log('[AI Chunking] Starting...', {
+      textLength: text.length,
+      estimatedTokens: this.countTokens(text)
+    });
+
+    try {
+      // 构建 AI 分块 Prompt
+      const prompt = `你是一个专业的文本处理专家。请将以下文本分割成多个语义连贯的块。
+
+要求：
+1. 每个块应该围绕一个核心主题或概念
+2. 每个块的 Token 数量应在 ${minTokens} 到 ${maxTokens} 之间，目标为 ${targetTokens} tokens
+3. 保持语义完整性，不要在句子中间切断
+4. 如果遇到标题、列表、代码块等结构化内容，尽量保持完整
+5. 返回 JSON 数组格式：[{"content": "块1内容", "summary": "块1摘要"}, ...]
+
+文本内容：
+${text}
+
+请直接返回 JSON 数组，不要添加任何其他说明。`;
+
+      // 调用 GPT-4o-mini 进行分块
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: '你是一个文本分块专家，擅长将长文本分割成语义连贯的块。'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.3,
+        response_format: { type: 'json_object' }
+      });
+
+      // 解析响应
+      const result = JSON.parse(response.choices[0].message.content);
+      const chunks = result.chunks || result;
+
+      console.log('[AI Chunking] Success:', {
+        chunksCount: chunks.length,
+        avgTokens: chunks.reduce((sum, c) => sum + this.countTokens(c.content), 0) / chunks.length
+      });
+
+      return chunks;
+
+    } catch (error) {
+      console.error('[AI Chunking] Failed:', error);
+      // 降级方案：使用简单的段落分割
+      return this.fallbackChunking(text, targetTokens);
+    }
+  }
+
+  /**
+   * AI 智能分块（带缓存）
+   */
+  static async aiChunkTextWithCache(text, options = {}) {
+    const hash = this.getContentHash(text);
+
+    // 检查缓存
+    if (this.chunkCache.has(hash)) {
+      console.log('[AI Chunking] Cache hit! Skipping AI call.');
+      return this.chunkCache.get(hash);
+    }
+
+    console.log('[AI Chunking] Cache miss. Calling AI...');
+
+    // 调用 AI 分块
+    const chunks = await this.aiChunkText(text, options);
+
+    // 存入缓存
+    this.chunkCache.set(hash, chunks);
+    console.log('[AI Chunking] Result cached. Cache size:', this.chunkCache.size);
+
+    return chunks;
+  }
+
+  /**
+   * 成本追踪
+   */
+  static trackChunkingCost(text, chunksCount) {
+    const estimatedInputTokens = this.countTokens(text);
+    const estimatedCost = (estimatedInputTokens / 1000000) * 0.15; // GPT-4o-mini 价格
+
+    console.log('[Cost Tracking]', {
+      inputTokens: estimatedInputTokens,
+      outputChunks: chunksCount,
+      estimatedCost: `$${estimatedCost.toFixed(4)}`
+    });
+
+    return {
+      inputTokens: estimatedInputTokens,
+      outputChunks: chunksCount,
+      estimatedCost
+    };
+  }
+
+  /**
+   * 降级分块方案
+   */
+  static fallbackChunking(text, targetTokens = 450) {
+    const paragraphs = text.split(/\n\n+/);
+    const chunks = [];
+    let currentChunk = '';
+    let currentTokens = 0;
+
+    for (const para of paragraphs) {
+      const paraTokens = this.countTokens(para);
+
+      if (currentTokens + paraTokens > targetTokens * 1.2 && currentChunk) {
+        chunks.push({
+          content: currentChunk.trim(),
+          summary: null
+        });
+        currentChunk = para;
+        currentTokens = paraTokens;
+      } else {
+        currentChunk += (currentChunk ? '\n\n' : '') + para;
+        currentTokens += paraTokens;
+      }
+    }
+
+    if (currentChunk) {
+      chunks.push({
+        content: currentChunk.trim(),
+        summary: null
+      });
+    }
+
+    return chunks;
+  }
 
   /**
    * 入队处理，带并发控制
@@ -131,7 +316,83 @@ class DocumentProcessor {
         wordCount,
         language
       };
-      
+
+      // ========== 向量 RAG 处理 ==========
+      console.log('[Document Processing] Starting vector RAG processing...');
+      console.log('[Document Processing] Full text length:', fullText.length);
+      console.log('[Document Processing] Estimated tokens:', this.countTokens(fullText));
+
+      // 1. 整合所有文本
+      const fullTextForChunking = extractedContent.pageTexts
+        ? extractedContent.pageTexts.map(p => p.content).join('\n\n')
+        : fullText;
+
+      // 2. AI 智能分块（使用缓存版本）
+      const aiChunks = await this.aiChunkTextWithCache(fullTextForChunking, {
+        minTokens: 300,
+        maxTokens: 600,
+        targetTokens: 450
+      });
+
+      console.log('[Document Processing] AI chunking complete:', aiChunks.length, 'chunks');
+
+      // 追踪 AI 分块成本
+      this.trackChunkingCost(fullTextForChunking, aiChunks.length);
+
+      // 3. 批量生成嵌入（分批处理，避免超过 API 限制）
+      const BATCH_SIZE = 100;
+      const chunksToInsert = [];
+
+      for (let i = 0; i < aiChunks.length; i += BATCH_SIZE) {
+        const batch = aiChunks.slice(i, i + BATCH_SIZE);
+        const batchContents = batch.map(c => c.content);
+
+        console.log(`[Document Processing] Generating embeddings for batch ${Math.floor(i / BATCH_SIZE) + 1}...`);
+
+        const embeddingResponse = await openai.embeddings.create({
+          model: 'text-embedding-3-small',
+          input: batchContents,
+        });
+
+        // 4. 构建要插入的文档
+        batch.forEach((chunk, batchIndex) => {
+          const globalIndex = i + batchIndex;
+          const tokenCount = this.countTokens(chunk.content);
+
+          chunksToInsert.push({
+            knowledgeBaseId: kb._id,
+            content: chunk.content,
+            embedding: embeddingResponse.data[batchIndex].embedding,
+            metadata: {
+              chunkIndex: globalIndex,
+              tokenCount: tokenCount,
+              charCount: chunk.content.length,
+              chunkType: 'semantic',
+              summary: chunk.summary || null,
+            },
+            semanticScore: 1.0, // AI 分块默认高质量
+          });
+        });
+      }
+
+      // 5. 批量插入到新集合
+      if (chunksToInsert.length > 0) {
+        await KnowledgeChunk.insertMany(chunksToInsert);
+        console.log('[Document Processing] Inserted', chunksToInsert.length, 'chunks to database');
+      }
+
+      // 6. 清理旧的 extractedContent（节省存储空间）
+      kb.extractedContent = {
+        pageCount: extractedContent.pageCount || extractedContent.metadata?.pageCount || 0,
+        totalChunks: chunksToInsert.length,
+        avgTokensPerChunk: chunksToInsert.length > 0
+          ? chunksToInsert.reduce((sum, c) => sum + c.metadata.tokenCount, 0) / chunksToInsert.length
+          : 0,
+      };
+      await kb.save();
+
+      console.log('[Document Processing] Vector RAG processing completed');
+
       await kb.updateProcessingStatus('completed', 100, 'completed', 'Processing completed successfully');
       
       console.log(`[DocProcessor] Processing completed: ${kb._id} (${wordCount} words, ${language})`);
@@ -333,6 +594,29 @@ class DocumentProcessor {
     }
     
     return 'none';
+  }
+
+  /**
+   * 并行处理多个文档
+   */
+  static async processMultipleDocuments(documentIds) {
+    console.log(`[DocProcessor] Starting batch processing for ${documentIds.length} documents...`);
+
+    const results = await Promise.allSettled(
+      documentIds.map(id => this.processDocument(id))
+    );
+
+    const successful = results.filter(r => r.status === 'fulfilled').length;
+    const failed = results.filter(r => r.status === 'rejected').length;
+
+    console.log(`[Batch Processing] Completed: Success: ${successful}, Failed: ${failed}`);
+
+    return {
+      total: documentIds.length,
+      successful,
+      failed,
+      results
+    };
   }
 }
 

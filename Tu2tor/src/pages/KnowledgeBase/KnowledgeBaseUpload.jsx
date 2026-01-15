@@ -21,6 +21,9 @@ import {
   Tag,
   Calendar,
   FileType,
+  Plus,
+  Search,
+  Filter
 } from 'lucide-react';
 
 const KnowledgeBaseUpload = () => {
@@ -41,6 +44,8 @@ const KnowledgeBaseUpload = () => {
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, documentId: null });
   const [dragActive, setDragActive] = useState(false);
   const [pollingInterval, setPollingInterval] = useState(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Fetch uploaded documents
   useEffect(() => {
@@ -204,11 +209,12 @@ const KnowledgeBaseUpload = () => {
           type: 'success'
         });
 
-        // Reset form
+        // Reset form and close modal
         setSelectedFile(null);
         setTitle('');
         setDescription('');
         setTags('');
+        setShowUploadModal(false);
         
         // Refresh documents list
         fetchDocuments();
@@ -266,32 +272,38 @@ const KnowledgeBaseUpload = () => {
   };
 
   const getFileIcon = (type) => {
-    if (type === 'pdf') return <FileText className="w-5 h-5 text-red-500" />;
-    if (type === 'pptx') return <File className="w-5 h-5 text-orange-500" />;
-    if (type === 'docx') return <FileText className="w-5 h-5 text-blue-500" />;
-    if (type === 'image') return <ImageIcon className="w-5 h-5 text-purple-500" />;
-    return <File className="w-5 h-5 text-gray-500" />;
+    if (type === 'pdf') return <FileText className="w-8 h-8 text-red-500" />;
+    if (type === 'pptx') return <File className="w-8 h-8 text-orange-500" />;
+    if (type === 'docx') return <FileText className="w-8 h-8 text-blue-500" />;
+    if (type === 'image') return <ImageIcon className="w-8 h-8 text-purple-500" />;
+    return <File className="w-8 h-8 text-gray-500" />;
   };
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      pending: { color: 'bg-yellow-100 text-yellow-800', icon: <Loader2 className="w-3 h-3 animate-spin" />, text: 'Pending' },
-      processing: { color: 'bg-blue-100 text-blue-800', icon: <Loader2 className="w-3 h-3 animate-spin" />, text: 'Processing' },
-      completed: { color: 'bg-green-100 text-green-800', icon: <CheckCircle className="w-3 h-3" />, text: 'Completed' },
-      failed: { color: 'bg-red-100 text-red-800', icon: <AlertCircle className="w-3 h-3" />, text: 'Failed' }
+      pending: { color: 'bg-yellow-50 text-yellow-600 border-yellow-200', icon: <Loader2 className="w-3 h-3 animate-spin" />, text: 'Queueing' },
+      processing: { color: 'bg-blue-50 text-blue-600 border-blue-200', icon: <Loader2 className="w-3 h-3 animate-spin" />, text: 'Processing' },
+      completed: { color: 'bg-green-50 text-green-600 border-green-200', icon: <CheckCircle className="w-3 h-3" />, text: 'Ready' },
+      failed: { color: 'bg-red-50 text-red-600 border-red-200', icon: <AlertCircle className="w-3 h-3" />, text: 'Failed' }
     };
 
     const config = statusConfig[status] || statusConfig.pending;
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
+      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${config.color}`}>
         {config.icon}
         {config.text}
       </span>
     );
   };
 
+  const filteredDocuments = documents.filter(doc => 
+    doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    doc.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    doc.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+    <div className="min-h-screen bg-gray-50">
       <Toast
         isOpen={toast.isOpen}
         onClose={() => setToast({ ...toast, isOpen: false })}
@@ -312,37 +324,205 @@ const KnowledgeBaseUpload = () => {
         type="danger"
       />
 
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <BookOpen className="w-8 h-8 text-purple-600" />
-            <h1 className="text-4xl font-bold text-gray-900">Knowledge Base</h1>
+      {/* Modern Header Section */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <BookOpen className="w-8 h-8 text-indigo-600" />
+                Knowledge Base
+              </h1>
+              <p className="text-gray-500 mt-1">Manage and organize your AI-enhanced study materials</p>
+            </div>
+            
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-lg shadow-indigo-200 transition-all hover:scale-105 active:scale-95"
+            >
+              <Plus className="w-5 h-5" />
+              Add Material
+            </button>
           </div>
-          <p className="text-gray-600">Upload and manage your study materials for AI-powered learning</p>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Upload Form */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Upload className="w-5 h-5 text-purple-600" />
+          {/* Search and Filters Bar */}
+          <div className="mt-8 flex flex-col md:flex-row gap-4 items-center">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input 
+                type="text" 
+                placeholder="Search documents by title, description, or tags..." 
+                className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-500/20 text-gray-700 placeholder-gray-400 transition-all"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-3 w-full md:w-auto">
+               <button 
+                onClick={fetchDocuments}
+                className="p-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition-colors"
+                title="Refresh List"
+               >
+                 <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="max-w-7xl mx-auto p-6">
+        {loading && documents.length === 0 ? (
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+          </div>
+        ) : filteredDocuments.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-96 bg-white rounded-3xl border border-dashed border-gray-300">
+            <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
+               <FileText className="w-10 h-10 text-indigo-300" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No documents found</h3>
+            <p className="text-gray-500 max-w-sm text-center mb-8">
+              {searchTerm ? "We couldn't find any documents matching your search." : "Get started by uploading your first study material to the Knowledge Base."}
+            </p>
+            {!searchTerm && (
+              <button
+                onClick={() => setShowUploadModal(true)}
+                className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition-colors"
+              >
+                Upload Document
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredDocuments.map((doc) => (
+              <div
+                key={doc._id || doc.id}
+                className="group bg-white rounded-2xl border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden"
+              >
+                {/* Card Header / Icon Area */}
+                <div className="h-32 bg-gray-50 group-hover:bg-indigo-50/50 transition-colors flex items-center justify-center relative">
+                  <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
+                    {getFileIcon(doc.type)}
+                  </div>
+                  <div className="absolute top-3 right-3">
+                    {getStatusBadge(doc.processingStatus?.status || 'pending')}
+                  </div>
+                </div>
+
+                {/* Card Content */}
+                <div className="p-5 flex-1 flex flex-col">
+                  <div className="mb-4">
+                    <h3 className="font-bold text-gray-900 line-clamp-1 mb-1" title={doc.title}>
+                      {doc.title}
+                    </h3>
+                    <p className="text-xs text-gray-400 flex items-center gap-2">
+                      <Calendar className="w-3 h-3" />
+                      {new Date(doc.uploadedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+
+                  {doc.description && (
+                    <p className="text-sm text-gray-600 mb-4 line-clamp-2 min-h-[40px]">
+                      {doc.description}
+                    </p>
+                  )}
+
+                  {/* Processing Progress Bar */}
+                  {(doc.processingStatus?.status === 'processing' || doc.processingStatus?.status === 'pending') && (
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between text-xs mb-1.5">
+                        <span className="text-indigo-600 font-medium">
+                          {doc.processingStatus.currentStep || 'Processing...'}
+                        </span>
+                        <span className="text-gray-500">{doc.processingStatus.progress || 0}%</span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="bg-indigo-600 h-full rounded-full transition-all duration-500"
+                          style={{ width: `${doc.processingStatus.progress || 0}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tags */}
+                  <div className="flex-1">
+                     <div className="flex flex-wrap gap-1.5 mb-4">
+                      {doc.tags?.slice(0, 3).map((tag, idx) => (
+                        <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-medium uppercase tracking-wide">
+                          #{tag}
+                        </span>
+                      ))}
+                      {doc.tags?.length > 3 && (
+                        <span className="px-2 py-0.5 bg-gray-50 text-gray-400 rounded text-[10px]">+{doc.tags.length - 3}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action Footer */}
+                  <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+                     <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <FileType className="w-3 h-3" />
+                        {doc.type.toUpperCase()}
+                     </div>
+                     <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                        {doc.processingStatus?.status === 'completed' && (
+                          <button
+                            onClick={() => navigate(`/app/knowledge-base/${doc._id}`)}
+                            className="p-1.5 hover:bg-indigo-50 text-indigo-600 rounded-lg transition-colors"
+                            title="View"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setConfirmDialog({ isOpen: true, documentId: doc._id })}
+                          className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                     </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <Upload className="w-5 h-5 text-indigo-600" />
                 Upload Material
               </h2>
+              <button 
+                onClick={() => setShowUploadModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
+            <div className="p-8">
               {/* File Drop Zone */}
               <div
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
-                className={`border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer ${
+                className={`border-2 border-dashed rounded-2xl p-10 text-center transition-all cursor-pointer group ${
                   dragActive
-                    ? 'border-purple-500 bg-purple-50'
+                    ? 'border-indigo-500 bg-indigo-50 scale-[1.02]'
                     : selectedFile
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-300 hover:border-purple-400 hover:bg-gray-50'
+                    ? 'border-green-500 bg-green-50/30'
+                    : 'border-gray-200 hover:border-indigo-400 hover:bg-gray-50'
                 }`}
                 onClick={() => document.getElementById('fileInput').click()}
               >
@@ -355,10 +535,12 @@ const KnowledgeBaseUpload = () => {
                 />
 
                 {selectedFile ? (
-                  <div className="space-y-3">
-                    <CheckCircle className="w-12 h-12 text-green-600 mx-auto" />
+                  <div className="space-y-4">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                       <CheckCircle className="w-8 h-8 text-green-600" />
+                    </div>
                     <div>
-                      <p className="font-semibold text-gray-900">{selectedFile.name}</p>
+                      <p className="font-bold text-gray-900 text-lg">{selectedFile.name}</p>
                       <p className="text-sm text-gray-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
                     </div>
                     <button
@@ -366,264 +548,121 @@ const KnowledgeBaseUpload = () => {
                         e.stopPropagation();
                         setSelectedFile(null);
                       }}
-                      className="text-sm text-red-600 hover:text-red-700 font-medium"
+                      className="px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors"
                     >
-                      Remove
+                      Remove File
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    <Upload className="w-12 h-12 text-gray-400 mx-auto" />
+                  <div className="space-y-4">
+                    <div className="w-16 h-16 bg-indigo-50 group-hover:bg-indigo-100 rounded-full flex items-center justify-center mx-auto transition-colors">
+                      <Upload className="w-8 h-8 text-indigo-500" />
+                    </div>
                     <div>
-                      <p className="text-gray-700 font-medium">Drop file here or click to browse</p>
-                      <p className="text-sm text-gray-500 mt-1">PDF, PPTX, DOCX, or Images (Max 50MB)</p>
+                      <p className="text-gray-900 font-semibold text-lg">Click to browse or drag file here</p>
+                      <p className="text-gray-500 mt-1">Supports PDF, PPTX, DOCX, Images (Max 50MB)</p>
                     </div>
                   </div>
                 )}
               </div>
 
               {/* Form Fields */}
-              <div className="space-y-4 mt-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Subject *
-                  </label>
-                  <select
-                    value={selectedSubject}
-                    onChange={(e) => setSelectedSubject(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    required
-                  >
-                    <option value="">Select a subject</option>
-                    {subjects.map((subject, idx) => {
-                      const value = subject._id || subject.id || subject.subjectId;
-                      return (
-                        <option key={value || idx} value={value || ''}>
-                        {subject.name}
-                        </option>
-                      );
-                    })}
-                  </select>
+              <div className="space-y-6 mt-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Subject *</label>
+                    <select
+                      value={selectedSubject}
+                      onChange={(e) => setSelectedSubject(e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                      required
+                    >
+                      <option value="">Select a subject</option>
+                      {subjects.map((subject, idx) => {
+                         const value = subject._id || subject.id || subject.subjectId;
+                         return (
+                           <option key={value || idx} value={value || ''}>
+                           {subject.name}
+                           </option>
+                         );
+                      })}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Visibility</label>
+                    <select
+                      value={visibility}
+                      onChange={(e) => setVisibility(e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                    >
+                      <option value="private">Private (Only me)</option>
+                      <option value="public">Public (Everyone)</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Title *
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Title *</label>
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
                     placeholder="e.g., Week 3 Lecture Notes"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Description
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none resize-none"
                     rows={3}
-                    placeholder="Brief description of the material..."
+                    placeholder="Brief description..."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Tags (comma-separated)
-                  </label>
-                  <input
-                    type="text"
-                    value={tags}
-                    onChange={(e) => setTags(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="e.g., lecture, midterm, important"
-                  />
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Tags</label>
+                  <div className="relative">
+                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      value={tags}
+                      onChange={(e) => setTags(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                      placeholder="comma, separated, tags"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Visibility
-                  </label>
-                  <select
-                    value={visibility}
-                    onChange={(e) => setVisibility(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                <div className="pt-4">
+                  <button
+                    onClick={handleUpload}
+                    disabled={!selectedFile || !selectedSubject || !title.trim() || uploading}
+                    className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white rounded-xl font-bold text-lg shadow-lg shadow-indigo-200 transition-all transform active:scale-[0.98] flex items-center justify-center gap-3"
                   >
-                    <option value="private">Private (Only me)</option>
-                    <option value="public">Public (Everyone)</option>
-                  </select>
+                    {uploading ? (
+                      <>
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-6 h-6" />
+                        Start Upload
+                      </>
+                    )}
+                  </button>
                 </div>
-
-                <button
-                  onClick={handleUpload}
-                  disabled={!selectedFile || !selectedSubject || !title.trim() || uploading}
-                  className="w-full py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
-                >
-                  {uploading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-5 h-5" />
-                      Upload Material
-                    </>
-                  )}
-                </button>
               </div>
-            </div>
-          </div>
-
-          {/* Documents List */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-purple-600" />
-                  My Materials ({documents.length})
-                </h2>
-                <button
-                  onClick={fetchDocuments}
-                  disabled={loading}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                  title="Refresh"
-                >
-                  <RefreshCw className={`w-5 h-5 text-gray-600 ${loading ? 'animate-spin' : ''}`} />
-                </button>
-              </div>
-
-              {loading && documents.length === 0 ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
-                </div>
-              ) : documents.length === 0 ? (
-                <div className="text-center py-12">
-                  <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">No materials uploaded yet</p>
-                  <p className="text-sm text-gray-400 mt-2">Upload your first document to get started!</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {documents.map((doc) => (
-                    <div
-                      key={doc._id || doc.id}
-                      className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0 w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                          {getFileIcon(doc.type)}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-3 mb-2">
-                            <h3 className="font-semibold text-gray-900 truncate">{doc.title}</h3>
-                            {getStatusBadge(doc.processingStatus?.status || 'pending')}
-                          </div>
-
-                          {doc.description && (
-                            <p className="text-sm text-gray-600 mb-2 line-clamp-2">{doc.description}</p>
-                          )}
-
-                          <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
-                            <span className="flex items-center gap-1">
-                              <FileType className="w-3 h-3" />
-                              {doc.type.toUpperCase()}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              {new Date(doc.uploadedAt).toLocaleDateString()}
-                            </span>
-                            {doc.extractedContent?.wordCount && (
-                              <span>{doc.extractedContent.wordCount.toLocaleString()} words</span>
-                            )}
-                          </div>
-
-                          {doc.tags && doc.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {doc.tags.map((tag, idx) => (
-                                <span
-                                  key={idx}
-                                  className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full text-xs"
-                                >
-                                  <Tag className="w-2.5 h-2.5" />
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-
-                          {(doc.processingStatus?.status === 'processing' || doc.processingStatus?.status === 'pending') && (
-                            <div className="mt-3">
-                              <div className="flex items-center justify-between text-xs mb-1.5">
-                                <span className="flex items-center gap-1.5 text-blue-700 font-medium">
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                  {doc.processingStatus.currentStep || doc.processingStatus.stage || 'Processing'}
-                                </span>
-                                <span className="text-gray-600 font-semibold">{doc.processingStatus.progress || 0}%</span>
-                              </div>
-                              {doc.processingStatus.message && (
-                                <p className="text-xs text-gray-500 mb-1">{doc.processingStatus.message}</p>
-                              )}
-                              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                                <div
-                                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
-                                  style={{ width: `${doc.processingStatus.progress || 0}%` }}
-                                />
-                              </div>
-                            </div>
-                          )}
-
-                          {doc.processingStatus?.status === 'failed' && (
-                            <div className="mt-2 p-3 bg-red-50 rounded-lg text-xs">
-                              <p className="font-medium text-red-700">Error: {doc.processingStatus.message || 'Processing failed'}</p>
-                              {doc.processingStatus.error && (
-                                <p className="mt-1 text-red-600 font-mono text-xs">{doc.processingStatus.error}</p>
-                              )}
-                              <button
-                                onClick={() => handleRetry(doc)}
-                                className="mt-2 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center gap-1.5 text-xs font-medium"
-                              >
-                                <RefreshCw className="w-3 h-3" />
-                                Delete & Re-upload
-                              </button>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {doc.processingStatus?.status === 'completed' && (
-                            <button
-                              onClick={() => navigate(`/app/knowledge-base/${doc._id}`)}
-                              className="p-2 hover:bg-purple-50 text-purple-600 rounded-lg transition-colors"
-                              title="View content"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                          )}
-                          <button
-                            onClick={() => setConfirmDialog({ isOpen: true, documentId: doc._id })}
-                            className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

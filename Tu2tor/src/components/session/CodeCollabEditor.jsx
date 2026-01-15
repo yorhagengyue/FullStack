@@ -237,19 +237,19 @@ const CodeCollabEditor = ({ bookingId, language = 'javascript', username = 'Gues
   };
 
   return (
-    <div className="h-full flex flex-col bg-gray-900">
-      {/* Toolbar */}
-      <div className="bg-gray-800 border-b border-gray-700 p-3 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <div className="h-full flex flex-col bg-[#1e1e1e]">
+      {/* Toolbar - Simplified */}
+      <div className="bg-[#2d2d30] border-b border-[#3e3e42] p-2 flex items-center justify-between">
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <Code2 className="w-5 h-5 text-indigo-400" />
-            <span className="text-white font-semibold">Collaborative Code Editor</span>
+            <Code2 className="w-4 h-4 text-blue-400" />
+            <span className="text-gray-200 font-semibold text-sm">Code Editor</span>
           </div>
 
           <select
             value={selectedLanguage}
             onChange={handleLanguageChange}
-            className="bg-gray-700 text-white px-3 py-1.5 rounded border border-gray-600 focus:outline-none focus:border-indigo-500"
+            className="bg-[#1e1e1e] text-gray-200 text-xs px-2 py-1 rounded border border-[#3e3e42] focus:outline-none focus:border-blue-500"
           >
             {languages.map(lang => (
               <option key={lang.value} value={lang.value}>
@@ -264,50 +264,52 @@ const CodeCollabEditor = ({ bookingId, language = 'javascript', username = 'Gues
           {onToggleMarkdown && (
             <button
               onClick={onToggleMarkdown}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded transition-colors ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                 showMarkdown 
                   ? 'bg-purple-600 hover:bg-purple-700 text-white' 
-                  : 'bg-gray-700 hover:bg-gray-600 text-white'
+                  : 'text-gray-400 hover:bg-[#3e3e42] hover:text-white'
               }`}
               title={showMarkdown ? 'Hide notes' : 'Show notes'}
             >
-              <FileText className="w-4 h-4" />
-              {showMarkdown ? 'Hide Notes' : 'Notes'}
+              <FileText className="w-3.5 h-3.5" />
+              Notes
             </button>
           )}
 
-          {/* Connection Status */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-700 rounded" title={`Connection: ${connectionStatus}`}>
-            <div className={`w-2 h-2 rounded-full ${
-              connectionStatus === 'connected' ? 'bg-green-500 animate-pulse' :
+          {/* Connection Status - Minimal */}
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-[#1e1e1e] border border-[#3e3e42] rounded-md" title={`Connection: ${connectionStatus}`}>
+            <div className={`w-1.5 h-1.5 rounded-full ${
+              connectionStatus === 'connected' ? 'bg-green-500' :
               connectionStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' :
               'bg-red-500'
             }`}></div>
-            <span className="text-white text-sm font-medium">
+            <span className="text-gray-400 text-xs font-medium">
               {connectionStatus === 'connected' ? 'Synced' :
                connectionStatus === 'connecting' ? 'Connecting...' :
-               'Disconnected'}
+               'Offline'}
             </span>
           </div>
 
-          {/* Connected Users */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-700 rounded">
-            <Users className="w-4 h-4 text-green-400" />
-            <span className="text-white text-sm">
+          {/* Connected Users - Minimal */}
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-[#1e1e1e] border border-[#3e3e42] rounded-md">
+            <Users className="w-3.5 h-3.5 text-gray-400" />
+            <span className="text-gray-400 text-xs font-medium">
               {connectedUsers.length}
             </span>
           </div>
 
-          {/* Save/Load Buttons */}
+          <div className="h-4 w-px bg-[#3e3e42] mx-1"></div>
+
+          {/* Save/Load Buttons - Compact */}
           <button
             onClick={handleSaveCode}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
+            className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-white hover:bg-[#3e3e42] rounded-md transition-colors"
             title="Download code"
           >
             <Download className="w-4 h-4" />
           </button>
 
-          <label className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors cursor-pointer">
+          <label className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-white hover:bg-[#3e3e42] rounded-md transition-colors cursor-pointer" title="Load code">
             <Upload className="w-4 h-4" />
             <input
               type="file"
@@ -317,45 +319,44 @@ const CodeCollabEditor = ({ bookingId, language = 'javascript', username = 'Gues
             />
           </label>
 
-          {/* Run Button */}
+          {/* Run Button - Compact */}
           <button
             onClick={handleRunCode}
             disabled={isRunning}
-            className="flex items-center gap-1.5 px-4 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded transition-colors font-semibold"
+            className="ml-1 flex items-center gap-1.5 px-3 py-1 bg-green-600 hover:bg-green-700 disabled:bg-[#3e3e42] disabled:text-gray-500 text-white rounded-md transition-colors text-xs font-semibold"
           >
             {isRunning ? (
               <>
-                <Square className="w-4 h-4" />
-                Running...
+                <Square className="w-3.5 h-3.5" />
+                Stop
               </>
             ) : (
               <>
-                <Play className="w-4 h-4 fill-current" />
+                <Play className="w-3.5 h-3.5 fill-current" />
                 Run
               </>
             )}
           </button>
 
-          {/* Toggle Output Button */}
+          {/* Toggle Output Button - Compact */}
           {executionHistory.length > 0 && !showOutput && (
             <button
               onClick={() => setShowOutput(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+              className="flex items-center gap-1.5 px-2 py-1 bg-[#007acc] hover:bg-[#0062a3] text-white rounded-md transition-colors text-xs"
               title="Show output terminal"
             >
-              <Terminal className="w-4 h-4" />
-              ({executionHistory.length})
+              <Terminal className="w-3.5 h-3.5" />
             </button>
           )}
 
-          {/* Complete Session Button */}
+          {/* Complete Session Button - Compact */}
           {onCompleteSession && (
             <button
               onClick={onCompleteSession}
               disabled={isCompleting}
-              className="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-600 disabled:to-gray-700 text-white rounded transition-all font-semibold shadow-lg"
+              className="ml-2 flex items-center gap-1.5 px-3 py-1 bg-[#238636] hover:bg-[#2ea043] disabled:bg-[#238636]/50 text-white rounded-md transition-all text-xs font-semibold shadow-sm"
             >
-              <CheckCircle className="w-4 h-4" />
+              <CheckCircle className="w-3.5 h-3.5" />
               {isCompleting ? 'Completing...' : 'Complete'}
             </button>
           )}

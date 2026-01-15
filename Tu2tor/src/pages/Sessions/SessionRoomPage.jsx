@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
@@ -17,6 +17,9 @@ import {
   Clock,
   MapPin,
   Video,
+  VideoOff,
+  Mic,
+  MicOff,
   AlertCircle,
   Maximize,
   Minimize,
@@ -47,6 +50,11 @@ const SessionRoomPage = () => {
 
   // Connection State
   const [connectedUsers, setConnectedUsers] = useState(0);
+
+  // Media Permissions State (for Pre-join)
+  const [mediaStream, setMediaStream] = useState(null);
+  const [permissionStatus, setPermissionStatus] = useState('prompt'); // 'prompt', 'granted', 'denied'
+  const videoPreviewRef = useRef(null);
 
   // UI State
   const [showCodeEditor, setShowCodeEditor] = useState(false);
@@ -90,8 +98,44 @@ const SessionRoomPage = () => {
     loadBooking();
   }, [bookingId]);
 
+  // Handle Media Permissions & Preview for Pre-join screen
+  useEffect(() => {
+    if (!sessionStarted && !loading && booking) {
+      const getMedia = async () => {
+        try {
+          // Request camera and microphone access
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          setMediaStream(stream);
+          setPermissionStatus('granted');
+          if (videoPreviewRef.current) {
+              videoPreviewRef.current.srcObject = stream;
+          }
+        } catch (err) {
+          console.error("Error accessing media devices:", err);
+          setPermissionStatus('denied');
+        }
+      };
+      
+      // Attempt to get media
+      getMedia();
+    }
+    
+    // Cleanup function
+    return () => {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [sessionStarted, loading, booking]);
+
 
   const handleJoinSession = async () => {
+    // Stop local preview stream before joining so Jitsi can take over
+    if (mediaStream) {
+       mediaStream.getTracks().forEach(track => track.stop());
+       setMediaStream(null);
+    }
+
     try {
       // API call to start session
       const updatedBooking = await bookingsAPI.startSession(bookingId);
@@ -228,32 +272,57 @@ const SessionRoomPage = () => {
 
             <button
               onClick={handleJoinSession}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2"
+              disabled={permissionStatus !== 'granted'}
+              className={`w-full text-white text-lg font-semibold py-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 ${
+                permissionStatus === 'granted' 
+                  ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200 cursor-pointer' 
+                  : 'bg-gray-400 cursor-not-allowed'
+              }`}
             >
               <Video className="w-5 h-5" />
-              Join Classroom
+              {permissionStatus === 'granted' ? 'Join Classroom' : 'Allow Camera to Join'}
             </button>
           </div>
 
-          {/* Right Side - Info Card */}
-          <div className="flex-1 bg-gradient-to-br from-blue-50 to-indigo-50 p-8 flex items-center justify-center relative overflow-hidden">
-            <div className="relative max-w-md text-center">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-blue-600 flex items-center justify-center shadow-lg">
-                <Video className="w-10 h-10 text-white" />
+          {/* Right Side - Preview & Check */}
+          <div className="flex-1 bg-gray-900 p-8 flex flex-col items-center justify-center relative overflow-hidden text-white">
+              {/* Video Preview */}
+              <div className="w-full max-w-md aspect-video bg-black rounded-lg overflow-hidden relative shadow-2xl border border-gray-800 mb-6 group">
+                  {permissionStatus === 'granted' ? (
+                      <>
+                        <video
+                            ref={videoPreviewRef}
+                            autoPlay
+                            muted
+                            playsInline
+                            className="w-full h-full object-cover transform scale-x-[-1]" // 镜像
+                        />
+                        <div className="absolute bottom-3 left-3 bg-black/50 px-2 py-1 rounded text-xs backdrop-blur-md flex items-center gap-1">
+                           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                           Camera Active
+                        </div>
+                      </>
+                  ) : (
+                      <div className="absolute inset-0 flex items-center justify-center flex-col text-gray-500">
+                          <div className="w-12 h-12 border-2 border-gray-600 rounded-full flex items-center justify-center mb-2">
+                               <VideoOff className="w-6 h-6" />
+                          </div>
+                          <span className="text-sm">Camera preview unavailable</span>
+                      </div>
+                  )}
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                Camera & Microphone Setup
-              </h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">
-                After clicking "Join Classroom", you'll see a preview screen where you can test your camera and microphone before joining the session.
-              </p>
-              <div className="bg-white rounded-xl p-4 shadow-sm">
-                <p className="text-sm text-gray-500 flex items-center justify-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  Your browser will request camera and microphone permissions
-                </p>
+
+              {/* Permission Status Text (No Card/Icon container) */}
+              <div className="text-center space-y-2 max-w-xs">
+                  <h3 className="font-medium text-lg">System Check</h3>
+                  <p className={`text-sm leading-relaxed ${permissionStatus === 'granted' ? 'text-green-400' : 'text-gray-400'}`}>
+                      {permissionStatus === 'granted'
+                          ? "Camera and microphone are ready."
+                          : permissionStatus === 'denied'
+                          ? "Permission denied. Please enable access in browser settings."
+                          : "Waiting for camera and microphone permissions..."}
+                  </p>
               </div>
-            </div>
           </div>
         </div>
         
@@ -281,20 +350,20 @@ const SessionRoomPage = () => {
       )}
 
       {/* Left Sidebar - Navigation */}
-      <aside className="w-20 bg-white border-r border-gray-100 flex flex-col items-center py-8 z-30 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
-        <div className="mb-12">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
-            <span className="text-white font-bold text-xl">T</span>
+      <aside className="w-16 bg-white border-r border-gray-100 flex flex-col items-center py-6 z-30 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+        <div className="mb-8">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-md shadow-blue-200">
+            <span className="text-white font-bold text-lg">T</span>
           </div>
         </div>
         
-        <div className="flex-1 flex flex-col gap-8 w-full">
-          <NavItem icon={Home} label="Home" onClick={() => navigate('/dashboard')} />
-          <NavItem icon={Video} label="Classroom" active />
+        <div className="flex-1 flex flex-col gap-6 w-full">
+          <NavItem icon={Home} label="Home" onClick={() => navigate('/dashboard')} compact />
+          <NavItem icon={Video} label="Classroom" active compact />
         </div>
 
         <div className="mt-auto flex flex-col gap-6">
-          <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-sm">
+          <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border border-white shadow-sm">
              {/* User Avatar - Display only */}
              <div className="w-full h-full bg-gradient-to-tr from-blue-400 to-purple-400 flex items-center justify-center text-white font-bold text-xs">
                {user?.username?.[0]?.toUpperCase() || 'U'}
@@ -305,25 +374,28 @@ const SessionRoomPage = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col relative h-full">
-        {/* Header */}
-        <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-8 z-20">
-          <div>
-            <h1 className="text-xl font-bold text-gray-800">{booking.subject} Virtual Classroom</h1>
-            <p className="text-sm text-gray-500 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              Live Session • {booking.duration} mins
+        {/* Header - Simplified */}
+        <header className="h-14 bg-white border-b border-gray-100 flex items-center justify-between px-6 z-20">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <h1 className="text-lg font-bold text-gray-800 truncate max-w-xl" title={booking.subject}>
+              {booking.subject}
+            </h1>
+            <div className="h-4 w-px bg-gray-300 mx-1"></div>
+            <p className="text-xs text-gray-500 flex items-center gap-1.5 whitespace-nowrap">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+              Live • {booking.duration}m
             </p>
           </div>
           
         </header>
 
         {/* Content Body */}
-        <div className="flex-1 p-6 overflow-hidden flex gap-6 relative">
+        <div className="flex-1 p-4 overflow-hidden flex gap-4 relative">
           
           {/* Central Stage */}
-          <div className="flex-1 flex flex-col gap-4 relative">
+          <div className="flex-1 flex flex-col gap-3 relative">
             {/* Main Viewport */}
-            <div className="flex-1 bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden relative group">
+            <div className="flex-1 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden relative group">
               
               {/* Editor Split View */}
               {(showCodeEditor || showMarkdownEditor) ? (
@@ -433,19 +505,21 @@ const SessionRoomPage = () => {
 };
 
 // Sub-components
-const NavItem = ({ icon: Icon, active, onClick, label }) => (
+const NavItem = ({ icon: Icon, active, onClick, label, compact }) => (
   <button 
     onClick={onClick}
-    className={`w-full relative flex flex-col items-center gap-1 p-3 transition-all ${
+    className={`w-full relative flex flex-col items-center gap-1 transition-all ${
+      compact ? 'p-2' : 'p-3'
+    } ${
       active ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
     }`}
     title={label}
   >
-    <div className={`p-3 rounded-xl transition-all ${active ? 'bg-blue-50 shadow-sm' : 'hover:bg-gray-100'}`}>
-      <Icon className={`w-6 h-6 ${active ? 'fill-blue-600' : ''}`} strokeWidth={active ? 2.5 : 2} />
+    <div className={`${compact ? 'p-2 rounded-lg' : 'p-3 rounded-xl'} transition-all ${active ? 'bg-blue-50 shadow-sm' : 'hover:bg-gray-100'}`}>
+      <Icon className={`${compact ? 'w-5 h-5' : 'w-6 h-6'} ${active ? 'fill-blue-600' : ''}`} strokeWidth={active ? 2.5 : 2} />
     </div>
     {active && (
-      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-blue-600 rounded-l-full"></div>
+      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-blue-600 rounded-l-full"></div>
     )}
   </button>
 );

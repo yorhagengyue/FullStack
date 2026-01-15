@@ -208,135 +208,126 @@ const MarkdownCollabEditor = ({ bookingId, username = 'Guest', initialContent = 
   };
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-      {/* Toolbar */}
-      <div className="bg-gradient-to-r from-purple-900/50 to-blue-900/50 backdrop-blur-sm border-b border-purple-500/30 p-4 flex items-center justify-between flex-shrink-0 shadow-lg">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-500/20 rounded-lg">
-              <FileText className="w-5 h-5 text-purple-400" />
-            </div>
-            <div>
-              <span className="text-white font-bold text-lg">{noteTitle}</span>
-              <div className="text-purple-300 text-xs">Collaborative Editing</div>
+    <div className="h-full flex flex-col bg-[#0d1117]">
+      {/* Toolbar - Simplified */}
+      <div className="bg-[#161b22] border-b border-[#30363d] p-2 flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-4 overflow-hidden">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <div className="overflow-hidden">
+              <span className="text-gray-200 font-semibold text-sm truncate block max-w-[200px]" title={noteTitle}>{noteTitle}</span>
             </div>
           </div>
 
-          {/* Mode Toggle */}
-          <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-xl p-1.5 border border-purple-500/20">
+          {/* Mode Toggle - Compact */}
+          <div className="flex items-center bg-[#0d1117] rounded-md border border-[#30363d] p-0.5">
             <button
               onClick={() => setMode('edit')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
                 mode === 'edit' 
-                  ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white shadow-lg shadow-purple-500/50' 
-                  : 'text-gray-300 hover:text-white hover:bg-white/10'
+                  ? 'bg-[#21262d] text-white shadow-sm' 
+                  : 'text-gray-400 hover:text-gray-200'
               }`}
               title="Edit mode"
             >
-              <Edit3 className="w-4 h-4" />
               Edit
             </button>
             <button
               onClick={() => setMode('split')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
                 mode === 'split' 
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-blue-500/50' 
-                  : 'text-gray-300 hover:text-white hover:bg-white/10'
+                  ? 'bg-[#21262d] text-white shadow-sm' 
+                  : 'text-gray-400 hover:text-gray-200'
               }`}
               title="Split mode"
             >
-              <Columns2 className="w-4 h-4" />
               Split
             </button>
             <button
               onClick={() => setMode('preview')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
                 mode === 'preview' 
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/50' 
-                  : 'text-gray-300 hover:text-white hover:bg-white/10'
+                  ? 'bg-[#21262d] text-white shadow-sm' 
+                  : 'text-gray-400 hover:text-gray-200'
               }`}
               title="Preview mode"
             >
-              <Eye className="w-4 h-4" />
               Preview
             </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {/* Toggle Code Button */}
           {onToggleCode && (
             <button
               onClick={onToggleCode}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                 showCode 
-                  ? 'bg-indigo-600 hover:bg-indigo-700 text-white' 
-                  : 'bg-white/10 hover:bg-white/20 text-white'
+                  ? 'bg-[#1f6feb] text-white' 
+                  : 'text-gray-400 hover:bg-[#21262d] hover:text-gray-200'
               }`}
-              title={showCode ? 'Hide code' : 'Show code'}
             >
-              <Code className="w-4 h-4" />
-              {showCode ? 'Hide Code' : 'Code'}
+              <Code className="w-3.5 h-3.5" />
+              Code
             </button>
           )}
 
-          {/* Connection Status */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-black/30 border border-purple-500/30 rounded-lg backdrop-blur-sm" title={`Connection: ${connectionStatus}`}>
-            <div className={`w-2 h-2 rounded-full ${
-              connectionStatus === 'connected' ? 'bg-green-500 animate-pulse' :
+          {/* Connection Status - Minimal */}
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-[#0d1117] border border-[#30363d] rounded-md" title={`Connection: ${connectionStatus}`}>
+            <div className={`w-1.5 h-1.5 rounded-full ${
+              connectionStatus === 'connected' ? 'bg-green-500' :
               connectionStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' :
               'bg-red-500'
             }`}></div>
-            <span className="text-white text-sm font-medium">
+            <span className="text-gray-400 text-xs font-medium">
               {connectionStatus === 'connected' ? 'Synced' :
                connectionStatus === 'connecting' ? 'Connecting...' :
-               'Disconnected'}
+               'Offline'}
             </span>
           </div>
 
-          {/* Connected Users */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/20 border border-green-500/30 rounded-lg backdrop-blur-sm">
-            <Users className="w-4 h-4 text-green-400" />
-            <span className="text-green-300 text-sm font-semibold">
+          {/* Connected Users - Minimal */}
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-[#0d1117] border border-[#30363d] rounded-md">
+            <Users className="w-3.5 h-3.5 text-gray-400" />
+            <span className="text-gray-400 text-xs font-medium">
               {connectedUsers.length}
             </span>
           </div>
 
-          {/* Save Button */}
+          <div className="h-4 w-px bg-[#30363d] mx-1"></div>
+
+          {/* Save Button - Compact */}
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-lg transition-all shadow-lg shadow-green-500/30 font-semibold text-sm"
+            className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-white hover:bg-[#21262d] rounded-md transition-colors"
+            title="Save"
           >
             {saveSuccess ? (
-              <>
-                <Check className="w-4 h-4" />
-                Saved!
-              </>
+              <Check className="w-4 h-4 text-green-500" />
             ) : (
-              <>
-                <Save className="w-4 h-4" />
-              </>
+              <Save className="w-4 h-4" />
             )}
           </button>
 
-          {/* Download Button */}
+          {/* Download Button - Compact */}
           <button
             onClick={handleDownload}
-            className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-lg transition-all backdrop-blur-sm font-semibold text-sm"
+            className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-white hover:bg-[#21262d] rounded-md transition-colors"
             title="Download as .md"
           >
             <Download className="w-4 h-4" />
           </button>
 
-          {/* Complete Session Button */}
+          {/* Complete Session Button - Compact */}
           {onCompleteSession && (
             <button
               onClick={onCompleteSession}
               disabled={isCompleting}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-lg transition-all shadow-lg font-semibold text-sm"
+              className="ml-2 flex items-center gap-1.5 px-3 py-1 bg-[#238636] hover:bg-[#2ea043] disabled:bg-[#238636]/50 text-white rounded-md transition-colors text-xs font-semibold shadow-sm"
             >
-              <CheckCircle className="w-4 h-4" />
+              <CheckCircle className="w-3.5 h-3.5" />
               {isCompleting ? 'Completing...' : 'Complete'}
             </button>
           )}

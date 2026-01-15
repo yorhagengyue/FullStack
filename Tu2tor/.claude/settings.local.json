@@ -7,7 +7,12 @@
       "Bash(npm test -- review.test.js)",
       "Bash(npm test -- --coverage --reporter=verbose)",
       "Bash(Select-String -Pattern \"Coverage report|% Branch|reviewController\")",
-      "Bash(npm test -- tutor.test.js)"
+      "Bash(npm test -- tutor.test.js)",
+      "Bash(npm install openai tiktoken)",
+      "Bash(npm run test)",
+      "Bash(npm test knowledgeBase.test.js)",
+      "Bash(npm test -- knowledgeBase.test.js)",
+      "Bash(npm test -- rag.test.js)"
     ]
   }
 }

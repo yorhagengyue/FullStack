@@ -37,6 +37,8 @@ import {
   authAPI,
   tutorsAPI,
   bookingsAPI,
+  knowledgeBaseAPI,
+  ragAPI,
   notificationsAPI,
   todosAPI,
   studyNotesAPI,
@@ -126,5 +128,43 @@ describe('API client', () => {
     hoisted.apiMock.get.mockResolvedValueOnce({ data: [] });
     await testAPI.getUsers();
     expect(hoisted.apiMock.get).toHaveBeenCalledWith('/test/users');
+
+    // Knowledge Base API tests
+    hoisted.apiMock.get.mockResolvedValueOnce({ data: { success: true, documents: [] } });
+    await knowledgeBaseAPI.list({ subjectId: 'cs' });
+    expect(hoisted.apiMock.get).toHaveBeenCalledWith('/knowledge-base', { params: { subjectId: 'cs' } });
+
+    hoisted.apiMock.get.mockResolvedValueOnce({ data: { success: true, processingStatus: {} } });
+    await knowledgeBaseAPI.getStatus('doc1');
+    expect(hoisted.apiMock.get).toHaveBeenCalledWith('/knowledge-base/doc1/status');
+
+    hoisted.apiMock.get.mockResolvedValueOnce({ data: { success: true, knowledgeBase: {} } });
+    await knowledgeBaseAPI.getDocument('doc1');
+    expect(hoisted.apiMock.get).toHaveBeenCalledWith('/knowledge-base/doc1');
+
+    hoisted.apiMock.get.mockResolvedValueOnce({ data: { success: true, content: {} } });
+    await knowledgeBaseAPI.getContent('doc1');
+    expect(hoisted.apiMock.get).toHaveBeenCalledWith('/knowledge-base/doc1/content');
+
+    hoisted.apiMock.put.mockResolvedValueOnce({ data: { success: true } });
+    await knowledgeBaseAPI.update('doc1', { title: 'New Title' });
+    expect(hoisted.apiMock.put).toHaveBeenCalledWith('/knowledge-base/doc1', { title: 'New Title' });
+
+    hoisted.apiMock.get.mockResolvedValueOnce({ data: { success: true, documents: [] } });
+    await knowledgeBaseAPI.search({ query: 'test' });
+    expect(hoisted.apiMock.get).toHaveBeenCalledWith('/knowledge-base/search', { params: { query: 'test' } });
+
+    hoisted.apiMock.get.mockResolvedValueOnce({ data: { success: true, tags: [] } });
+    await knowledgeBaseAPI.getTags();
+    expect(hoisted.apiMock.get).toHaveBeenCalledWith('/knowledge-base/tags');
+
+    // RAG API tests
+    hoisted.apiMock.post.mockResolvedValueOnce({ data: { success: true, answer: 'test answer' } });
+    await ragAPI.query({ question: 'What is this?', documentIds: ['doc1'] });
+    expect(hoisted.apiMock.post).toHaveBeenCalledWith('/rag/query', {
+      question: 'What is this?',
+      subjectId: undefined,
+      documentIds: ['doc1']
+    });
   });
 });

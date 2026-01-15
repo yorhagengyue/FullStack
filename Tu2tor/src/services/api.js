@@ -267,6 +267,54 @@ export const knowledgeBaseAPI = {
   delete: async (documentId) => {
     const response = await api.delete(`/knowledge-base/${documentId}`);
     return response.data;
+  },
+
+  /**
+   * Get processing status of a document
+   */
+  getStatus: async (documentId) => {
+    const response = await api.get(`/knowledge-base/${documentId}/status`);
+    return response.data;
+  },
+
+  /**
+   * Get a single document by ID
+   */
+  getDocument: async (documentId) => {
+    const response = await api.get(`/knowledge-base/${documentId}`);
+    return response.data;
+  },
+
+  /**
+   * Get document content (extracted text)
+   */
+  getContent: async (documentId) => {
+    const response = await api.get(`/knowledge-base/${documentId}/content`);
+    return response.data;
+  },
+
+  /**
+   * Update document metadata
+   */
+  update: async (documentId, updates) => {
+    const response = await api.put(`/knowledge-base/${documentId}`, updates);
+    return response.data;
+  },
+
+  /**
+   * Search documents by keyword
+   */
+  search: async (params = {}) => {
+    const response = await api.get('/knowledge-base/search', { params });
+    return response.data;
+  },
+
+  /**
+   * Get all available tags
+   */
+  getTags: async () => {
+    const response = await api.get('/knowledge-base/tags');
+    return response.data;
   }
 };
 

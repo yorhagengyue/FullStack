@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 import KnowledgeBase from '../models/KnowledgeBase.js';
+import KnowledgeChunk from '../models/KnowledgeChunk.js';
+import openai from '../config/openai.js';
 import aiService from '../ai/services/AIService.js';
 
 /**
@@ -153,8 +155,133 @@ async function findRelevantChunks({ question, subjectId, documentIds = [], topDo
   return {
     chunks,
     keywords,
-    documentsFound: docs.length
+    documentsFound: docs.length,
+    searchMethod: 'keyword' // 标注：使用关键词搜索（降级方案）
   };
+}
+
+/**
+ * 基于向量搜索获取相关段落（新版本）
+ */
+async function findRelevantChunksWithVectorSearch({ question, subjectId, documentIds = [], topK = 5 }) {
+  console.log('[RAG Service] ========== VECTOR SEARCH ==========');
+  console.log('[RAG Service] Question:', question);
+  console.log('[RAG Service] DocumentIds:', documentIds);
+  console.log('[RAG Service] SubjectId:', subjectId);
+
+  try {
+    // 1. 将问题转换为向量
+    console.log('[RAG Service] Generating embedding for question...');
+    const queryResponse = await openai.embeddings.create({
+      model: 'text-embedding-3-small',
+      input: question,
+    });
+    const queryVector = queryResponse.data[0].embedding;
+    console.log('[RAG Service] Embedding generated, dimensions:', queryVector.length);
+
+    // 2. 构建聚合管道
+    const pipeline = [
+      {
+        $vectorSearch: {
+          index: 'vector_index', // 使用在 MongoDB Atlas 中创建的索引名称
+          path: 'embedding',
+          queryVector: queryVector,
+          numCandidates: 100,
+          limit: topK,
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          knowledgeBaseId: 1,
+          content: 1,
+          'metadata.pageNumber': 1,
+          'metadata.chunkIndex': 1,
+          'metadata.tokenCount': 1,
+          score: { $meta: 'vectorSearchScore' }
+        }
+      }
+    ];
+
+    // 3. 如果指定了文档ID，添加过滤条件
+    if (documentIds.length > 0) {
+      const objectIds = documentIds.map(id => {
+        try {
+          return new mongoose.Types.ObjectId(id);
+        } catch (e) {
+          console.error(`[RAG Service] Invalid ObjectId: ${id}`, e);
+          return null;
+        }
+      }).filter(Boolean);
+
+      console.log('[RAG Service] Filtering by document IDs:', objectIds);
+
+      // 在 $vectorSearch 之后添加 $match 阶段
+      pipeline.splice(1, 0, {
+        $match: {
+          knowledgeBaseId: { $in: objectIds }
+        }
+      });
+    }
+
+    console.log('[RAG Service] Executing vector search pipeline...');
+
+    // 4. 执行查询
+    const chunks = await KnowledgeChunk.aggregate(pipeline);
+
+    console.log('[RAG Service] Vector search results:', chunks.length, 'chunks found');
+
+    // 5. 过滤低分结果并获取文档标题
+    const relevantChunks = [];
+    const documentTitles = new Map();
+
+    for (const chunk of chunks) {
+      // 只返回相似度分数 > 0.6 的结果（降低阈值以支持跨语言搜索）
+      if (chunk.score > 0.6) {
+        // 获取文档标题（如果还没有缓存）
+        if (!documentTitles.has(chunk.knowledgeBaseId.toString())) {
+          const kb = await KnowledgeBase.findById(chunk.knowledgeBaseId).select('title').lean();
+          if (kb) {
+            documentTitles.set(chunk.knowledgeBaseId.toString(), kb.title);
+          }
+        }
+
+        relevantChunks.push({
+          documentId: chunk.knowledgeBaseId,
+          title: documentTitles.get(chunk.knowledgeBaseId.toString()) || 'Unknown Document',
+          pageNumber: chunk.metadata?.pageNumber || chunk.metadata?.chunkIndex || 0,
+          content: chunk.content,
+          score: chunk.score
+        });
+
+        console.log(`[RAG Service] Added chunk with score ${chunk.score.toFixed(3)}`);
+      }
+    }
+
+    console.log('[RAG Service] Filtered chunks (score > 0.6):', relevantChunks.length);
+    console.log('[RAG Service] ==========================================');
+
+    return {
+      chunks: relevantChunks,
+      keywords: [], // 向量搜索不需要关键词
+      documentsFound: documentTitles.size,
+      searchMethod: 'vector' // 标注：使用向量搜索
+    };
+
+  } catch (error) {
+    console.error('[RAG Service] Vector search failed:', error);
+    console.error('[RAG Service] Error details:', error.message);
+
+    // ⚠️ 降级方案：使用旧的关键词搜索
+    console.warn('[RAG Service] ⚠️  FALLBACK: Switching to keyword search due to vector search failure');
+    return await findRelevantChunks({
+      question,
+      subjectId,
+      documentIds,
+      topDocs: 3,
+      maxChunks: topK
+    });
+  }
 }
 
 /**
@@ -200,13 +327,13 @@ export async function queryWithRAG({ question, subjectId, documentIds = [] }) {
   console.log('[RAG Service] ========== QUERY WITH RAG ==========');
   console.log('[RAG Service] Question:', question);
   console.log('[RAG Service] DocumentIds:', documentIds);
-  
-  const searchResult = await findRelevantChunks({
+
+  // 使用新的向量搜索
+  const searchResult = await findRelevantChunksWithVectorSearch({
     question,
     subjectId,
     documentIds,
-    topDocs: 3,
-    maxChunks: documentIds.length > 0 ? 10 : 5 // 用户选择文档时，返回更多 chunks
+    topK: documentIds.length > 0 ? 10 : 5 // 用户选择文档时，返回更多 chunks
   });
 
   console.log('[RAG Service] Search result:', {
@@ -247,7 +374,8 @@ export async function queryWithRAG({ question, subjectId, documentIds = [] }) {
     meta: {
       keywords: searchResult.keywords,
       documentsFound: searchResult.documentsFound,
-      chunksFound: searchResult.chunks.length
+      chunksFound: searchResult.chunks.length,
+      searchMethod: searchResult.searchMethod // 标注：vector 或 keyword
     }
   };
 
