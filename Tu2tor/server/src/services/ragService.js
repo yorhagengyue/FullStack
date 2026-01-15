@@ -328,13 +328,44 @@ export async function queryWithRAG({ question, subjectId, documentIds = [] }) {
   console.log('[RAG Service] Question:', question);
   console.log('[RAG Service] DocumentIds:', documentIds);
 
-  // 使用新的向量搜索
-  const searchResult = await findRelevantChunksWithVectorSearch({
-    question,
-    subjectId,
-    documentIds,
-    topK: documentIds.length > 0 ? 10 : 5 // 用户选择文档时，返回更多 chunks
-  });
+  // 环境变量控制：是否使用向量搜索（默认启用）
+  const USE_VECTOR_SEARCH = process.env.USE_VECTOR_SEARCH !== 'false';
+  console.log('[RAG Service] USE_VECTOR_SEARCH:', USE_VECTOR_SEARCH);
+
+  let searchResult;
+
+  if (USE_VECTOR_SEARCH) {
+    try {
+      // 尝试使用向量搜索
+      searchResult = await findRelevantChunksWithVectorSearch({
+        question,
+        subjectId,
+        documentIds,
+        topK: documentIds.length > 0 ? 10 : 5 // 用户选择文档时，返回更多 chunks
+      });
+    } catch (error) {
+      console.error('[RAG Service] Vector search failed, falling back to keyword search');
+      console.error('[RAG Service] Error:', error.message);
+      // 回退到关键词搜索
+      searchResult = await findRelevantChunks({
+        question,
+        subjectId,
+        documentIds,
+        topDocs: 3,
+        maxChunks: documentIds.length > 0 ? 10 : 5
+      });
+    }
+  } else {
+    // 直接使用关键词搜索
+    console.log('[RAG Service] Using keyword search (vector search disabled by env)');
+    searchResult = await findRelevantChunks({
+      question,
+      subjectId,
+      documentIds,
+      topDocs: 3,
+      maxChunks: documentIds.length > 0 ? 10 : 5
+    });
+  }
 
   console.log('[RAG Service] Search result:', {
     keywords: searchResult.keywords,

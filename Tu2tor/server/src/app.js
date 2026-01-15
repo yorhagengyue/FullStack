@@ -29,6 +29,8 @@ export const createApp = ({ status, websocketService } = {}) => {
     'http://127.0.0.1:5174',
     'https://tu2tor-frontend.onrender.com',
     'https://tu2tor.onrender.com',
+    'https://tu2tor.com',
+    'https://www.tu2tor.com',
     process.env.FRONTEND_URL
   ].filter(Boolean);
 

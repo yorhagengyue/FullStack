@@ -5,6 +5,7 @@ import { useApp } from '../../context/AppContext';
 import { knowledgeBaseAPI } from '../../services/api';
 import Toast from '../../components/ui/Toast';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import ChunkVisualization from '../../components/knowledge-base/ChunkVisualization';
 import {
   Upload,
   FileText,
@@ -23,7 +24,8 @@ import {
   FileType,
   Plus,
   Search,
-  Filter
+  Filter,
+  Layers
 } from 'lucide-react';
 
 const KnowledgeBaseUpload = () => {
@@ -46,6 +48,8 @@ const KnowledgeBaseUpload = () => {
   const [pollingInterval, setPollingInterval] = useState(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showChunkModal, setShowChunkModal] = useState(false);
+  const [selectedDocumentForChunks, setSelectedDocumentForChunks] = useState(null);
 
   // Fetch uploaded documents
   useEffect(() => {
@@ -97,7 +101,7 @@ const KnowledgeBaseUpload = () => {
   const fetchDocuments = async () => {
     setLoading(true);
     try {
-      const response = await knowledgeBaseAPI.list({ sortBy: 'uploadedAt', sortOrder: 'desc' });
+      const response = await knowledgeBaseAPI.list({ sortBy: 'createdAt', sortOrder: 'desc' });
       if (response.success) {
         setDocuments(response.documents || response.data || []);
       }
@@ -272,25 +276,41 @@ const KnowledgeBaseUpload = () => {
   };
 
   const getFileIcon = (type) => {
-    if (type === 'pdf') return <FileText className="w-8 h-8 text-red-500" />;
-    if (type === 'pptx') return <File className="w-8 h-8 text-orange-500" />;
-    if (type === 'docx') return <FileText className="w-8 h-8 text-blue-500" />;
-    if (type === 'image') return <ImageIcon className="w-8 h-8 text-purple-500" />;
-    return <File className="w-8 h-8 text-gray-500" />;
+    if (type === 'pdf') return <FileText className="w-4 h-4 text-red-500" />;
+    if (type === 'pptx') return <File className="w-4 h-4 text-orange-500" />;
+    if (type === 'docx') return <FileText className="w-4 h-4 text-blue-500" />;
+    if (type === 'image') return <ImageIcon className="w-4 h-4 text-purple-500" />;
+    return <File className="w-4 h-4 text-gray-500" />;
   };
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      pending: { color: 'bg-yellow-50 text-yellow-600 border-yellow-200', icon: <Loader2 className="w-3 h-3 animate-spin" />, text: 'Queueing' },
-      processing: { color: 'bg-blue-50 text-blue-600 border-blue-200', icon: <Loader2 className="w-3 h-3 animate-spin" />, text: 'Processing' },
-      completed: { color: 'bg-green-50 text-green-600 border-green-200', icon: <CheckCircle className="w-3 h-3" />, text: 'Ready' },
-      failed: { color: 'bg-red-50 text-red-600 border-red-200', icon: <AlertCircle className="w-3 h-3" />, text: 'Failed' }
+      pending: { 
+        color: 'bg-amber-100/80 text-amber-700', 
+        dot: 'bg-amber-400',
+        text: 'Pending' 
+      },
+      processing: { 
+        color: 'bg-blue-100/80 text-blue-700', 
+        dot: 'bg-blue-400 animate-pulse',
+        text: 'Processing' 
+      },
+      completed: { 
+        color: 'bg-emerald-100/80 text-emerald-700', 
+        dot: 'bg-emerald-400',
+        text: 'Ready' 
+      },
+      failed: { 
+        color: 'bg-red-100/80 text-red-700', 
+        dot: 'bg-red-400',
+        text: 'Failed' 
+      }
     };
 
     const config = statusConfig[status] || statusConfig.pending;
     return (
-      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${config.color}`}>
-        {config.icon}
+      <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold tracking-wide uppercase ${config.color} shadow-sm`}>
+        <div className={`w-1.5 h-1.5 rounded-full ${config.dot}`}></div>
         {config.text}
       </span>
     );
@@ -303,7 +323,7 @@ const KnowledgeBaseUpload = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white p-8 font-sans selection:bg-gray-200">
       <Toast
         isOpen={toast.isOpen}
         onClose={() => setToast({ ...toast, isOpen: false })}
@@ -324,168 +344,204 @@ const KnowledgeBaseUpload = () => {
         type="danger"
       />
 
-      {/* Modern Header Section */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                <BookOpen className="w-8 h-8 text-indigo-600" />
-                Knowledge Base
-              </h1>
-              <p className="text-gray-500 mt-1">Manage and organize your AI-enhanced study materials</p>
+      {/* Main Container */}
+      <div className="max-w-[1600px] mx-auto">
+        
+        {/* Top Header Section */}
+        <div className="flex flex-col md:flex-row md:items-start justify-between mb-16 gap-10">
+          <div className="space-y-6">
+            {/* Status Bar Pills */}
+            <div className="flex items-center gap-3">
+               <div className="bg-white rounded-full px-5 py-1.5 border border-gray-200 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow">
+                  <span className="text-xs font-semibold text-gray-600">Your Knowledge</span>
+                  <div className="w-px h-3 bg-gray-300"></div>
+                  <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                  <span className="text-xs text-gray-500 font-medium">{new Date().toLocaleDateString()}</span>
+               </div>
+               
+               <div className="flex h-8 bg-gray-900 rounded-full items-center px-4 gap-2 shadow-lg shadow-gray-200">
+                  <div className="flex -space-x-1.5">
+                     <div className="w-4 h-4 rounded-full bg-white/20 border border-white/40"></div>
+                     <div className="w-4 h-4 rounded-full bg-white/20 border border-white/40"></div>
+                  </div>
+                  <span className="text-[10px] font-bold text-white tracking-wide">AI ACTIVE</span>
+               </div>
             </div>
-            
-            <button
-              onClick={() => setShowUploadModal(true)}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-lg shadow-indigo-200 transition-all hover:scale-105 active:scale-95"
-            >
-              <Plus className="w-5 h-5" />
-              Add Material
-            </button>
+
+            <h1 className="text-6xl font-light text-gray-900 tracking-tight leading-none">
+              KNOWLEDGE<span className="font-bold">BASE</span>
+            </h1>
           </div>
 
-          {/* Search and Filters Bar */}
-          <div className="mt-8 flex flex-col md:flex-row gap-4 items-center">
-            <div className="relative flex-1 w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input 
-                type="text" 
-                placeholder="Search documents by title, description, or tags..." 
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-500/20 text-gray-700 placeholder-gray-400 transition-all"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+          {/* Stats - Minimalist Vertical */}
+          <div className="flex gap-16 pt-4 pr-4">
+            <div className="text-center group cursor-default">
+              <div className="relative">
+                <div className="text-5xl font-extralight text-gray-900 mb-1 group-hover:scale-110 transition-transform origin-bottom duration-300">{documents.length}</div>
+                <span className="absolute -top-2 -right-4 bg-gray-100 text-[9px] font-bold px-1.5 py-0.5 rounded text-gray-900">Docs</span>
+              </div>
+              <div className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">Total</div>
             </div>
-            <div className="flex gap-3 w-full md:w-auto">
-               <button 
-                onClick={fetchDocuments}
-                className="p-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition-colors"
-                title="Refresh List"
-               >
-                 <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-               </button>
+            <div className="text-center group cursor-default">
+              <div className="relative">
+                <div className="text-5xl font-extralight text-gray-900 mb-1 group-hover:scale-110 transition-transform origin-bottom duration-300">
+                  {documents.filter(d => d.processingStatus?.status === 'completed').length}
+                </div>
+                <span className="absolute -top-2 -right-6 bg-black text-[9px] font-bold px-1.5 py-0.5 rounded text-white">Ready</span>
+              </div>
+              <div className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">Processed</div>
+            </div>
+            <div className="text-center group cursor-default">
+              <div className="text-5xl font-extralight text-gray-900 mb-1 group-hover:scale-110 transition-transform origin-bottom duration-300">
+                {subjects.length}
+              </div>
+              <div className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">Subjects</div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content Grid */}
-      <div className="max-w-7xl mx-auto p-6">
+        {/* Action Bar */}
+        <div className="flex flex-col lg:flex-row items-end justify-between gap-6 mb-12 border-b border-gray-100 pb-8">
+          <div className="flex items-center gap-6 w-full lg:w-auto">
+             <h2 className="text-3xl font-light text-gray-800 mr-2">
+               My Documents <span className="text-sm font-medium text-gray-400 ml-2 align-middle">{documents.length} Files</span>
+              </h2>
+
+             {/* Minimalist Search */}
+             <div className="group relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-gray-900 transition-colors" />
+                <input 
+                  type="text" 
+                  placeholder="Search..." 
+                  className="pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-full text-sm w-64 focus:w-80 transition-all duration-300 outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+             </div>
+
+             <button className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-colors">
+                <Filter className="w-3.5 h-3.5" />
+             </button>
+             
+             <div className="flex bg-gray-50 p-1 rounded-full">
+                <button 
+                   className="bg-black text-white px-4 py-1.5 rounded-full text-xs font-semibold shadow-sm"
+                   onClick={fetchDocuments}
+                >
+                   All
+                </button>
+                <button className="text-gray-500 px-4 py-1.5 rounded-full text-xs font-medium hover:text-gray-900 transition-colors">
+                   Recent
+                </button>
+             </div>
+          </div>
+
+          <button
+            onClick={() => setShowUploadModal(true)}
+            className="bg-black hover:bg-gray-800 text-white px-8 py-3.5 rounded-full font-bold text-xs tracking-wide shadow-lg shadow-gray-200 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            UPLOAD NEW
+          </button>
+        </div>
+
+        {/* Documents Grid */}
         {loading && documents.length === 0 ? (
           <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+            <Loader2 className="w-8 h-8 text-gray-300 animate-spin" />
           </div>
         ) : filteredDocuments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-96 bg-white rounded-3xl border border-dashed border-gray-300">
-            <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
-               <FileText className="w-10 h-10 text-indigo-300" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No documents found</h3>
-            <p className="text-gray-500 max-w-sm text-center mb-8">
-              {searchTerm ? "We couldn't find any documents matching your search." : "Get started by uploading your first study material to the Knowledge Base."}
-            </p>
-            {!searchTerm && (
-              <button
-                onClick={() => setShowUploadModal(true)}
-                className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition-colors"
-              >
-                Upload Document
-              </button>
-            )}
+          <div className="flex flex-col items-center justify-center h-80 border-2 border-dashed border-gray-100 rounded-[2rem]">
+             <p className="text-gray-400 font-light text-xl">No documents found</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredDocuments.map((doc) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+            {filteredDocuments.map((doc, index) => (
               <div
                 key={doc._id || doc.id}
-                className="group bg-white rounded-2xl border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden"
+                className="group bg-white rounded-[2.5rem] p-8 border border-gray-100 hover:border-gray-200 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_60px_-10px_rgba(0,0,0,0.1)] transition-all duration-500 hover:-translate-y-1 relative overflow-hidden"
               >
-                {/* Card Header / Icon Area */}
-                <div className="h-32 bg-gray-50 group-hover:bg-indigo-50/50 transition-colors flex items-center justify-center relative">
-                  <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
-                    {getFileIcon(doc.type)}
+                {/* Background Decoration */}
+                <div className="absolute -right-10 -top-10 w-40 h-40 bg-gray-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-2xl"></div>
+
+                <div className="flex items-start justify-between mb-8 relative z-10">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-[10px] font-black tracking-wider text-gray-400 group-hover:bg-black group-hover:text-white transition-colors">
+                       {doc.type.toUpperCase()}
+                    </div>
+                    <div>
+                       <h3 className="font-medium text-lg text-gray-900 truncate max-w-[200px]">{doc.title}</h3>
+                       <div className="flex items-center gap-2 mt-1">
+                          <div className={`w-1.5 h-1.5 rounded-full ${doc.processingStatus?.status === 'completed' ? 'bg-black' : 'bg-gray-300 animate-pulse'}`}></div>
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                             {doc.processingStatus?.status === 'completed' ? 'Processed' : 'Syncing'}
+                          </span>
+                       </div>
+                    </div>
                   </div>
-                  <div className="absolute top-3 right-3">
-                    {getStatusBadge(doc.processingStatus?.status || 'pending')}
-                  </div>
+                  
+                  <button 
+                    onClick={() => navigate(`/app/knowledge-base/${doc._id}`)}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-gray-300 hover:text-white hover:bg-black transition-all opacity-0 group-hover:opacity-100"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
                 </div>
 
-                {/* Card Content */}
-                <div className="p-5 flex-1 flex flex-col">
-                  <div className="mb-4">
-                    <h3 className="font-bold text-gray-900 line-clamp-1 mb-1" title={doc.title}>
-                      {doc.title}
-                    </h3>
-                    <p className="text-xs text-gray-400 flex items-center gap-2">
-                      <Calendar className="w-3 h-3" />
-                      {new Date(doc.uploadedAt).toLocaleDateString()}
-                    </p>
-                  </div>
+                {/* Data Grid */}
+                <div className="grid grid-cols-2 gap-4 mb-8 relative z-10">
+                   <div className="p-4 bg-gray-50/80 rounded-2xl group-hover:bg-white group-hover:shadow-sm transition-all duration-300">
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Uploaded</p>
+                      <p className="text-sm font-bold text-gray-700">{new Date(doc.createdAt || doc.updatedAt).toLocaleDateString()}</p>
+                   </div>
+                   <div className="p-4 bg-gray-50/80 rounded-2xl group-hover:bg-white group-hover:shadow-sm transition-all duration-300">
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Size</p>
+                      <p className="text-sm font-medium text-gray-700">
+                        {doc.extractedContent?.wordCount ? `${(doc.extractedContent.wordCount / 1000).toFixed(1)}k words` : 'Calculating'}
+                      </p>
+                   </div>
+                </div>
 
-                  {doc.description && (
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2 min-h-[40px]">
-                      {doc.description}
-                    </p>
-                  )}
-
-                  {/* Processing Progress Bar */}
-                  {(doc.processingStatus?.status === 'processing' || doc.processingStatus?.status === 'pending') && (
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between text-xs mb-1.5">
-                        <span className="text-indigo-600 font-medium">
-                          {doc.processingStatus.currentStep || 'Processing...'}
-                        </span>
-                        <span className="text-gray-500">{doc.processingStatus.progress || 0}%</span>
-                      </div>
-                      <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                        <div
-                          className="bg-indigo-600 h-full rounded-full transition-all duration-500"
-                          style={{ width: `${doc.processingStatus.progress || 0}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Tags */}
-                  <div className="flex-1">
-                     <div className="flex flex-wrap gap-1.5 mb-4">
-                      {doc.tags?.slice(0, 3).map((tag, idx) => (
-                        <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-medium uppercase tracking-wide">
-                          #{tag}
-                        </span>
+                {/* Bottom Row */}
+                <div className="flex items-end justify-between relative z-10">
+                   {/* Processing Dots */}
+                   <div className="flex gap-1.5 pb-2">
+                      {[1,2,3].map(i => (
+                         <div key={i} className="w-1.5 h-1.5 rounded-full bg-gray-200 group-hover:bg-gray-300 transition-colors"></div>
                       ))}
-                      {doc.tags?.length > 3 && (
-                        <span className="px-2 py-0.5 bg-gray-50 text-gray-400 rounded text-[10px]">+{doc.tags.length - 3}</span>
-                      )}
-                    </div>
-                  </div>
+                   </div>
 
-                  {/* Action Footer */}
-                  <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
-                     <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <FileType className="w-3 h-3" />
-                        {doc.type.toUpperCase()}
-                     </div>
-                     <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                        {doc.processingStatus?.status === 'completed' && (
-                          <button
-                            onClick={() => navigate(`/app/knowledge-base/${doc._id}`)}
-                            className="p-1.5 hover:bg-indigo-50 text-indigo-600 rounded-lg transition-colors"
-                            title="View"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => setConfirmDialog({ isOpen: true, documentId: doc._id })}
-                          className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                     </div>
-                  </div>
+                   <div className="flex gap-2">
+                      <button 
+                        onClick={() => {
+                            if (doc.processingStatus?.status !== 'completed') {
+                              setToast({ 
+                                isOpen: true, 
+                                message: 'Document is still processing. Chunks will be available once processing is complete.', 
+                                type: 'info' 
+                              });
+                              return;
+                            }
+                            setSelectedDocumentForChunks(doc._id);
+                            setShowChunkModal(true);
+                        }}
+                        disabled={doc.processingStatus?.status !== 'completed'}
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
+                          doc.processingStatus?.status === 'completed'
+                            ? 'text-gray-400 hover:bg-gray-100 hover:text-gray-900 cursor-pointer'
+                            : 'text-gray-200 cursor-not-allowed'
+                        }`}
+                        title={doc.processingStatus?.status === 'completed' ? 'View Chunks' : 'Processing...'}
+                      >
+                         <Layers className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => setConfirmDialog({ isOpen: true, documentId: doc._id })}
+                        className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-red-600 transition-colors"
+                      >
+                         <Trash2 className="w-4 h-4" />
+                      </button>
+                   </div>
                 </div>
               </div>
             ))}
@@ -493,36 +549,42 @@ const KnowledgeBaseUpload = () => {
         )}
       </div>
 
-      {/* Upload Modal */}
+      {/* Upload Modal - Workspace Style */}
       {showUploadModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <Upload className="w-5 h-5 text-indigo-600" />
-                Upload Material
-              </h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/30 backdrop-blur-md">
+          <div className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl border border-gray-200">
+            {/* Modal Header */}
+            <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-white to-blue-50/30">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                  <Upload className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">New Material</h2>
+                  <p className="text-xs text-gray-500">Upload study documents</p>
+                </div>
+              </div>
               <button 
                 onClick={() => setShowUploadModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
+                className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-2xl text-gray-400 hover:text-gray-600 transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-8">
-              {/* File Drop Zone */}
+            <div className="p-8 overflow-y-auto max-h-[calc(90vh-120px)]">
+              {/* File Drop Zone - Workspace Card Style */}
               <div
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
-                className={`border-2 border-dashed rounded-2xl p-10 text-center transition-all cursor-pointer group ${
+                className={`rounded-[2rem] p-8 text-center transition-all cursor-pointer border-2 border-dashed ${
                   dragActive
-                    ? 'border-indigo-500 bg-indigo-50 scale-[1.02]'
+                    ? 'border-indigo-400 bg-indigo-50/50 scale-[1.01]'
                     : selectedFile
-                    ? 'border-green-500 bg-green-50/30'
-                    : 'border-gray-200 hover:border-indigo-400 hover:bg-gray-50'
+                    ? 'border-green-400 bg-green-50/30'
+                    : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50/50'
                 }`}
                 onClick={() => document.getElementById('fileInput').click()}
               >
@@ -535,12 +597,12 @@ const KnowledgeBaseUpload = () => {
                 />
 
                 {selectedFile ? (
-                  <div className="space-y-4">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                       <CheckCircle className="w-8 h-8 text-green-600" />
+                  <div className="flex items-center gap-4 justify-center">
+                    <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
+                       <CheckCircle className="w-7 h-7 text-white" />
                     </div>
-                    <div>
-                      <p className="font-bold text-gray-900 text-lg">{selectedFile.name}</p>
+                    <div className="text-left">
+                      <p className="font-bold text-gray-900 text-base">{selectedFile.name}</p>
                       <p className="text-sm text-gray-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
                     </div>
                     <button
@@ -548,117 +610,148 @@ const KnowledgeBaseUpload = () => {
                         e.stopPropagation();
                         setSelectedFile(null);
                       }}
-                      className="px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors"
+                      className="ml-auto w-8 h-8 flex items-center justify-center hover:bg-red-50 text-red-500 rounded-xl transition-colors"
                     >
-                      Remove File
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="w-16 h-16 bg-indigo-50 group-hover:bg-indigo-100 rounded-full flex items-center justify-center mx-auto transition-colors">
-                      <Upload className="w-8 h-8 text-indigo-500" />
+                  <div className="space-y-3">
+                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto shadow-md">
+                      <Upload className="w-7 h-7 text-indigo-600" />
                     </div>
                     <div>
-                      <p className="text-gray-900 font-semibold text-lg">Click to browse or drag file here</p>
-                      <p className="text-gray-500 mt-1">Supports PDF, PPTX, DOCX, Images (Max 50MB)</p>
+                      <p className="text-gray-900 font-bold text-base">Drop file or click to browse</p>
+                      <p className="text-gray-500 text-sm mt-1">PDF, PPTX, DOCX, Images (Max 50MB)</p>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Form Fields */}
-              <div className="space-y-6 mt-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Subject *</label>
-                    <select
-                      value={selectedSubject}
-                      onChange={(e) => setSelectedSubject(e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
-                      required
-                    >
-                      <option value="">Select a subject</option>
-                      {subjects.map((subject, idx) => {
-                         const value = subject._id || subject.id || subject.subjectId;
-                         return (
-                           <option key={value || idx} value={value || ''}>
-                           {subject.name}
-                           </option>
-                         );
-                      })}
-                    </select>
-                  </div>
+              {/* Form Fields - Refined */}
+              <div className="space-y-5 mt-8">
+                <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Subject *</label>
+                  <select
+                    value={selectedSubject}
+                    onChange={(e) => setSelectedSubject(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all outline-none text-sm shadow-sm"
+                    required
+                  >
+                      <option value="">Select subject</option>
+                    {subjects.map((subject, idx) => {
+                      const value = subject._id || subject.id || subject.subjectId;
+                      return (
+                        <option key={value || idx} value={value || ''}>
+                        {subject.name}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Visibility</label>
+                <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Visibility</label>
                     <select
                       value={visibility}
                       onChange={(e) => setVisibility(e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                      className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all outline-none text-sm shadow-sm"
                     >
-                      <option value="private">Private (Only me)</option>
-                      <option value="public">Public (Everyone)</option>
+                      <option value="private">Private</option>
+                      <option value="public">Public</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Title *</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Title *</label>
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all outline-none text-sm shadow-sm"
                     placeholder="e.g., Week 3 Lecture Notes"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Description</label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none resize-none"
+                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all outline-none resize-none text-sm shadow-sm"
                     rows={3}
-                    placeholder="Brief description..."
+                    placeholder="What's this material about?"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Tags</label>
-                  <div className="relative">
-                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      type="text"
-                      value={tags}
-                      onChange={(e) => setTags(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
-                      placeholder="comma, separated, tags"
-                    />
-                  </div>
+                  <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Tags</label>
+                  <input
+                    type="text"
+                    value={tags}
+                    onChange={(e) => setTags(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all outline-none text-sm shadow-sm"
+                    placeholder="lecture, exam, notes"
+                  />
                 </div>
 
-                <div className="pt-4">
-                  <button
-                    onClick={handleUpload}
-                    disabled={!selectedFile || !selectedSubject || !title.trim() || uploading}
-                    className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white rounded-xl font-bold text-lg shadow-lg shadow-indigo-200 transition-all transform active:scale-[0.98] flex items-center justify-center gap-3"
-                  >
-                    {uploading ? (
-                      <>
-                        <Loader2 className="w-6 h-6 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="w-6 h-6" />
-                        Start Upload
-                      </>
-                    )}
-                  </button>
-                </div>
+                <div className="pt-2">
+                <button
+                  onClick={handleUpload}
+                  disabled={!selectedFile || !selectedSubject || !title.trim() || uploading}
+                    className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed text-white rounded-full font-bold text-base shadow-lg shadow-indigo-300/40 transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                  {uploading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-5 h-5" />
+                      Upload Material
+                    </>
+                  )}
+                </button>
               </div>
+            </div>
+          </div>
+                              </div>
+                            </div>
+                          )}
+
+      {/* Chunk Visualization Modal */}
+      {showChunkModal && selectedDocumentForChunks && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <Layers className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Document Chunks</h2>
+                  <p className="text-sm text-gray-500">View how this document was split for RAG processing</p>
+                            </div>
+                        </div>
+                            <button
+                onClick={() => {
+                  setShowChunkModal(false);
+                  setSelectedDocumentForChunks(null);
+                }}
+                className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+                          </button>
+                        </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <ChunkVisualization documentId={selectedDocumentForChunks} />
             </div>
           </div>
         </div>
@@ -668,4 +761,3 @@ const KnowledgeBaseUpload = () => {
 };
 
 export default KnowledgeBaseUpload;
-

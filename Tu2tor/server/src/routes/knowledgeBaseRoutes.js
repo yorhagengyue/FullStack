@@ -68,6 +68,7 @@ router.delete('/:id', knowledgeBaseController.deleteDocument);
 // 文档内容和状态
 router.get('/:id/status', knowledgeBaseController.getProcessingStatus);
 router.get('/:id/content', knowledgeBaseController.getDocumentContent);
+router.get('/:id/chunks', knowledgeBaseController.getDocumentChunks);
 
 // 科目相关
 router.get('/subject/:subjectId/stats', knowledgeBaseController.getSubjectStats);

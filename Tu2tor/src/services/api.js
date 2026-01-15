@@ -294,6 +294,14 @@ export const knowledgeBaseAPI = {
   },
 
   /**
+   * Get document chunks (for visualization)
+   */
+  getChunks: async (documentId) => {
+    const response = await api.get(`/knowledge-base/${documentId}/chunks`);
+    return response.data;
+  },
+
+  /**
    * Update document metadata
    */
   update: async (documentId, updates) => {

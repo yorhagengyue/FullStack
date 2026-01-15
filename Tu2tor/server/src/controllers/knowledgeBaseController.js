@@ -1,4 +1,5 @@
 import KnowledgeBase from '../models/KnowledgeBase.js';
+import KnowledgeChunk from '../models/KnowledgeChunk.js';
 import DocumentProcessor from '../services/documentProcessor.js';
 import fs from 'fs/promises';
 import path from 'path';
@@ -525,6 +526,65 @@ export const getTags = async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch tags',
+      message: error.message
+    });
+  }
+};
+
+/**
+ * 获取文档的所有 chunks（用于可视化）
+ */
+export const getDocumentChunks = async (req, res) => {
+  try {
+    const kb = await KnowledgeBase.findById(req.params.id);
+
+    if (!kb) {
+      return res.status(404).json({
+        success: false,
+        error: 'Document not found'
+      });
+    }
+
+    // 检查访问权限
+    if (!kb.canAccess(req.user._id)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied'
+      });
+    }
+
+    // 检查处理状态
+    if (kb.processingStatus.status !== 'completed') {
+      return res.status(400).json({
+        success: false,
+        error: 'Document is still being processed',
+        processingStatus: kb.processingStatus
+      });
+    }
+
+    // 获取所有 chunks（不包含 embedding 向量）
+    const chunks = await KnowledgeChunk.find({ knowledgeBaseId: kb._id })
+      .select('-embedding') // 排除 embedding 字段（太大）
+      .sort({ 'metadata.chunkIndex': 1 }) // 按索引排序
+      .lean();
+
+    res.json({
+      success: true,
+      chunks,
+      stats: {
+        totalChunks: chunks.length,
+        avgTokens: chunks.length > 0
+          ? chunks.reduce((sum, c) => sum + c.metadata.tokenCount, 0) / chunks.length
+          : 0,
+        totalTokens: chunks.reduce((sum, c) => sum + c.metadata.tokenCount, 0)
+      }
+    });
+
+  } catch (error) {
+    console.error('[KB Controller] Get chunks error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch chunks',
       message: error.message
     });
   }

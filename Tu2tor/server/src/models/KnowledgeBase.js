@@ -187,15 +187,20 @@ knowledgeBaseSchema.methods.incrementViewCount = function() {
 
 // 实例方法：检查用户访问权限
 knowledgeBaseSchema.methods.canAccess = function(userId) {
+  // 验证 userId 参数
+  if (!userId) return false;
+
   // 所有者
-  if (this.userId.equals(userId)) return true;
-  
+  if (this.userId && this.userId.equals(userId)) return true;
+
   // 公开文档
   if (this.visibility === 'public') return true;
-  
+
   // 明确共享
-  if (this.sharedWith.some(id => id.equals(userId))) return true;
-  
+  if (this.sharedWith && Array.isArray(this.sharedWith)) {
+    if (this.sharedWith.some(id => id && id.equals && id.equals(userId))) return true;
+  }
+
   // 科目内文档需要在 controller 层检查用户是否选修该科目
   return false;
 };

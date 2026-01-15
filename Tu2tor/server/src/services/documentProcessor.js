@@ -108,7 +108,19 @@ ${text}
 
       // 解析响应
       const result = JSON.parse(response.choices[0].message.content);
-      const chunks = result.chunks || result;
+      let chunks = result.chunks || result;
+
+      // 验证 chunks 是数组
+      if (!Array.isArray(chunks)) {
+        console.warn('[AI Chunking] Response is not an array, using fallback');
+        return this.fallbackChunking(text, targetTokens);
+      }
+
+      // 验证 chunks 不为空
+      if (chunks.length === 0) {
+        console.warn('[AI Chunking] Empty chunks array, using fallback');
+        return this.fallbackChunking(text, targetTokens);
+      }
 
       console.log('[AI Chunking] Success:', {
         chunksCount: chunks.length,
@@ -200,6 +212,82 @@ ${text}
       });
     }
 
+    return chunks;
+  }
+
+  /**
+   * PPT基于幻灯片的分块策略
+   */
+  static async chunkPptxBySlides(pageTexts) {
+    const MIN_TOKENS = 150;  // 最小token数，小于此值则合并
+    const MAX_TOKENS = 600;  // 最大token数，大于此值则拆分
+    const chunks = [];
+    let currentChunk = '';
+    let currentTokens = 0;
+    let slideNumbers = [];
+
+    console.log('[PPTX Chunking] Processing', pageTexts.length, 'slides');
+
+    for (let i = 0; i < pageTexts.length; i++) {
+      const slide = pageTexts[i];
+      const slideContent = slide.content.trim();
+      const slideTokens = this.countTokens(slideContent);
+
+      // 如果当前幻灯片太大，单独处理
+      if (slideTokens > MAX_TOKENS) {
+        // 先保存之前累积的chunk
+        if (currentChunk) {
+          chunks.push({
+            content: currentChunk.trim(),
+            summary: `Slides ${slideNumbers[0]}-${slideNumbers[slideNumbers.length - 1]}`
+          });
+          currentChunk = '';
+          currentTokens = 0;
+          slideNumbers = [];
+        }
+
+        // 对大幻灯片使用fallback分块
+        console.log(`[PPTX Chunking] Slide ${slide.pageNumber} is too large (${slideTokens} tokens), splitting...`);
+        const subChunks = this.fallbackChunking(slideContent, 450);
+        subChunks.forEach((subChunk, idx) => {
+          chunks.push({
+            content: subChunk.content,
+            summary: `Slide ${slide.pageNumber} (part ${idx + 1}/${subChunks.length})`
+          });
+        });
+        continue;
+      }
+
+      // 如果添加当前幻灯片会超过最大值，先保存之前的chunk
+      if (currentTokens + slideTokens > MAX_TOKENS && currentChunk) {
+        chunks.push({
+          content: currentChunk.trim(),
+          summary: slideNumbers.length > 1
+            ? `Slides ${slideNumbers[0]}-${slideNumbers[slideNumbers.length - 1]}`
+            : `Slide ${slideNumbers[0]}`
+        });
+        currentChunk = '';
+        currentTokens = 0;
+        slideNumbers = [];
+      }
+
+      // 添加当前幻灯片
+      currentChunk += (currentChunk ? '\n\n---\n\n' : '') + slideContent;
+      currentTokens += slideTokens;
+      slideNumbers.push(slide.pageNumber);
+    }
+
+    // 保存最后的chunk
+    if (currentChunk) {
+      chunks.push({
+        content: currentChunk.trim(),
+        summary: slideNumbers.length > 1
+          ? `Slides ${slideNumbers[0]}-${slideNumbers[slideNumbers.length - 1]}`
+          : `Slide ${slideNumbers[0]}`
+      });
+    }
+
+    console.log('[PPTX Chunking] Created', chunks.length, 'chunks from', pageTexts.length, 'slides');
     return chunks;
   }
 
@@ -322,22 +410,35 @@ ${text}
       console.log('[Document Processing] Full text length:', fullText.length);
       console.log('[Document Processing] Estimated tokens:', this.countTokens(fullText));
 
-      // 1. 整合所有文本
-      const fullTextForChunking = extractedContent.pageTexts
-        ? extractedContent.pageTexts.map(p => p.content).join('\n\n')
-        : fullText;
+      let aiChunks;
+      let fullTextForChunking;
 
-      // 2. AI 智能分块（使用缓存版本）
-      const aiChunks = await this.aiChunkTextWithCache(fullTextForChunking, {
-        minTokens: 300,
-        maxTokens: 600,
-        targetTokens: 450
-      });
+      // 针对PPT使用基于页面的chunking策略
+      if (kb.type === 'pptx' && extractedContent.pageTexts) {
+        console.log('[Document Processing] Using slide-based chunking for PPTX');
+        fullTextForChunking = extractedContent.pageTexts.map(p => p.content).join('\n\n');
+        aiChunks = await this.chunkPptxBySlides(extractedContent.pageTexts);
+      } else {
+        // 其他文件类型使用AI智能分块
+        // 1. 整合所有文本
+        fullTextForChunking = extractedContent.pageTexts
+          ? extractedContent.pageTexts.map(p => p.content).join('\n\n')
+          : fullText;
 
-      console.log('[Document Processing] AI chunking complete:', aiChunks.length, 'chunks');
+        // 2. AI 智能分块（使用缓存版本）
+        aiChunks = await this.aiChunkTextWithCache(fullTextForChunking, {
+          minTokens: 300,
+          maxTokens: 600,
+          targetTokens: 450
+        });
+      }
 
-      // 追踪 AI 分块成本
-      this.trackChunkingCost(fullTextForChunking, aiChunks.length);
+      console.log('[Document Processing] Chunking complete:', aiChunks.length, 'chunks');
+
+      // 追踪 AI 分块成本（仅对非PPT文件，因为PPT不使用AI分块）
+      if (kb.type !== 'pptx') {
+        this.trackChunkingCost(fullTextForChunking, aiChunks.length);
+      }
 
       // 3. 批量生成嵌入（分批处理，避免超过 API 限制）
       const BATCH_SIZE = 100;
@@ -451,33 +552,78 @@ ${text}
   }
   
   /**
-   * 提取 PPTX 文本
+   * 提取 PPTX 文本（改进版：更好地识别幻灯片边界）
    */
   static async extractPptxText(filePath) {
     try {
       const text = await officeParser.parseOfficeAsync(filePath);
-      
-      // 按双换行分割幻灯片
-      const slides = text.split('\n\n\n').filter(s => s.trim());
-      
-      // 如果没有三个换行符，尝试用双换行分割
-      const pages = slides.length > 1 ? slides : text.split('\n\n').filter(s => s.trim());
-      
+
+      console.log('[PPTX Extraction] Raw text length:', text.length);
+
+      // 改进的幻灯片分割策略
+      // 1. 首先尝试用多个换行符分割（通常幻灯片之间有多个换行）
+      let slides = text.split(/\n{3,}/).filter(s => s.trim());
+
+      // 2. 如果分割结果太少，尝试用双换行分割
+      if (slides.length < 3) {
+        slides = text.split(/\n{2,}/).filter(s => s.trim());
+      }
+
+      // 3. 如果还是太少，可能是单个长文本，使用基于token的智能分割
+      if (slides.length < 2) {
+        console.log('[PPTX Extraction] Using token-based splitting');
+        slides = this.splitByTokens(text, 300); // 每300 tokens一个"幻灯片"
+      }
+
+      // 4. 过滤掉太短的片段（可能是噪音）
+      slides = slides.filter(s => s.trim().length > 20);
+
+      console.log('[PPTX Extraction] Identified', slides.length, 'slides');
+
       return {
         fullText: text,
-        pageTexts: pages.map((content, index) => ({
+        pageTexts: slides.map((content, index) => ({
           pageNumber: index + 1,
           content: content.trim(),
           images: []
         })),
         metadata: {
-          pageCount: pages.length
+          pageCount: slides.length
         }
       };
     } catch (error) {
       console.error('[DocProcessor] PPTX extraction error:', error);
       throw new Error(`Failed to extract PPTX text: ${error.message}`);
     }
+  }
+
+  /**
+   * 基于token数分割文本（用于无明显分隔符的文本）
+   */
+  static splitByTokens(text, targetTokens = 300) {
+    const paragraphs = text.split(/\n+/);
+    const chunks = [];
+    let currentChunk = '';
+    let currentTokens = 0;
+
+    for (const para of paragraphs) {
+      const paraTokens = this.countTokens(para);
+
+      if (currentTokens + paraTokens > targetTokens && currentChunk) {
+        chunks.push(currentChunk.trim());
+        currentChunk = para;
+        currentTokens = paraTokens;
+      } else {
+        currentChunk += (currentChunk ? '\n' : '') + para;
+        currentTokens += paraTokens;
+      }
+    }
+
+    if (currentChunk) {
+      chunks.push(currentChunk.trim());
+    }
+
+    return chunks;
   }
   
   /**

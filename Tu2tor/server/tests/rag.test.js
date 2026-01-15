@@ -5,14 +5,6 @@ import { connectTestDb, clearTestDb, disconnectTestDb } from './utils/testDb.js'
 import KnowledgeBase from '../src/models/KnowledgeBase.js';
 import KnowledgeChunk from '../src/models/KnowledgeChunk.js';
 import User from '../src/models/User.js';
-import aiService from '../src/ai/services/AIService.js';
-
-// Mock AIService to avoid real API calls during tests
-vi.spyOn(aiService, 'generateContent').mockResolvedValue({
-  content: 'This is a test response about machine learning and AI.',
-  tokens: 100,
-  cost: 0.001
-});
 
 const { app } = createApp();
 
