@@ -20,7 +20,7 @@ export const getTodos = async (req, res) => {
 // @access  Private
 export const createTodo = async (req, res) => {
   try {
-    const { text, priority, dueDate } = req.body;
+    const { text, priority, dueDate, completed } = req.body;
 
     if (!text || text.trim() === '') {
       return res.status(400).json({ message: 'Todo text is required' });
@@ -31,7 +31,7 @@ export const createTodo = async (req, res) => {
       text: text.trim(),
       priority: priority || 'medium',
       dueDate: dueDate || null,
-      completed: false
+      completed: completed || false
     });
 
     res.status(201).json(todo);
