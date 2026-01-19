@@ -239,4 +239,4 @@ Already handled in `CodeCollabEditor.jsx` with custom worker configuration. If i
 
 - See [API.md](./API.md) for API endpoint documentation
 - See [ARCHITECTURE.md](./ARCHITECTURE.md) for system design
-- See [DEPLOYMENT.md](./DEPLOYMENT.md) for production deployment
+- See `render.yaml` for production deployment configuration

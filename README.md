@@ -108,7 +108,7 @@ Tu2tor/
 - [Setup Guide](./SETUP.md) - Detailed installation and configuration
 - [API Reference](./API.md) - Complete API documentation
 - [Architecture](./ARCHITECTURE.md) - System design and data flow
-- [Deployment](./DEPLOYMENT.md) - Production deployment guide
+- [RAG System](./RAG.md) - Retrieval-Augmented Generation implementation
 
 ## Testing
 
@@ -128,7 +128,7 @@ npm run test:coverage
 
 ## Deployment
 
-The application is configured for deployment on Render.com. See `render.yaml` for configuration details and [DEPLOYMENT.md](./DEPLOYMENT.md) for step-by-step instructions.
+The application is configured for deployment on Render.com. See `render.yaml` for configuration details.
 
 ## License
 
