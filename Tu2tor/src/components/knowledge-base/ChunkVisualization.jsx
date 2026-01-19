@@ -157,12 +157,12 @@ const ChunkVisualization = ({ documentId }) => {
 
         <div className="space-y-8">
           {chunks.map((chunk, index) => {
-            const isExpanded = expandedChunks.has(chunk._id);
+          const isExpanded = expandedChunks.has(chunk._id);
             const contentPreview = chunk.content.slice(0, 250);
             const needsTruncation = chunk.content.length > 250;
             const typeStyle = getChunkTypeStyle(chunk.metadata.chunkType);
 
-            return (
+          return (
               <div key={chunk._id} className="relative group">
                 {/* Timeline Node - Left Side */}
                 <div className="absolute -left-[34px] top-0 flex flex-col items-center">
@@ -184,22 +184,22 @@ const ChunkVisualization = ({ documentId }) => {
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-4 border-b border-gray-100 pb-4">
                       <span className={`px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border ${typeStyle.bg} ${typeStyle.text} ${typeStyle.border}`}>
                         {chunk.metadata.chunkType}
-                      </span>
+                  </span>
                       
                       <div className="flex items-center gap-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                         <span className="flex items-center gap-1.5">
                           <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
                           {chunk.metadata.tokenCount} tokens
-                        </span>
+                  </span>
                         <span className="flex items-center gap-1.5">
                           <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
                           {chunk.metadata.charCount} chars
-                        </span>
-                      </div>
-                    </div>
+                    </span>
+                </div>
+              </div>
 
                     {/* Summary Section (if exists) */}
-                    {chunk.metadata.summary && (
+              {chunk.metadata.summary && (
                       <div className="mb-5 p-5 bg-gray-50/80 rounded-2xl border border-gray-100">
                         <div className="flex items-center gap-2 mb-2 text-gray-900 font-bold text-sm">
                            <AlignLeft className="w-4 h-4 text-gray-500" />
@@ -208,8 +208,8 @@ const ChunkVisualization = ({ documentId }) => {
                         <p className="text-sm text-gray-600 leading-relaxed font-medium">
                           {chunk.metadata.summary}
                         </p>
-                      </div>
-                    )}
+                </div>
+              )}
 
                     {/* Main Content */}
                     <div className="relative">
@@ -222,18 +222,18 @@ const ChunkVisualization = ({ documentId }) => {
                         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white via-white/90 to-transparent"></div>
                       )}
                     </div>
-                  </div>
+              </div>
 
                   {/* Expand/Collapse Action */}
-                  {needsTruncation && (
-                    <button
+              {needsTruncation && (
+                <button
                       className={`w-full py-3 text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 ${
                         isExpanded 
                           ? 'bg-gray-50 text-gray-500 hover:bg-gray-100 border-t border-gray-100' 
                           : 'bg-white text-gray-900 hover:bg-gray-50 border-t border-gray-100'
                       }`}
-                      onClick={() => toggleChunk(chunk._id)}
-                    >
+                  onClick={() => toggleChunk(chunk._id)}
+                >
                       {isExpanded ? (
                         <>
                           <Minimize2 className="w-3.5 h-3.5" />
@@ -245,12 +245,12 @@ const ChunkVisualization = ({ documentId }) => {
                           Read More
                         </>
                       )}
-                    </button>
-                  )}
+                </button>
+              )}
                 </div>
-              </div>
-            );
-          })}
+            </div>
+          );
+        })}
         </div>
       </div>
     </div>

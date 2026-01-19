@@ -82,7 +82,7 @@ const SessionRoomPage = () => {
       try {
         const data = await bookingsAPI.getBookingById(bookingId);
         setBooking(data);
-        
+
         // Restore session state if needed
         if (data.status === 'confirmed' && data.actualStartTime) {
           setSessionStarted(true);
@@ -109,8 +109,8 @@ const SessionRoomPage = () => {
           setPermissionStatus('granted');
           if (videoPreviewRef.current) {
               videoPreviewRef.current.srcObject = stream;
-          }
-        } catch (err) {
+        }
+      } catch (err) {
           console.error("Error accessing media devices:", err);
           setPermissionStatus('denied');
         }
@@ -281,8 +281,8 @@ const SessionRoomPage = () => {
             >
               <Video className="w-5 h-5" />
               {permissionStatus === 'granted' ? 'Join Classroom' : 'Allow Camera to Join'}
-            </button>
-          </div>
+        </button>
+      </div>
 
           {/* Right Side - Preview & Check */}
           <div className="flex-1 bg-gray-900 p-8 flex flex-col items-center justify-center relative overflow-hidden text-white">
@@ -342,11 +342,11 @@ const SessionRoomPage = () => {
     <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
       {/* Toast Notification */}
       {toast.show && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
+      <Toast
+        message={toast.message}
+        type={toast.type}
           onClose={() => setToast({ ...toast, show: false })}
-        />
+      />
       )}
 
       {/* Left Sidebar - Navigation */}
@@ -354,9 +354,9 @@ const SessionRoomPage = () => {
         <div className="mb-8">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-md shadow-blue-200">
             <span className="text-white font-bold text-lg">T</span>
-          </div>
-        </div>
-        
+              </div>
+            </div>
+
         <div className="flex-1 flex flex-col gap-6 w-full">
           <NavItem icon={Home} label="Home" onClick={() => navigate('/dashboard')} compact />
           <NavItem icon={Video} label="Classroom" active compact />
@@ -367,7 +367,7 @@ const SessionRoomPage = () => {
              {/* User Avatar - Display only */}
              <div className="w-full h-full bg-gradient-to-tr from-blue-400 to-purple-400 flex items-center justify-center text-white font-bold text-xs">
                {user?.username?.[0]?.toUpperCase() || 'U'}
-             </div>
+              </div>
           </div>
         </div>
       </aside>
@@ -385,7 +385,7 @@ const SessionRoomPage = () => {
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
               Live • {booking.duration}m
             </p>
-          </div>
+              </div>
           
         </header>
 
@@ -402,48 +402,48 @@ const SessionRoomPage = () => {
                  <div className="flex h-full w-full">
                     {/* Editor Area */}
                     <div className="flex-1 h-full bg-gray-900">
-                      {showCodeEditor && (
-                        <CodeCollabEditor
-                          bookingId={bookingId}
-                          language={booking.subject?.toLowerCase().includes('python') ? 'python' : 'javascript'}
-                          username={user?.username || 'Guest'}
-                          onToggleMarkdown={toggleMarkdownEditor}
-                          showMarkdown={showMarkdownEditor}
-                          onCompleteSession={handleCompleteSession}
-                          isCompleting={isCompleting}
-                        />
-                      )}
-                      {showMarkdownEditor && selectedNote && (
-                        <MarkdownCollabEditor
-                          bookingId={bookingId}
-                          username={user?.username || 'Guest'}
-                          initialContent={selectedNote.content || ''}
-                          noteTitle={selectedNote.title || 'Untitled'}
-                          onToggleCode={toggleCodeEditor}
-                          showCode={showCodeEditor}
-                          onCompleteSession={handleCompleteSession}
-                          isCompleting={isCompleting}
-                        />
-                      )}
-                    </div>
-                    
+              {showCodeEditor && (
+                  <CodeCollabEditor
+                    bookingId={bookingId}
+                    language={booking.subject?.toLowerCase().includes('python') ? 'python' : 'javascript'}
+                    username={user?.username || 'Guest'}
+                    onToggleMarkdown={toggleMarkdownEditor}
+                    showMarkdown={showMarkdownEditor}
+                    onCompleteSession={handleCompleteSession}
+                    isCompleting={isCompleting}
+                  />
+              )}
+              {showMarkdownEditor && selectedNote && (
+                  <MarkdownCollabEditor
+                    bookingId={bookingId}
+                    username={user?.username || 'Guest'}
+                    initialContent={selectedNote.content || ''}
+                    noteTitle={selectedNote.title || 'Untitled'}
+                    onToggleCode={toggleCodeEditor}
+                    showCode={showCodeEditor}
+                    onCompleteSession={handleCompleteSession}
+                    isCompleting={isCompleting}
+                  />
+              )}
+            </div>
+
                     {/* Small Video Sidebar */}
                     <div className="w-80 border-l border-gray-800 bg-black relative">
-                       <JitsiMeetRoom
-                          roomId={booking.meetingRoomId}
-                          displayName={user?.username || 'Guest'}
-                          onMeetingEnd={handleMeetingEnd}
+                    <JitsiMeetRoom
+                      roomId={booking.meetingRoomId}
+                      displayName={user?.username || 'Guest'}
+                      onMeetingEnd={handleMeetingEnd}
                           showControls={false} // Hide controls in mini mode if possible
                           quality="low"
-                        />
-                    </div>
-                 </div>
+                    />
+                  </div>
+                  </div>
               ) : (
                 /* Full Video View */
-                <JitsiMeetRoom
-                  roomId={booking.meetingRoomId}
-                  displayName={user?.username || 'Guest'}
-                  onMeetingEnd={handleMeetingEnd}
+              <JitsiMeetRoom
+                roomId={booking.meetingRoomId}
+                displayName={user?.username || 'Guest'}
+                onMeetingEnd={handleMeetingEnd}
                   quality="high"
                 />
               )}
@@ -470,7 +470,7 @@ const SessionRoomPage = () => {
         </div>
       </main>
 
-      {/* Note Selector Modal */}
+        {/* Note Selector Modal */}
       {showNoteSelector && (
         <NoteSelector
           onSelect={handleNoteSelect}

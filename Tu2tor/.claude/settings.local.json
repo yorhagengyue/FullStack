@@ -12,7 +12,10 @@
       "Bash(npm run test)",
       "Bash(npm test knowledgeBase.test.js)",
       "Bash(npm test -- knowledgeBase.test.js)",
-      "Bash(npm test -- rag.test.js)"
+      "Bash(npm test -- rag.test.js)",
+      "Bash(git add server/src/app.js server/src/controllers/knowledgeBaseController.js server/src/models/KnowledgeBase.js server/src/routes/knowledgeBaseRoutes.js server/src/services/documentProcessor.js server/src/services/ragService.js server/tests/rag.test.js src/pages/KnowledgeBase/KnowledgeBaseUpload.jsx src/services/api.js src/components/knowledge-base/)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd custom domain CORS support and improve PPT chunking\n\n- Add tu2tor.com and www.tu2tor.com to CORS allowed origins\n- Implement slide-based chunking strategy for PPTX files\n- Add chunk visualization component with modal UI\n- Fix canAccess method validation to prevent undefined errors\n- Add AI chunking response validation with fallback\n- Improve PPTX text extraction with multi-level splitting strategy\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push origin main)"
     ]
   }
 }

@@ -307,7 +307,7 @@ const MarkdownCollabEditor = ({ bookingId, username = 'Guest', initialContent = 
             {saveSuccess ? (
               <Check className="w-4 h-4 text-green-500" />
             ) : (
-              <Save className="w-4 h-4" />
+                <Save className="w-4 h-4" />
             )}
           </button>
 
