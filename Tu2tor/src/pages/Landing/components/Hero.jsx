@@ -116,7 +116,7 @@ const Hero = () => {
                  tag="h1"
                />
                <SplitText
-                 text="with help from your peers."
+                 text="with help from your peer Geng Yue."
                  className="text-3xl lg:text-5xl font-bold tracking-tight text-gray-900 leading-tight text-left"
                  delay={0.3} // Delay the second line slightly
                  stagger={0.08}
